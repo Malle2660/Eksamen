@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handler</title>
+</head>
+<body>
+    <h1>Handler</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Portefølje ID</th>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Antal</th>
+                <th>Pris</th>
+                <th>Dato</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% transactions.forEach(transaction => { %>
+                <tr>
+                    <td><%= transaction.portfolio_id %></td>
+                    <td><%= transaction.symbol %></td>
+                    <td><%= transaction.type %></td>
+                    <td><%= transaction.quantity %></td>
+                    <td><%= transaction.price %></td>
+                    <td><%= transaction.date %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

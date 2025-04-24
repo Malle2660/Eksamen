@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finans App</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Finans App</h1>
+        
+        <%- include('partials/register') %>
+        <div class="auth-form" id="loginForm">
+            <h2>Log Ind</h2>
+            <form id="login">
+                <input type="text" id="login-username" placeholder="Brugernavn" required>
+                <input type="password" id="login-password" placeholder="Adgangskode" required>
+                <button type="submit">Log Ind</button>
+            </form>
+            <div id="loginSuccess" class="hidden">
+                <p>Du er logget ind!</p>
+                <a href="/portfolio">Gå til Porteføljer</a>
+            </div>
+        </div>
+        <%- include('partials/change-password') %>
+    </div>
+    <script src="/client.js"></script>
+</body>
+</html> 
