@@ -14,10 +14,10 @@ module.exports = class Database {
       if (!this.connected) {
         this.db = await sql.connect(this.config);
         this.connected = true;
-        console.log('Forbundet til databasen!');
+        console.log('✅ Forbundet til databasen!');
       }
     } catch (error) {
-      console.error('Fejl ved forbindelse til databasen:', error);
+      console.error('❌ Fejl ved forbindelse til databasen:', error);
       throw error;
     }
   }
@@ -27,32 +27,83 @@ module.exports = class Database {
     if (this.connected) {
       await this.db.close();
       this.connected = false;
-      console.log('Forbindelsen til databasen er lukket.');
+      console.log('🔌 Forbindelsen til databasen er lukket.');
     }
   }
 
-  // Udfør en SQL-forespørgsel
-  async query(queryString, params = []) {
+  // Opret en ny bruger
+  async create(username, email, password) {
     try {
-      if (!this.connected) {
-        await this.connect();
-      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      if (!this.connected) await this.connect();
 
-      const request = this.db.request();
+      const result = await this.db.request()
+        .input('username', sql.NVarChar, username)
+        .input('email', sql.NVarChar, email)
+        .input('password', sql.NVarChar, hashedPassword)
+        .query(`
+          INSERT INTO users (username, email, password)
+          VALUES (@username, @email, @password);
+          SELECT SCOPE_IDENTITY() AS id;
+        `);
 
-      // Tilføj parametre til forespørgslen
-      params.forEach(param => {
-        request.input(param.name, param.type, param.value);
-      });
+      return result.recordset[0]; // returner brugerens id
+    } catch (err) {
+      console.error('❌ Fejl ved oprettelse af bruger:', err);
+      throw err;
+    }
+  }
 
-      const result = await request.query(queryString);
-      return result.recordset;
-    } catch (error) {
-      console.error('Fejl ved udførelse af forespørgsel:', error);
-      throw error;
+  // Find en bruger baseret på brugernavn
+  async findByUsername(username) {
+    try {
+      if (!this.connected) await this.connect();
+
+      const result = await this.db.request()
+        .input('username', sql.NVarChar, username)
+        .query('SELECT * FROM users WHERE username = @username');
+
+      return result.recordset[0];
+    } catch (err) {
+      console.error('❌ Fejl ved hentning af bruger:', err);
+      throw err;
+    }
+  }
+
+  // Verificer adgangskode
+  async verifyPassword(password, hashedPassword) {
+    return bcrypt.compare(password, hashedPassword);
+  }
+
+  // Find bruger baseret på ID
+  async findById(userId) {
+    try {
+      if (!this.connected) await this.connect();
+
+      const result = await this.db.request()
+        .input('id', sql.Int, userId)
+        .query('SELECT * FROM users WHERE id = @id');
+
+      return result.recordset[0];
+    } catch (err) {
+      throw new Error('Fejl ved hentning af bruger: ' + err.message);
+    }
+  }
+
+  // Opdater adgangskode
+  async updatePassword(userId, newPassword) {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      if (!this.connected) await this.connect();
+
+      await this.db.request()
+        .input('id', sql.Int, userId)
+        .input('password', sql.NVarChar, hashedPassword)
+        .query('UPDATE users SET password = @password WHERE id = @id');
+
+      return true;
+    } catch (err) {
+      throw new Error('Fejl ved opdatering af adgangskode: ' + err.message);
     }
   }
 };
-
-
-

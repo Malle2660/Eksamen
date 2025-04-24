@@ -18,23 +18,23 @@ app.use(express.json());  // Gør at vi kan læse JSON data fra requests
 app.use(express.urlencoded({ extended: true }));  // Gør at vi kan læse form data
 app.use(express.static(path.join(__dirname, 'public')));  // Gør public mappen tilgængelig for klienten
 
-// Database
+// === DATABASE SETUP ===
 const Database = require('./db/database');  // Importerer vores database klasse
 const config = require('./db/config.js');   // Konfiguration til Azure SQL database
 const db = new Database(config);            // Opretter en ny database instans
 
-// Importer routes
-const authRoutes = require('./routes/auth');             // Authentication routes
-const portfolioRoutes = require('./routes/portfolio');   // Portfolio routes
-const transactionRoutes = require('./routes/transactions'); // Transaction routes
+// === IMPORTER ROUTES ===
+// Disse kaldes som funktioner med db som argument
+const authRoutes = require('./routes/auth')(db);               // Authentication routes
+//const portfolioRoutes = require('./routes/portfolio')(db);     // Portfolio routes
+//const transactionRoutes = require('./routes/transactions')(db); // Transaction routes
 
 // === ROUTES ===
-// Definerer hvilke routes der skal håndteres af hvilke route handlers
-app.use('/api/auth', authRoutes);           // Alle auth relaterede endpoints starter med /api/auth
-app.use('/portfolio', portfolioRoutes);     // Portfolio routes starter med /portfolio
-app.use('/transactions', transactionRoutes); // Transaction routes starter med /transactions
+app.use('/auth', authRoutes);           // Alle auth relaterede endpoints starter med /api/auth
+//app.use('/portfolio', portfolioRoutes);     // Portfolio routes starter med /portfolio
+//app.use('/transactions', transactionRoutes); // Transaction routes starter med /transactions
 
-// Hovedsiden
+// === HOVEDSIDE ===
 app.get('/', (req, res) => {  
     res.render('index');  // Viser index.ejs når nogen besøger hovedsiden
 });
@@ -48,10 +48,10 @@ async function start() {
         // await db.testConnection();    // Tjek at forbindelsen virker
 
         app.listen(PORT, () => {
-            console.log(`Server kører på http://localhost:${PORT}`);
+            console.log(`✅ Server kører på http://localhost:${PORT}`);
         });
     } catch (err) {
-        console.error('Kunne ikke starte server pga. databasefejl:', err);
+        console.error('❌ Kunne ikke starte server pga. databasefejl:', err);
         process.exit(1); // Stop appen hvis DB ikke virker
     }
 }

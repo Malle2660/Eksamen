@@ -1,4 +1,5 @@
 // API endpoint
+/* 
 const API_URL = 'http://localhost:3000/api';
 
 // Helper til at vise fejl/success beskeder
@@ -112,3 +113,4 @@ document.getElementById('changePassword').addEventListener('submit', async (e) =
     }
 });
     
+*/
