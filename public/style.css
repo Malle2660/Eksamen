@@ -1,106 +1,127 @@
+/* RESET & BASE */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    background-color: rgb(21, 177, 233);
-    color: #333;
-    padding: 20px;
-}
-
-.container {
+  }
+  
+  body {
+    background-color: #1E1E1E;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600; /* Semi Bold */
+    color: #C3C3C1; /* Light gray color */
+  }
+  
+  /* CONTAINER */
+  .container {
+    background-color: #1B1B19;
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
-}
-
-h1 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 2rem;
-}
-
-.auth-form {
-    background: white;
-    padding: 20px;
-    margin: 20px;
+  }
+  
+  /* SIDEBAR */
+  .sidebar {
+    font-size: 8px;
+  }
+  
+  /* HEADER */
+  h1, .header {
+    font-size: 16px;
+    color: #C3C3C1;
+  }
+  
+  /* CARDS */
+  .card {
+    background-color: #242424;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-}
-
-h2 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-input {
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-button {
-    background-color: #3498db;
-    color: white;
-    padding: 0.8rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-header {
+    font-size: 7px;
+    color: #84837E; /* Dark gray */
+  }
+  
+  .card-value {
+    font-size: 13px;
+    color: #C3C3C1;
+  }
+  
+  .card-change {
+    font-size: 10px;
+  }
+  
+  .card-change.positive {
+    color: #46634C;
+  }
+  
+  .card-change.negative {
+    color: #BD3A3A;
+  }
+  
+  /* GRAPH */
+  .graph {
+    background-color: #1B1B19;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .graph-header {
+    font-size: 16px;
+    margin-bottom: 1rem;
+  }
+  
+  .graph-content {
+    font-size: 10px;
+  }
+  
+  /* GRAPH COLORS */
+  .graph-line1 {
+    stroke: #2C64BC; /* Light blue */
+  }
+  
+  .graph-line2 {
+    stroke: #2B2733; /* Dark blue */
+  }
+  
+  /* BUTTONS */
+  button {
+    background-color: #242424;
+    color: #8B8B89;
+    padding: 0.8rem 1.2rem;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
-
-.hidden {
-    display: none;
-}
-
-.error {
-    color: #e74c3c;
-    margin-top: 0.5rem;
-    text-align: center;
-}
-
-.success {
-    color: #2ecc71;
-    margin-top: 0.5rem;
-    text-align: center;
-}
-
-.portfolio-form {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.portfolio-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.portfolio-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-} 
+  }
+  
+  button:hover {
+    background-color: #2B2B2B;
+  }
+  
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-family: inherit;
+  }
+  
+  thead {
+    background-color: #1E1E1E;
+    font-size: 7px;
+    color: #C3C3C1;
+    text-align: left;
+  }
+  
+  tbody {
+    font-size: 8px;
+    color: #84837E;
+  }
+  
+  td, th {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #2B2B2B;
+  }  
