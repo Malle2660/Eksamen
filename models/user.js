@@ -107,7 +107,7 @@ class User {
     }
 
     // Opret en ny konto
-    static async createAccount(userId, accountName, currency) {
+    static async createAccount(userId, accountName, currency) { 
         try {
             const pool = await sql.connect(config);
             const result = await pool.request()
@@ -225,7 +225,6 @@ class User {
             throw new Error('Fejl ved hentning af transaktionshistorik: ' + err.message);
         }
     }
-
     // Hent alle konti for en bruger
     static async getAccountsByUser(userId) {
         try {
