@@ -22,3 +22,6 @@ const passwordConfig = {
 };
 
 module.exports = passwordConfig
+
+
+
