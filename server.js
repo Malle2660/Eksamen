@@ -19,25 +19,28 @@ app.use(express.urlencoded({ extended: true }));  // Gør at vi kan læse form d
 app.use(express.static(path.join(__dirname, 'public')));  // Gør public mappen tilgængelig for klienten
 
 // === DATABASE SETUP ===
-const Database = require('./db/database');  // Importerer vores database klasse
+const Database = require('./db/database'); // Korrekt sti til database.js// Korrekt sti til database.js // Hvis portfolio.js ligger i models
+console.log('Leder efter database.js i:', require.resolve('./db/database'));
 const config = require('./db/config.js');   // Konfiguration til Azure SQL database
 const db = new Database(config);            // Opretter en ny database instans
 
 // === IMPORTER ROUTES ===
 // Disse kaldes som funktioner med db som argument
 const authRoutes = require('./routes/auth')(db);               // Authentication routes
-//const portfolioRoutes = require('./routes/portfolio')(db);     // Portfolio routes
+const portfolioRoutes = require('./routes/portfolio')(db)
+
 //const transactionRoutes = require('./routes/transactions')(db); // Transaction routes
 
 // === ROUTES ===
 app.use('/auth', authRoutes);           // Alle auth relaterede endpoints starter med /api/auth
-//app.use('/portfolio', portfolioRoutes);     // Portfolio routes starter med /portfolio
-//app.use('/transactions', transactionRoutes); // Transaction routes starter med /transactions
+app.use('/portfolio', portfolioRoutes);     // Portfolio routes starter med /portfolio
+
 
 // === HOVEDSIDE ===
 app.get('/', (req, res) => {  
     res.render('index');  // Viser index.ejs når nogen besøger hovedsiden
 });
+// app.use('/portfolio', portfolioRoutes);
 
 // === SERVER START ===
 const PORT = process.env.PORT || 3000;

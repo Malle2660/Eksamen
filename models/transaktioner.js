@@ -1,4 +1,4 @@
-// Dette er en funktion, der håndterer søgninger efter værdipapirer (f.eks. aktier, kryptovaluta m.m.)
+/*// Dette er en funktion, der håndterer søgninger efter værdipapirer (f.eks. aktier, kryptovaluta m.m.)
 
 // Når nogen søger i systemet, som fx "Apple" eller "Aktie", sendes det som en forespørgsel i URL'en
 // Eksempel: /api/stocks/search?query=apple

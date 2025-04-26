@@ -1,8 +1,8 @@
-const Database = require('./database'); // Importer database.js
+/*
+const Database = require('../db/database'); // Korrekt sti til database.js
 const sql = require('mssql'); // Kun brugt til at definere datatyper
 
-// Opret en databaseinstans
-const config = {
+const db = new Database({
     user: 'your-username',
     password: 'your-password',
     server: 'your-server.database.windows.net',
@@ -11,8 +11,7 @@ const config = {
         encrypt: true,
         enableArithAbort: true,
     },
-};
-const db = new Database(config);
+});
 
 class Portfolio {
     // 1. Opret en ny portefølje
@@ -161,4 +160,4 @@ class Portfolio {
 module.exports = Portfolio;
 
 
-
+*/
