@@ -37,36 +37,31 @@ module.exports = function (db) {
     }
     );        
     // === Login ===
-    router.post('/login', async (req, res) => {
-        try {
-            const { username, password } = req.body;
+router.post('/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
 
-            if (!username || !password) {
-                return res.status(400).json({ message: 'Alle felter skal udfyldes' });
-            }
-
-            const user = await db.findByUsername(username);
-            if (!user) {
-                return res.status(401).json({ message: 'Ugyldigt brugernavn eller adgangskode' });
-            }
-
-            const isValid = await bcrypt.compare(password, user.password);
-            if (!isValid) {
-                return res.status(401).json({ message: 'Ugyldigt brugernavn eller adgangskode' });
-            }
-
-            const token = jwt.sign(
-                { userId: user.id, username: user.username },
-                process.env.JWT_SECRET || 'hemmelig',
-                { expiresIn: '24h' }
-            );
-
-            res.json({ token, userId: user.id, username: user.username });
-        } catch (error) {
-            console.error('❌ Fejl i /login:', error);
-            res.status(500).json({ message: 'Der skete en fejl ved login' });
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Alle felter skal udfyldes' });
         }
-    });
+
+        // Brug db.login metoden (som vi lige lavede!)
+        const user = await db.login(username, password);
+
+        // Opret JWT token efter succesfuldt login
+        const token = jwt.sign(
+            { userId: user.userID, username: user.username },
+            process.env.JWT_SECRET || 'hemmelig',
+            { expiresIn: '24h' }
+        );
+
+        res.json({ token, userId: user.userID, username: user.username });
+    } catch (error) {
+        console.error('❌ Fejl i /login:', error.message, error.stack);
+        res.status(500).json({ message: 'Der skete en fejl ved login', error: error.message });
+    }
+});
+
 
     // === Ændre adgangskode ===
     router.post('/change-password', async (req, res) => {

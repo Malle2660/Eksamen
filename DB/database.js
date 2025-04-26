@@ -32,27 +32,57 @@ module.exports = class Database {
   }
 
   // Opret en ny bruger
-  async create(username, email, password) {
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
+async create(username, email, password) {
+  try {
+    if (!this.connected) await this.connect();
+
+    const result = await this.db.request()
+      .input('username', sql.NVarChar, username)
+      .input('email', sql.NVarChar, email)
+      .input('password', sql.NVarChar, password)  // brug password direkte!
+      .query(`
+        INSERT INTO users (username, email, password)
+        VALUES (@username, @email, @password);
+        SELECT SCOPE_IDENTITY() AS id;
+      `);
+
+    return result.recordset[0];
+  } catch (err) {
+    console.error('❌ Fejl ved oprettelse af bruger:', err);
+    throw err;
+  }
+}
+
+ 
+ // Login
+async login(username, password) {
+  try {
       if (!this.connected) await this.connect();
 
+      // Hent bruger baseret på username
       const result = await this.db.request()
-        .input('username', sql.NVarChar, username)
-        .input('email', sql.NVarChar, email)
-        .input('password', sql.NVarChar, hashedPassword)
-        .query(`
-          INSERT INTO users (username, email, password)
-          VALUES (@username, @email, @password);
-          SELECT SCOPE_IDENTITY() AS id;
-        `);
+          .input('username', sql.NVarChar, username)
+          .query('SELECT * FROM users WHERE username = @username');
 
-      return result.recordset[0]; // returner brugerens id
-    } catch (err) {
-      console.error('❌ Fejl ved oprettelse af bruger:', err);
-      throw err;
-    }
+      const user = result.recordset[0];
+
+      if (!user) {
+          throw new Error('Bruger ikke fundet.');
+      }
+
+      // Sammenlign password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+          throw new Error('Forkert adgangskode.');
+      }
+
+      return user; // Returnér brugerdata ved succesfuldt login
+  } catch (err) {
+      console.error('❌ Fejl ved login:', err.message);
+      throw new Error('Fejl ved login: ' + err.message);
   }
+}
+
 
   // Find en bruger baseret på brugernavn
   async findByUsername(username) {

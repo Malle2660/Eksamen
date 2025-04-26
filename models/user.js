@@ -1,4 +1,3 @@
-
 /*
 const sql = require('mssql');
 const bcrypt = require('bcryptjs');
@@ -7,7 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config(); // Indlæs miljøvariabler fra .env-filen
 
 // Azure SQL-konfiguration
-/* const config = {
+const config = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     server: process.env.DB_SERVER,
@@ -17,8 +16,8 @@ dotenv.config(); // Indlæs miljøvariabler fra .env-filen
         enableArithAbort: true
     }
 };
-*/
-/*
+
+
 class User {
     // Opret en ny bruger
     static async create(username, email, password) {
@@ -242,4 +241,5 @@ class User {
 }
 
 module.exports = User;
+
 */
