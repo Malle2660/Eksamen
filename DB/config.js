@@ -1,27 +1,15 @@
-const dotenv = require('dotenv');
+require('dotenv').config(); // VIGTIGT: dette skal stå helt i toppen!
 
-if(process.env.NODE_ENV === 'development') {
-  dotenv.config({ path: `.env.${process.env.NODE_ENV}`, debug: true });
-}
-
-const server ="eksamen2025.database.windows.net";
-const database ="Eksamen DB";
-const port = 1433;
-const user ="AmalieKoefoed-Hansen";
-const password ="Kode123@";
-
-const passwordConfig = {
-  server,
-  port,
-  database,
-  user,
-  password,
+const config = {
+  server: process.env.DB_SERVER,
+  database: process.env.DB_DATABASE,
+  port: 1433,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   options: {
-    encrypt: true
+    encrypt: true,
+    enableArithAbort: true,
   }
 };
 
-module.exports = passwordConfig
-
-
-
+module.exports = config;
