@@ -95,5 +95,17 @@ module.exports = function (db) {
         }
     });
 
+    // Hent alle porteføljer for den nuværende bruger
+router.get('/', async (req, res)=> {
+    try {
+        const userId = req.session.userId; 
+        const portfolios = await Portfolio.getAllForUser(userId);
+        res.render('portfolio', { portfolios });
+        } catch (error) {
+            console.error('❌ Fejl ved hentning af porteføljer:', error.message);
+            res.status(500).json({ message: 'Der skete en fejl ved hentning af porteføljer' });
+        }
+});
+
     return router;
 };
