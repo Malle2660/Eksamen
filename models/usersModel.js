@@ -47,15 +47,15 @@ async login(username, password) {
         return result.recordset[0];
     }
 
-    // Opdater adgangskode
-    async updatePassword(userId, newPassword) {
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        const pool = await poolPromise;
-        await pool.request()
-            .input('userId', sql.Int, userId)
-            .input('password', sql.NVarChar, hashedPassword)
-            .query('UPDATE users SET password = @password WHERE userID = @userId');
-    }
+   // Opdater adgangskode
+async updatePassword(userId, newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const pool = await poolPromise;
+    await pool.request()
+        .input('userId', sql.Int, userId)
+        .input('password', sql.NVarChar(255), hashedPassword)  // Sørg for at sætte korrekt længde
+        .query('UPDATE users SET password = @password WHERE userID = @userId');
 }
 
+}
 module.exports = new UsersModel();
