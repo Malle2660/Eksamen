@@ -6,6 +6,10 @@ const path = require('path');        // Hjælper med at håndtere filstier
 // Opretter en ny Express applikation (vores server)
 const app = express();
 
+// === VIEW ENGINE SETUP ===
+app.set('view engine', 'ejs'); // Angiver EJS som template engine
+app.set('views', path.join(__dirname, 'views')); // Angiver views-mappen
+
 // === MIDDLEWARE SETUP ===
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
