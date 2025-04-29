@@ -1,13 +1,12 @@
-// Importerer de nødvendige Node.js moduler/packages
 require('dotenv').config(); 
-const express = require('express');  // Express framework til at lave webserver
-const path = require('path');        // Hjælper med at håndtere filstier
+const express = require('express');
+const path = require('path');
 
 // Opretter en ny Express applikation (vores server)
 const app = express();
 
 // === VIEW ENGINE SETUP ===
-app.set('view engine', 'ejs'); // Angiver EJS som template engine
+app.set('view engine', 'ejs');  // Angiver EJS som template engine
 app.set('views', path.join(__dirname, 'views')); // Angiver views-mappen
 
 // === MIDDLEWARE SETUP ===
@@ -25,11 +24,21 @@ const accountsRoutes = require('./routes/accounts');  // <-- Importer accounts r
 const transactionRoutes = require('./routes/transactions'); // <-- Importer transactions routes
 const portfolioRoutes = require('./routes/portfolio'); // <-- Importer portfolio routes
 
+// === IMPORTER API ROUTES ===
+// Opdateret sti for API routes
+const exchangeRateRoutes = require('./routes/exchangeRateRoutes');  // <-- Valutakurser routes
+const alphaVantageRoutes = require('./routes/alphaVantageRoutes');  // <-- Aktiekurser routes
+
 // === ROUTES ===
 app.use('/auth', authRoutes);  // Authentication routes
 app.use('/account', accountsRoutes);  // Account routes
 app.use('/transactions', transactionRoutes);  // Transaction routes
+<<<<<<< HEAD
 app.use('/portfolio', portfolioRoutes(poolPromise));  // Portfolio routes
+=======
+app.use('/api/exchange-rate', exchangeRateRoutes);  // Valutakurser routes
+app.use('/api/alpha-vantage', alphaVantageRoutes);  // Aktiekurser routes
+>>>>>>> f7984794904c0538a8898617d7dd07056857218a
 
 // === HOVEDSIDE ===
 app.get('/', (req, res) => {
@@ -37,7 +46,7 @@ app.get('/', (req, res) => {
 });
 
 // === SERVER START ===
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 
 async function start() {
     try {

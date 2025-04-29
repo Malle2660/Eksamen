@@ -1,8 +1,6 @@
-// API endpoint
-/*
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:3000';
 
-// Helper til at vise fejl/success beskeder
+// Helper til at vise beskeder
 function showMessage(formId, message, isError = false) {
     const form = document.getElementById(formId);
     const existingMessage = form.querySelector('.message');
@@ -16,7 +14,7 @@ function showMessage(formId, message, isError = false) {
     form.appendChild(messageDiv);
 }
 
-// Register handling
+// Håndtering af brugerregistrering
 document.getElementById('register').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -46,7 +44,7 @@ document.getElementById('register').addEventListener('submit', async (e) => {
     }
 });
 
-// Login handling
+// Håndtering af login
 document.getElementById('login').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -65,37 +63,37 @@ document.getElementById('login').addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (response.ok) {
-            // Gem token og brugerdata
             localStorage.setItem('token', data.token);
             localStorage.setItem('userId', data.userId);
-        
-            // Redirect til portfolio-siden
-            window.location.href = '/portfolio';
+            window.location.href = '/portfolio'; // Skift til portefølje-siden
+        } else {
+            showMessage('login', data.message, true);
         }
-        
-// Change password handling
+    } catch (error) {
+        showMessage('login', 'Fejl ved login', true);
+    }
+});
+
+// Håndtering af adgangskodeændring
 document.getElementById('changePassword').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Hent password information
     const currentPassword = document.getElementById('current-password').value;
     const newPassword = document.getElementById('new-password').value;
     const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
 
-    // Tjek om bruger er logget ind
     if (!token || !userId) {
         showMessage('changePassword', 'Du skal være logget ind for at ændre adgangskode', true);
         return;
     }
 
     try {
-        // Send password ændrings request
         const response = await fetch(`${API_URL}/auth/change-password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`  // Send token med for at bevise login
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ userId, currentPassword, newPassword })
         });
@@ -112,5 +110,7 @@ document.getElementById('changePassword').addEventListener('submit', async (e) =
         showMessage('changePassword', 'Der skete en fejl ved ændring af adgangskode', true);
     }
 });
-    
-*/
+
+// aktie og valuta ligger her for nu, men de skal kobles i forhold til datbabasen og porteføljesiden. 
+
+

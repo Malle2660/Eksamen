@@ -1,30 +1,131 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
+<!-- Definerer dokumenttypen som HTML5 -->
+
 <html lang="da">
+<!-- Starter HTML dokumentet og sætter sproget til dansk -->
+
 <head>
     <meta charset="UTF-8">
+    <!-- Angiver tegnsættet til UTF-8, så danske bogstaver som æ, ø, å virker korrekt -->
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Gør siden responsiv, så den skalerer korrekt på mobiltelefoner og tablets -->
+
     <title>Finans App</title>
+    <!-- Titlen på hjemmesiden som vises i browserens fane -->
+
     <link rel="stylesheet" href="/style.css">
+    <!-- Linker til en ekstern CSS-stilfil, som styrer sidens udseende -->
 </head>
+
 <body>
     <div class="container">
+        <!-- Hovedcontainer som samler alt indholdet på siden -->
+
         <h1>Finans App</h1>
-        
+        <!-- Hovedoverskrift for siden -->
+
         <%- include('partials/register') %>
+        <!-- Inkluderer en ekstern fil 'partials/register' (via EJS templates).
+             Denne fil indeholder sandsynligvis en registreringsformular -->
+
         <div class="auth-form" id="loginForm">
+            <!-- Sektion for login-formularen -->
+
             <h2>Log Ind</h2>
+            <!-- Overskrift for login-formularen -->
+
             <form id="login">
+                <!-- Start på selve login-formularen -->
+
                 <input type="text" id="login-username" placeholder="Brugernavn" required>
+                <!-- Inputfelt hvor brugeren skriver sit brugernavn.
+                     'required' betyder at feltet skal udfyldes for at kunne sende formularen -->
+
                 <input type="password" id="login-password" placeholder="Adgangskode" required>
+                <!-- Inputfelt til adgangskode, som skjuler det indtastede -->
+
                 <button type="submit">Log Ind</button>
+                <!-- Knap til at sende formularen (logge ind) -->
             </form>
-            <div id="loginSuccess" class="hidden">
-                <p>Du er logget ind!</p>
-                <a href="/portfolio">Gå til Porteføljer</a>
-            </div>
         </div>
+
+        <div id="loginSuccess" class="hidden">
+            <!-- Denne sektion vises KUN når brugeren er logget ind.
+                 Den starter som skjult pga. klassen "hidden" -->
+
+            <p>Du er logget ind!</p>
+            <!-- Bekræftelse til brugeren på at login var succesfuldt -->
+
+            <a href="/portfolio">Gå til Porteføljer</a>
+            <!-- Link der fører brugeren videre til portefølje-siden -->
+
+            <!-- Dashboard sektion -->
+            <div id="dashboard" class="hidden">
+                <!-- Dashboardet starter også som skjult.
+                     Det bliver vist når brugeren er logget ind -->
+
+                <h2>Dashboard</h2>
+                <!-- Overskrift for dashboardet -->
+
+                <div class="dashboard-cards">
+                    <!-- Container som samler alle dashboard-kort -->
+
+                    <div class="dashboard-card">
+                        <!-- Første kort: viser samlet værdi -->
+
+                        <h3>Total Værdi</h3>
+                        <!-- Titel på kortet -->
+
+                        <p class="value" id="totalValue">Indlæser...</p>
+                        <!-- Viser den samlede værdi af brugerens investeringer.
+                             Starter med "Indlæser...", som opdateres via JavaScript -->
+
+                        <p class="change" id="totalChange">Indlæser...</p>
+                        <!-- Viser ændringen i total værdi (f.eks. +5% eller -2%) -->
+                    </div>
+
+                    <div class="dashboard-card">
+                        <!-- Andet kort: viser realiseret gevinst -->
+
+                        <h3>Realiseret Gevinst</h3>
+                        <!-- Titel på kortet -->
+
+                        <p class="value" id="realizedProfit">Indlæser...</p>
+                        <!-- Viser hvor meget gevinst brugeren har opnået ved at sælge investeringer -->
+
+                        <p class="change" id="realizedChange">Indlæser...</p>
+                        <!-- Viser ændring i realiseret gevinst -->
+                    </div>
+
+                    <div class="dashboard-card">
+                        <!-- Tredje kort: viser urealiseret gevinst -->
+
+                        <h3>Urealiseret Gevinst</h3>
+                        <!-- Titel på kortet -->
+
+                        <p class="value" id="unrealizedProfit">Indlæser...</p>
+                        <!-- Viser gevinst på investeringer som brugeren stadig ejer -->
+
+                        <p class="change" id="unrealizedChange">Indlæser...</p>
+                        <!-- Viser ændringen i urealiseret gevinst -->
+                    </div>
+
+                </div> <!-- Slut på dashboard-cards container -->
+            </div>
+            <!-- Slut på dashboard sektion -->
+        </div>
+        <!-- Slut på login success sektion -->
+
         <%- include('partials/change-password') %>
+        <!-- Inkluderer endnu en ekstern fil 'partials/change-password' (via EJS templates).
+             Denne fil indeholder sandsynligvis en formular til at ændre adgangskode -->
+
     </div>
+    <!-- Slut på container div -->
+
     <script src="/client.js"></script>
+    <!-- Tilknytter ekstern JavaScript-fil 'client.js', som håndterer
+         login-funktionalitet, skjul/visning af elementer og opdatering af data -->
 </body>
-</html> 
+</html>

@@ -57,6 +57,72 @@ class TransactionsModel {
             .query('SELECT * FROM Transactions WHERE accountID = @accountId ORDER BY date DESC');
         return result.recordset;
     }
+async buySecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
+    const pool = await poolPromise;
+
+    const totalPrice = quantity * pricePerUnit + fee;
+
+    // Check if sufficient balance
+    const balanceResult = await pool.request()
+        .input('accountId', sql.Int, accountId)
+        .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
+
+    const balance = balanceResult.recordset[0]?.balance;
+    if (balance < totalPrice) throw new Error("Insufficient funds");
+
+    // Deduct balance and insert transaction
+    await pool.request()
+        .input('accountId', sql.Int, accountId)
+        .input('amount', sql.Float, totalPrice)
+        .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
+
+    await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .input('accountId', sql.Int, accountId)
+        .input('securityId', sql.Int, securityId)
+        .input('quantity', sql.Float, quantity)
+        .input('price', sql.Float, totalPrice)
+        .input('fee', sql.Float, fee)
+        .input('type', sql.NVarChar, 'Buy')
+        .query(`
+            INSERT INTO Trades (portfolioID, accountID, securityID, quantity, totalPrice, fee, tradeType, date)
+            VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
+        `);
+}
+async buySecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
+    const pool = await poolPromise;
+
+    const totalPrice = quantity * pricePerUnit + fee;
+
+    // Check if sufficient balance
+    const balanceResult = await pool.request()
+        .input('accountId', sql.Int, accountId)
+        .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
+
+    const balance = balanceResult.recordset[0]?.balance;
+    if (balance < totalPrice) throw new Error("Insufficient funds");
+
+    // Deduct balance and insert transaction
+    await pool.request()
+        .input('accountId', sql.Int, accountId)
+        .input('amount', sql.Float, totalPrice)
+        .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
+
+    await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .input('accountId', sql.Int, accountId)
+        .input('securityId', sql.Int, securityId)
+        .input('quantity', sql.Float, quantity)
+        .input('price', sql.Float, totalPrice)
+        .input('fee', sql.Float, fee)
+        .input('type', sql.NVarChar, 'Buy')
+        .query(`
+            INSERT INTO Trades (portfolioID, accountID, securityID, quantity, totalPrice, fee, tradeType, date)
+            VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
+        `);
+}
+
+    
 }
 
 module.exports = new TransactionsModel();

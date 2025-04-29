@@ -1,127 +1,183 @@
-/* RESET & BASE */
+/* RESET & BASE - Nulstiller standardmargener og padding */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-  }
-  
-  body {
-    background-color: #1E1E1E;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600; /* Semi Bold */
-    color: #C3C3C1; /* Light gray color */
-  }
-  
-  /* CONTAINER */
-  .container {
-    background-color: #1B1B19;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-  
-  /* SIDEBAR */
-  .sidebar {
-    font-size: 8px;
-  }
-  
-  /* HEADER */
-  h1, .header {
-    font-size: 16px;
-    color: #C3C3C1;
-  }
-  
-  /* CARDS */
-  .card {
-    background-color: #242424;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  .card-header {
-    font-size: 7px;
-    color: #84837E; /* Dark gray */
-  }
-  
-  .card-value {
-    font-size: 13px;
-    color: #C3C3C1;
-  }
-  
-  .card-change {
-    font-size: 10px;
-  }
-  
-  .card-change.positive {
+    /* Sørger for at padding og border inkluderes i elementets totale bredde og højde */
+}
+
+body {
+    background-color: #1E1E1E; /* Sætter mørk baggrundsfarve */
+    font-family: 'Inter', sans-serif; /* Definerer skrifttypen */
+    font-weight: 600; /* Semi-bold skrift */
+    color: #C3C3C1; /* Lys grå tekstfarve */
+}
+
+/* CONTAINER - Hovedomslag til hele siden */
+.container {
+    background-color: #1B1B19; /* Mørkebrunlig baggrund */
+    max-width: 1200px; /* Maksimal bredde på containeren */
+    margin: 0 auto; /* Centrer containeren horisontalt */
+    padding: 2rem; /* Indvendig afstand på 2 rem */
+}
+
+/* SIDEBAR - Særligt hvis der senere kommer en sidebar */
+.sidebar {
+    font-size: 8px; /* Lidt mindre tekststørrelse til sidebjælken */
+}
+
+/* HEADER - Styling til overskrifter */
+h1, .header {
+    font-size: 16px; /* Tekststørrelse på 16px */
+    color: #C3C3C1; /* Lys grå farve */
+}
+
+/* CARDS - Styling til indholdskort */
+.card {
+    background-color: #242424; /* Mørkegrå baggrund */
+    border-radius: 8px; /* Afrundede hjørner */
+    padding: 1.5rem; /* Indvendig afstand */
+    margin-bottom: 1rem; /* Luft under hvert kort */
+}
+
+.card-header {
+    font-size: 7px; /* Lille overskrift */
+    color: #84837E; /* Mørkere grå farve */
+}
+
+.card-value {
+    font-size: 13px; /* Større tekst til værdier */
+    color: #C3C3C1; /* Lys grå farve */
+}
+
+.card-change {
+    font-size: 10px; /* Tekststørrelse til ændringer */
+}
+
+/* Positive ændringer på kortet (grønlig farve) */
+.card-change.positive {
     color: #46634C;
-  }
-  
-  .card-change.negative {
+}
+
+/* Negative ændringer på kortet (rødlig farve) */
+.card-change.negative {
     color: #BD3A3A;
-  }
-  
-  /* GRAPH */
-  .graph {
-    background-color: #1B1B19;
-    padding: 1rem;
-    border-radius: 8px;
-  }
-  
-  .graph-header {
-    font-size: 16px;
-    margin-bottom: 1rem;
-  }
-  
-  .graph-content {
-    font-size: 10px;
-  }
-  
-  /* GRAPH COLORS */
-  .graph-line1 {
-    stroke: #2C64BC; /* Light blue */
-  }
-  
-  .graph-line2 {
-    stroke: #2B2733; /* Dark blue */
-  }
-  
-  /* BUTTONS */
-  button {
-    background-color: #242424;
-    color: #8B8B89;
-    padding: 0.8rem 1.2rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  button:hover {
+}
+
+/* GRAPH - Styling til grafer */
+.graph {
+    background-color: #1B1B19; /* Samme mørkebrunlige baggrund som containeren */
+    padding: 1rem; /* Indvendig afstand */
+    border-radius: 8px; /* Afrundede hjørner */
+}
+
+.graph-header {
+    font-size: 16px; /* Tekststørrelse til grafens overskrift */
+    margin-bottom: 1rem; /* Luft under overskriften */
+}
+
+.graph-content {
+    font-size: 10px; /* Lidt mindre tekststørrelse til grafens indhold */
+}
+
+/* GRAPH COLORS - Farver på grafens linjer */
+.graph-line1 {
+    stroke: #2C64BC; /* Lys blå linje */
+}
+
+.graph-line2 {
+    stroke: #2B2733; /* Mørk blå/sort linje */
+}
+
+/* BUTTONS - Styling til knapper */
+button {
+    background-color: #242424; /* Mørkegrå baggrund */
+    color: #8B8B89; /* Grå tekstfarve */
+    padding: 0.8rem 1.2rem; /* Indvendig afstand (højde x bredde) */
+    border: none; /* Fjerner standardkant */
+    border-radius: 4px; /* Let afrundede hjørner */
+    cursor: pointer; /* Ændrer musen til håndikon ved hover */
+    font-size: 1rem; /* Standard tekststørrelse */
+}
+
+/* Ændrer baggrundsfarven på knapper, når musen holdes over */
+button:hover {
     background-color: #2B2B2B;
-  }
-  
-  /* TABLE */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    font-family: inherit;
-  }
-  
-  thead {
-    background-color: #1E1E1E;
-    font-size: 7px;
-    color: #C3C3C1;
-    text-align: left;
-  }
-  
-  tbody {
-    font-size: 8px;
-    color: #84837E;
-  }
-  
-  td, th {
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid #2B2B2B;
-  }  
+}
+
+/* TABLE - Styling til tabeller */
+table {
+    width: 100%; /* Gør tabellen lige så bred som containeren */
+    border-collapse: collapse; /* Fjerner dobbelt kanter mellem celler */
+    margin-top: 1rem; /* Luft over tabellen */
+    font-family: inherit; /* Arver font fra body */
+}
+
+thead {
+    background-color: #1E1E1E; /* Mørk baggrund til tabelhovedet */
+    font-size: 7px; /* Lille tekststørrelse */
+    color: #C3C3C1; /* Lys grå tekst */
+    text-align: left; /* Justerer tekst til venstre */
+}
+
+tbody {
+    font-size: 8px; /* Tekststørrelse til tabelens data */
+    color: #84837E; /* Mørk grå tekst */
+}
+
+td, th {
+    padding: 0.5rem 1rem; /* Luft inde i cellerne */
+    border-bottom: 1px solid #2B2B2B; /* Tynd mørkegrå streg mellem rækker */
+}
+
+/* DASHBOARD CARDS - Specifik styling til dashboard kort */
+.dashboard-cards {
+    display: flex; /* Bruger flexbox layout */
+    gap: 20px; /* Afstand mellem kort */
+    margin-top: 2rem; /* Luft over dashboardet */
+    justify-content: center; /* Centrerer kortene */
+    flex-wrap: wrap; /* Gør at kortene kan gå på ny linje hvis skærmen er smal */
+}
+
+.dashboard-card {
+    background-color: #242424; /* Mørkegrå baggrund */
+    border-radius: 8px; /* Afrundede hjørner */
+    padding: 1.5rem; /* Indvendig afstand */
+    width: 220px; /* Fast bredde på kortene */
+    text-align: center; /* Centrerer teksten i kortet */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Blød skygge omkring kortene */
+}
+
+.dashboard-card h3 {
+    font-size: 14px; /* Tekststørrelse til overskrift i kortet */
+    color: #C3C3C1; /* Lys grå tekst */
+    margin-bottom: 10px; /* Luft under overskriften */
+}
+
+.value {
+    font-size: 20px; /* Stor skrift til værdier */
+    font-weight: bold; /* Gør teksten fed */
+    color: #C3C3C1; /* Lys grå tekst */
+    margin: 10px 0; /* Luft over og under værdien */
+}
+
+.change {
+    font-size: 12px; /* Mindre tekst til ændringer */
+    font-weight: bold; /* Gør teksten fed */
+}
+
+/* Farve når ændringen er positiv */
+.change.positive {
+    color: #46634C;
+}
+
+/* Farve når ændringen er negativ */
+.change.negative {
+    color: #BD3A3A;
+}
+
+/* HIDDEN CLASS - Skjuler elementer */
+.hidden {
+    display: none;
+    /* Elementet bliver usynligt og optager ikke plads */
+}
