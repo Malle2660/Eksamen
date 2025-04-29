@@ -3,20 +3,22 @@ module.exports = function (db) {
     const router = express.Router();
     const Portfolio = require('../models/portfolio'); // Importer Portfolio-modellen
 
+    console.log('Portfolio route loader kører');
+
     // Opret en ny portefølje
     router.post('/create', async (req, res) => {
         try {
-            const { name, accountId, userId } = req.body;
+            const { name, accountId} = req.body;
 
-            if (!name || !accountId || !userId) {
+            if (!name || !accountId) {
                 return res.status(400).json({ message: 'Alle felter skal udfyldes' });
             }
 
-            const portfolioId = await Portfolio.create(name, accountId, userId);
+            const portfolioId = await Portfolio.create(name, accountId);
             res.status(201).json({ message: 'Portefølje oprettet succesfuldt', portfolioId });
         } catch (error) {
             console.error('❌ Fejl i /register:', error.message, error.stack);
-            res.status(500).json({ message: 'Der skete en fejl ved oprettelse af bruger', error: error.message });
+            res.status(500).json({ message: 'Der skete en fejl ved oprettelse af portfølje', error: error.message });
         }
     }
     );        
@@ -73,7 +75,6 @@ module.exports = function (db) {
     router.delete('/:portfolioId', async (req, res) => {
         try {
             const { portfolioId } = req.params;
-
             await Portfolio.delete(portfolioId);
             res.json({ message: 'Portefølje slettet succesfuldt' });
         } catch (err) {
@@ -82,7 +83,7 @@ module.exports = function (db) {
         }
     });
 
-    // Hent porteføljesammendrag
+    // Henter porteføljesammendrag
     router.get('/:portfolioId/summary', async (req, res) => {
         try {
             const { portfolioId } = req.params;
@@ -109,3 +110,6 @@ router.get('/', async (req, res)=> {
 
     return router;
 };
+
+
+

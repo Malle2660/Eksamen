@@ -23,11 +23,13 @@ console.log('Leder efter database.js i:', require.resolve('./db/database'));
 const authRoutes = require('./routes/auth');
 const accountsRoutes = require('./routes/accounts');  // <-- Importer accounts routes
 const transactionRoutes = require('./routes/transactions'); // <-- Importer transactions routes
+const portfolioRoutes = require('./routes/portfolio'); // <-- Importer portfolio routes
 
 // === ROUTES ===
 app.use('/auth', authRoutes);  // Authentication routes
 app.use('/account', accountsRoutes);  // Account routes
 app.use('/transactions', transactionRoutes);  // Transaction routes
+app.use('/portfolio', portfolioRoutes(poolPromise));  // Portfolio routes
 
 // === HOVEDSIDE ===
 app.get('/', (req, res) => {
@@ -35,7 +37,7 @@ app.get('/', (req, res) => {
 });
 
 // === SERVER START ===
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 async function start() {
     try {
