@@ -33,7 +33,7 @@ const alphaVantageRoutes = require('./routes/alphaVantageRoutes');  // <-- Aktie
 app.use('/auth', authRoutes);  // Authentication routes
 app.use('/account', accountsRoutes);  // Account routes
 app.use('/transactions', transactionRoutes);  // Transaction routes
-app.use('/portfolios', portfolioRoutes(poolPromise));
+app.use('/portfolios', portfolioRoutes);  // Portfolio routes
 
 
 // API routes
