@@ -56,6 +56,15 @@ async updatePassword(userId, newPassword) {
         .input('password', sql.NVarChar(255), hashedPassword)  // Sørg for at sætte korrekt længde
         .query('UPDATE users SET password = @password WHERE userID = @userId');
 }
+// Find bruger baseret på userId
+async findById(userId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('userId', sql.Int, userId)
+        .query('SELECT * FROM users WHERE userID = @userId');
+    return result.recordset[0];
+}
+
 
 }
 module.exports = new UsersModel();

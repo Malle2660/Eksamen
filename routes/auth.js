@@ -56,33 +56,37 @@ router.post('/login', async (req, res) => {
 // === Ændre adgangskode ===
 router.post('/change-password', async (req, res) => {
     try {
-        // Hent de nødvendige data fra request body
         const { userId, oldPassword, newPassword } = req.body;
-        
-        // Tjek at alle nødvendige felter er sendt
+
+        console.log('🔐 Indkomne data:', { userId, oldPassword, newPassword });
+
         if (!userId || !oldPassword || !newPassword) {
             return res.status(400).json({ message: 'Alle felter skal udfyldes' });
         }
 
-        // Find brugeren baseret på userId
         const user = await usersModel.findById(userId);
+        console.log('👤 Fundet bruger:', user);
+
         if (!user) {
             return res.status(404).json({ message: 'Bruger ikke fundet' });
         }
 
-        // Tjek om den gamle adgangskode er korrekt
         const isValid = await bcrypt.compare(oldPassword, user.password);
+        console.log('🔍 Password match:', isValid);
+
         if (!isValid) {
             return res.status(401).json({ message: 'Nuværende adgangskode er forkert' });
         }
 
-        // Opdater adgangskoden
         await usersModel.updatePassword(userId, newPassword);
         res.json({ message: 'Adgangskode ændret succesfuldt' });
+
     } catch (error) {
+        console.error('❌ Fejl ved ændring af adgangskode:', error.message);
         res.status(500).json({ message: 'Fejl ved ændring af adgangskode', error: error.message });
     }
 });
+
 
 
 
