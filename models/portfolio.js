@@ -150,4 +150,3 @@ async getPortfolioOverview(portfolioId) {
 
 // Exporter instans af PortfolioModel klassen som et modul
 module.exports = new PortfolioModel();
-...

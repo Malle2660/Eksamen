@@ -76,3 +76,4 @@ router.post('/trade/sell', async (req, res) => {
 
 
 module.exports = router;
+////hjælp dem
