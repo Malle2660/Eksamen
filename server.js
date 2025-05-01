@@ -31,14 +31,13 @@ const alphaVantageRoutes = require('./routes/alphaVantageRoutes');  // <-- Aktie
 
 // === ROUTES ===
 app.use('/auth', authRoutes);  // Authentication routes
-app.use('/account', accountsRoutes);  // Account routes
+app.use('/accounts', accountsRoutes);  // Account routes
 app.use('/transactions', transactionRoutes);  // Transaction routes
-<<<<<<< HEAD
 app.use('/portfolio', portfolioRoutes(poolPromise));  // Portfolio routes
-=======
+
 app.use('/api/exchange-rate', exchangeRateRoutes);  // Valutakurser routes
 app.use('/api/alpha-vantage', alphaVantageRoutes);  // Aktiekurser routes
->>>>>>> f7984794904c0538a8898617d7dd07056857218a
+
 
 // === HOVEDSIDE ===
 app.get('/', (req, res) => {
@@ -61,3 +60,7 @@ async function start() {
 }
 
 start(); // Start hele appen
+
+
+
+

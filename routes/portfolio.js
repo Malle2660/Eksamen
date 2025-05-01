@@ -3,7 +3,7 @@ module.exports = function (db) {
     const router = express.Router();
     const Portfolio = require('../models/portfolio'); // Importer Portfolio-modellen
 
-    console.log('Portfolio route loader kører');
+    console.log('✅ Portfolio route kører');
 
     // Opret en ny portefølje
     router.post('/create', async (req, res) => {
@@ -110,6 +110,8 @@ router.get('/', async (req, res)=> {
 
     return router;
 };
+
+
 
 
 

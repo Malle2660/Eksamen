@@ -4,6 +4,7 @@ class TransactionsModel {
     // Indsæt penge på konto
     async deposit(accountId, amount) {
         const pool = await poolPromise;
+
         // Opdater saldoen på kontoen
         await pool.request()
             .input('accountId', sql.Int, accountId)
@@ -13,8 +14,9 @@ class TransactionsModel {
                 SET balance = balance + @amount 
                 WHERE accountID = @accountId AND closedAccount = 0;
             `);
-        
-            await pool.request()
+
+        // log transaktionen i Transactions tabellen
+        await pool.request()
             .input('accountId', sql.Int, accountId)
             .input('amount', sql.Float, amount)
             .input('transactionType', sql.NVarChar, 'Deposit')
@@ -22,12 +24,19 @@ class TransactionsModel {
                 INSERT INTO Transactions (accountID, amount, transactionType, date)
                 VALUES (@accountId, @amount, @transactionType, GETDATE());
             `);
-        
+
+        // Returner den nye saldo
+        const result = await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
+
+        return result.recordset[0].balance;
     }
 
     // Hæv penge fra konto
     async withdraw(accountId, amount) {
         const pool = await poolPromise;
+
         // Opdater saldoen på kontoen
         await pool.request()
             .input('accountId', sql.Int, accountId)
@@ -37,7 +46,7 @@ class TransactionsModel {
                 SET balance = balance - @amount 
                 WHERE accountID = @accountId AND closedAccount = 0;
             `);
-        
+
         // Indsæt transaktionen i Transactions tabellen
         await pool.request()
             .input('accountId', sql.Int, accountId)
@@ -47,6 +56,13 @@ class TransactionsModel {
                 INSERT INTO Transactions (accountID, amount, transactionType, date)
                 VALUES (@accountId, @amount, @transactionType, GETDATE());
             `);
+
+        // Returner den nye saldo
+        const result = await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId');
+
+        return result.recordset[0].balance;
     }
 
     // Hent transaktioner for en specifik konto
@@ -57,72 +73,50 @@ class TransactionsModel {
             .query('SELECT * FROM Transactions WHERE accountID = @accountId ORDER BY date DESC');
         return result.recordset;
     }
-async buySecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
-    const pool = await poolPromise;
 
-    const totalPrice = quantity * pricePerUnit + fee;
 
-    // Check if sufficient balance
-    const balanceResult = await pool.request()
-        .input('accountId', sql.Int, accountId)
-        .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
+    // køb værdipapirer
+    async buySecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
+        const pool = await poolPromise;
 
-    const balance = balanceResult.recordset[0]?.balance;
-    if (balance < totalPrice) throw new Error("Insufficient funds");
+        const totalPrice = quantity * pricePerUnit + fee;
 
-    // Deduct balance and insert transaction
-    await pool.request()
-        .input('accountId', sql.Int, accountId)
-        .input('amount', sql.Float, totalPrice)
-        .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
+        // Check if sufficient balance
+        const balanceResult = await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
 
-    await pool.request()
-        .input('portfolioId', sql.Int, portfolioId)
-        .input('accountId', sql.Int, accountId)
-        .input('securityId', sql.Int, securityId)
-        .input('quantity', sql.Float, quantity)
-        .input('price', sql.Float, totalPrice)
-        .input('fee', sql.Float, fee)
-        .input('type', sql.NVarChar, 'Buy')
-        .query(`
+        const balance = balanceResult.recordset[0]?.balance;
+        if (balance < totalPrice) throw new Error("Insufficient funds");
+
+        // Deduct balance and insert transaction
+        await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .input('amount', sql.Float, totalPrice)
+            .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
+
+        await pool.request()
+            .input('portfolioId', sql.Int, portfolioId)
+            .input('accountId', sql.Int, accountId)
+            .input('securityId', sql.Int, securityId)
+            .input('quantity', sql.Float, quantity)
+            .input('price', sql.Float, totalPrice)
+            .input('fee', sql.Float, fee)
+            .input('type', sql.NVarChar, 'Buy')
+            .query(`
             INSERT INTO Trades (portfolioID, accountID, securityID, quantity, totalPrice, fee, tradeType, date)
             VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
         `);
-}
-async buySecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
-    const pool = await poolPromise;
 
-    const totalPrice = quantity * pricePerUnit + fee;
+        // returner den nye saldo 
+        const newBalanceResult = await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId');
 
-    // Check if sufficient balance
-    const balanceResult = await pool.request()
-        .input('accountId', sql.Int, accountId)
-        .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
+        return newBalanceResult.recordset[0].balance;
 
-    const balance = balanceResult.recordset[0]?.balance;
-    if (balance < totalPrice) throw new Error("Insufficient funds");
 
-    // Deduct balance and insert transaction
-    await pool.request()
-        .input('accountId', sql.Int, accountId)
-        .input('amount', sql.Float, totalPrice)
-        .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
-
-    await pool.request()
-        .input('portfolioId', sql.Int, portfolioId)
-        .input('accountId', sql.Int, accountId)
-        .input('securityId', sql.Int, securityId)
-        .input('quantity', sql.Float, quantity)
-        .input('price', sql.Float, totalPrice)
-        .input('fee', sql.Float, fee)
-        .input('type', sql.NVarChar, 'Buy')
-        .query(`
-            INSERT INTO Trades (portfolioID, accountID, securityID, quantity, totalPrice, fee, tradeType, date)
-            VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
-        `);
-}
-
-    
+    }
 }
 
 module.exports = new TransactionsModel();
