@@ -78,6 +78,74 @@ class PortfolioModel {
 
         return result.recordset[0]; // Returnér det første resultat
     }
+    // GAK (gennemsnitlig anskaffelseskurs) pr. værdipapir i portefølje
+async calculateGAK(portfolioId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .query(`
+            SELECT 
+                stockID,
+                SUM(price * quantity) / SUM(quantity) AS GAK
+            FROM Trades
+            WHERE portfolioID = @portfolioId
+            GROUP BY stockID;
+        `);
+    return result.recordset;
+}
+
+// Forventet værdi = antal * aktuel pris
+async calculateExpectedValue(portfolioId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .query(`
+            SELECT 
+                t.stockID,
+                SUM(t.quantity) * s.currentPrice AS expectedValue
+            FROM Trades t
+            JOIN Stocks s ON t.stockID = s.stockID
+            WHERE t.portfolioID = @portfolioId
+            GROUP BY t.stockID, s.currentPrice;
+        `);
+    return result.recordset;
+}
+
+// Urealiseret gevinst/tab = forventet værdi - samlet erhvervelsespris
+async calculateUnrealizedGainLoss(portfolioId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .query(`
+            SELECT 
+                t.stockID,
+                SUM(t.quantity * s.currentPrice) - SUM(t.quantity * t.price) AS gainOrLoss
+            FROM Trades t
+            JOIN Stocks s ON t.stockID = s.stockID
+            WHERE t.portfolioID = @portfolioId
+            GROUP BY t.stockID;
+        `);
+    return result.recordset;
+}
+
+// Oversigt: totaler for portefølje
+async getPortfolioOverview(portfolioId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('portfolioId', sql.Int, portfolioId)
+        .query(`
+            SELECT
+                SUM(t.quantity * t.price) AS totalPurchase,
+                SUM(t.quantity * s.currentPrice) AS totalExpected,
+                SUM(t.quantity * s.currentPrice) - SUM(t.quantity * t.price) AS totalUnrealized
+            FROM Trades t
+            JOIN Stocks s ON t.stockID = s.stockID
+            WHERE t.portfolioID = @portfolioId;
+        `);
+    return result.recordset[0];
+}
+
+    
 }
 
 // Exporter instans af PortfolioModel klassen som et modul

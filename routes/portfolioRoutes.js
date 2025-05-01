@@ -104,6 +104,64 @@ router.get('/', async (req, res) => {
         console.error('❌ Fejl ved hentning af porteføljer:', error.message);
         res.status(500).json({ message: 'Der skete en fejl ved hentning af porteføljer' });
     }
+})
+// === portfolioroutes.js (udvidede routes) ===
+
+// GAK – gennemsnitlig anskaffelseskurs
+router.get('/:portfolioId/gak', async (req, res) => {
+    try {
+        const portfolioId = parseInt(req.params.portfolioId);
+        if (isNaN(portfolioId)) return res.status(400).json({ message: 'Ugyldigt portfolioId' });
+
+        const result = await Portfolio.calculateGAK(portfolioId);
+        res.json(result);
+    } catch (err) {
+        console.error('❌ Fejl ved beregning af GAK:', err.message);
+        res.status(500).json({ message: 'Fejl ved GAK-beregning' });
+    }
 });
+
+// Forventet værdi – samlet værdi af beholdning
+router.get('/:portfolioId/expected-value', async (req, res) => {
+    try {
+        const portfolioId = parseInt(req.params.portfolioId);
+        if (isNaN(portfolioId)) return res.status(400).json({ message: 'Ugyldigt portfolioId' });
+
+        const result = await Portfolio.calculateExpectedValue(portfolioId);
+        res.json(result);
+    } catch (err) {
+        console.error('❌ Fejl ved forventet værdi:', err.message);
+        res.status(500).json({ message: 'Fejl ved beregning af forventet værdi' });
+    }
+});
+
+// Urealiseret gevinst eller tab
+router.get('/:portfolioId/unrealized', async (req, res) => {
+    try {
+        const portfolioId = parseInt(req.params.portfolioId);
+        if (isNaN(portfolioId)) return res.status(400).json({ message: 'Ugyldigt portfolioId' });
+
+        const result = await Portfolio.calculateUnrealizedGainLoss(portfolioId);
+        res.json(result);
+    } catch (err) {
+        console.error('❌ Fejl ved urealiseret gevinst/tab:', err.message);
+        res.status(500).json({ message: 'Fejl ved urealiseret gevinst/tab' });
+    }
+});
+
+// Porteføljeoversigt – total købspris, nuværende værdi og gevinst/tab
+router.get('/:portfolioId/overview', async (req, res) => {
+    try {
+        const portfolioId = parseInt(req.params.portfolioId);
+        if (isNaN(portfolioId)) return res.status(400).json({ message: 'Ugyldigt portfolioId' });
+
+        const result = await Portfolio.getPortfolioOverview(portfolioId);
+        res.json(result);
+    } catch (err) {
+        console.error('❌ Fejl ved porteføljeoversigt:', err.message);
+        res.status(500).json({ message: 'Fejl ved oversigt' });
+    }
+});
+
 
 module.exports = router; // Eksporterer routeren

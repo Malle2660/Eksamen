@@ -110,7 +110,3 @@ document.getElementById('changePassword').addEventListener('submit', async (e) =
         showMessage('changePassword', 'Der skete en fejl ved ændring af adgangskode', true);
     }
 });
-
-// aktie og valuta ligger her for nu, men de skal kobles i forhold til datbabasen og porteføljesiden. 
-
-
