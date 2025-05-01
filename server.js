@@ -22,7 +22,8 @@ console.log('Leder efter database.js i:', require.resolve('./db/database'));
 const authRoutes = require('./routes/auth');
 const accountsRoutes = require('./routes/accounts');  // <-- Importer accounts routes
 const transactionRoutes = require('./routes/transactions'); // <-- Importer transactions routes
-const portfolioRoutes = require('./routes/portfolio'); // <-- Importer portfolio routes
+const portfolioRoutes = require('./routes/portfolioRoutes');  // Tjek om stien er korrekt
+
 
 // === IMPORTER API ROUTES ===
 // Opdateret sti for API routes
@@ -33,8 +34,8 @@ const alphaVantageRoutes = require('./routes/alphaVantageRoutes');  // <-- Aktie
 app.use('/auth', authRoutes);  // Authentication routes
 app.use('/accounts', accountsRoutes);  // Account routes
 app.use('/transactions', transactionRoutes);  // Transaction routes
-app.use('/portfolio', portfolioRoutes(poolPromise));  // Portfolio routes
-
+// Log portfolioRoutes for at se, hvad der bliver importeret
+app.use('/portfolios', portfolioRoutes);  // Portfolio routes
 app.use('/api/exchange-rate', exchangeRateRoutes);  // Valutakurser routes
 app.use('/api/alpha-vantage', alphaVantageRoutes);  // Aktiekurser routes
 
@@ -58,6 +59,7 @@ async function start() {
         process.exit(1);
     }
 }
+
 
 start(); // Start hele appen
 
