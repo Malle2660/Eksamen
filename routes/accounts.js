@@ -71,12 +71,14 @@ router.post('/withdraw', async (req, res) => {
             return res.status(400).json({ message: 'Account ID og beløb mangler' });
         }
 
-        await transactionsModel.withdraw(accountId, amount);
-        res.json({ message: `Hævet ${amount} fra konto!` });
+        const balance = await transactionsModel.withdraw(accountId, amount);
+
+        res.json({ message: `Hævet ${amount} fra konto!`,balance });
     } catch (error) {
         res.status(500).json({ message: 'Fejl ved hævning', error: error.message });
     }
 });
+
 
 // === Se transaktioner ===
 router.get('/transactions/:accountId', async (req, res) => {

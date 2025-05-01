@@ -16,14 +16,15 @@ class AccountsModel {
         return result.recordset[0];
     }
 
-    // Luk konto
+    // Luk konto og lukke tidspunktet
     async closeAccount(accountId) {
         const pool = await poolPromise;
         await pool.request()
             .input('accountId', sql.Int, accountId)
             .query(`
                 UPDATE Accounts
-                SET closedAccount = 1
+                SET closedAccount = 1,
+                closedAt = GETDATE()
                 WHERE accountID = @accountId;
             `);
     }
