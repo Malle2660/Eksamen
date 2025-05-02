@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PortfolioTracker Dashboard</title>
+  <!-- Inter font -->
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <!-- Logo-ikon -->
+        <img src="logo.png" alt="PortfolioTracker Logo" class="logo-icon">
+        <!-- Tekstblok -->
+        <div class="logo-text">
+          <h1>PORTFOLIOTRACKER</h1>
+          <p>ORGANIZING YOUR FINANCES</p>
+        </div>
+        <!-- Pil til at skjule sidebar -->
+        <button class="collapse-btn" aria-label="Skjul sidebar">❮</button>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><svg><!-- hjem-ikon --></svg><span>Dashboard</span></li>
+          <li><svg><!-- konti-ikon --></svg><span>Accounts</span></li>
+          <li><svg><!-- porteføljer-ikon --></svg><span>Portfolios</span></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- HOVEDINDHOLD -->
+    <main class="main-content">
+      <!-- Sideoverskrift -->
+      <header class="page-header">
+        <h2>Dashboard</h2>
+      </header>
+
+      <!-- METRIKKORT -->
+      <section class="metrics">
+        <div class="card">
+          <div class="label">Total værdi</div>
+          <div class="value">
+            <div class="change positive"><svg><!-- pil op --></svg>2.4%</div>
+            <div>224.543 DKK</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Total Realiseret gevinst</div>
+          <div class="value">
+            <div class="change positive"><svg><!-- pil op --></svg>5.1%</div>
+            <div>10.241 DKK</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Total Urealiseret Gevinst</div>
+          <div class="value">
+            <div class="change negative"><svg><!-- pil ned --></svg>0.8%</div>
+            <div>25.015 DKK</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GRAF-SEKTION -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h3>Samlet Værdi</h3>
+          <span>Year to date</span>
+        </div>
+        <div class="chart-placeholder">[Chart Placeholder]</div>
+      </section>
+
+      <!-- TABELLER -->
+      <section class="tables">
+        <div class="table-container">
+          <div class="table-header">
+            <h4>Top 5 værdipapirer baseret på værdi</h4>
+            <button>Se All</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Portfolio</th>
+                <th>24h Change</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rækker… -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-container">
+          <div class="table-header">
+            <h4>Top 5 værdipapirer baseret på profit</h4>
+            <button>Se All</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Portfolio</th>
+                <th>24h Change</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rækker… -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+
+
+
