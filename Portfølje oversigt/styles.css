@@ -1,0 +1,294 @@
+/* Importér Roboto Slab til overskrifter */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
+
+/* ----- GLOBAL VARIABLES ----- */
+:root {
+  --bg-global:      #1E1E1E;
+  --bg-container:   #1B1B19;
+  --text-light:     #C3C3C1;
+  --text-dark:      #84837E;
+  --color-positive: #46634C;
+  --color-negative: #BD3A3A;
+  --sidebar-bg:     #513F95;
+  --button-bg:      #242424;
+  --button-text:    #fff;
+}
+
+/* ----- RESET & BASE ----- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-global);
+  color: var(--text-light);
+}
+ul, a {
+  list-style: none;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ----- OVERORDNET GRID-LAYOUT ----- */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+}
+
+/* ----- SIDEBAR ----- */
+.sidebar {
+  background: var(--bg-container);
+  display: flex;
+  flex-direction: column;
+}
+
+/* — Top-banner med logo & pil — */
+.sidebar-header {
+  background: var(--sidebar-bg);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.logo-icon {
+  background: var(--sidebar-bg);
+  width: 75px;
+  height: 64px;
+  margin-left: 0;
+  margin-right: -10px;
+  padding: 0;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.logo-text {
+  display: inline-block;
+  text-align: center;
+  margin-left: 8px;
+}
+.logo-text h1 {
+  font-family: 'Roboto Slab', serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: #fff;
+  margin: 0 0 2px 0;
+}
+.logo-text p {
+  font-weight: 600;
+  font-size: 0.5rem;
+  color: var(--text-light);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin: 0;
+}
+.collapse-btn {
+  margin-left: auto;
+  margin-right: -16px;
+  width: 32px;
+  height: 32px;
+  background: var(--button-bg);
+  border: none;
+  border-radius: 50%;
+  color: var(--button-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ----- NAVIGATION ----- */
+.sidebar-nav ul {
+  margin-top: 16px;
+  padding: 0;
+}
+/* Erstat svg’er med PNG-ikoner via pseudo-elementer */
+.sidebar-nav li:nth-child(1) svg { display: none; }
+.sidebar-nav li:nth-child(1)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('dashboard.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(2) svg { display: none; }
+.sidebar-nav li:nth-child(2)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('accounts.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(3) svg { display: none; }
+.sidebar-nav li:nth-child(3)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('portfolios.png') no-repeat center center;
+  background-size: contain;
+}
+/* Generel styling */
+.sidebar-nav li {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  padding-left: 16px;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.sidebar-nav li:hover,
+.sidebar-nav li.active {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+.sidebar-nav svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  fill: var(--text-light);
+}
+
+/* ----- HOVEDINDHOLD ----- */
+.main-content {
+  padding: 3rem 2rem 2rem;
+  overflow-y: auto;
+}
+.page-header h2 {
+  margin: 1rem 0 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* ----- METRIKKORT ----- */
+.metrics {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.card {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  flex: 1;
+}
+.card .label {
+  font-size: 0.75rem;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+.card .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+}
+.change {
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+}
+.change.positive { color: var(--color-positive); }
+.change.negative { color: var(--color-negative); }
+.change svg { margin-right: 0.25rem; width: 12px; height: 12px; }
+
+/* ----- GRAF-SEKTION ----- */
+.chart-section {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.chart-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.chart-header span {
+  font-size: 0.625rem;
+  color: var(--text-dark);
+}
+.chart-placeholder {
+  height: 300px;
+  background: #2B2733;
+  border-radius: 4px;
+}
+
+/* ----- TABELLER ----- */
+.tables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.table-container {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.table-header h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+.table-header button {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 0.5rem;
+  text-align: left;
+}
+th {
+  font-size: 0.75rem;
+  color: var(--text-dark);
+  text-transform: uppercase;
+}
+tr + tr {
+  border-top: 1px solid #2A2A2A;
+}
+td {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+td .ticker {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dark);
+}
+.value {
+  font-weight: 700;
+}
+.percent.positive { color: var(--color-positive); }
+.percent.negative { color: var(--color-negative); }
