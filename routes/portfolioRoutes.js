@@ -5,7 +5,6 @@ const Portfolio = require('../models/portfolio'); // Importer Portfolio-modellen
 
 console.log('Portfolio route loader kører');
 
-
 // Opret en ny portefølje
 router.post('/create', async (req, res) => {
    try {
