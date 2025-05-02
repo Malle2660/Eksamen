@@ -1,0 +1,325 @@
+/* Importér Roboto Slab til overskrifter */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
+
+/* ----- VARIABLER ----- */
+:root {
+  --bg-global:      #1E1E1E;
+  --bg-container:   #1B1B19;
+  --text-light:     #C3C3C1;
+  --text-dark:      #84837E;
+  --color-positive: #46634C;
+  --color-negative: #BD3A3A;
+  --sidebar-bg:     #513F95;
+  --button-bg:      #242424;
+  --button-text:    #fff;
+
+  --aapl:  #FECB2F;
+  --msft:  #FF9F1C;
+  --googl: #1F2B6F;
+  --amzn:  #4A90E2;
+}
+
+/* ----- RESET & BASE ----- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-global);
+  color: var(--text-light);
+}
+ul, a {
+  list-style: none;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ----- OVERORDNET GRID-LAYOUT ----- */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ----- SIDEBAR ----- */
+.sidebar {
+  background: var(--bg-container);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-header {
+  background: var(--sidebar-bg);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.logo-icon {
+  width: 75px;
+  height: 64px;
+  margin-left: 0;
+  margin-right: -10px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+.logo-text {
+  display: inline-block;
+  text-align: center;
+  margin-left: 8px;
+}
+.logo-text h1 {
+  font-family: 'Roboto Slab', serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.logo-text p {
+  font-weight: 600;
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--text-light);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.collapse-btn {
+  margin-left: auto;
+  margin-right: -16px;
+  width: 32px;
+  height: 32px;
+  background: var(--button-bg);
+  border: none;
+  border-radius: 50%;
+  color: var(--button-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ----- NAVIGATION (OPDATERET) ----- */
+.sidebar-nav ul {
+  margin-top: 16px;
+  padding: 0;
+}
+.sidebar-nav li:nth-child(1) svg { display: none; }
+.sidebar-nav li:nth-child(1)::before {
+  content: "";
+  display: inline-block;
+  width: 24px; height: 24px;
+  margin-right: 8px;
+  background: url('dashboard.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(2) svg { display: none; }
+.sidebar-nav li:nth-child(2)::before {
+  content: "";
+  display: inline-block;
+  width: 24px; height: 24px;
+  margin-right: 8px;
+  background: url('accounts.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(3) svg { display: none; }
+.sidebar-nav li:nth-child(3)::before {
+  content: "";
+  display: inline-block;
+  width: 24px; height: 24px;
+  margin-right: 8px;
+  background: url('portfolios.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li {
+  display: flex;
+  align-items: center;
+  padding: 8px 0 8px 16px;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.sidebar-nav li:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+.sidebar-nav svg {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  margin-right: 12px;
+  fill: var(--text-light);
+}
+
+/* ----- HOVEDINDHOLD ----- */
+.main-content {
+  padding: 3rem 2rem 2rem;
+  overflow-y: auto;
+}
+
+/* HEADER — titel til venstre, kontroller til højre */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+/* Wrapper til search + knapper */
+.header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: var(--bg-container);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  flex: 1;
+}
+
+/* Søgefelt */
+.search-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+.search-input::placeholder {
+  color: var(--text-dark);
+}
+.search-input:focus {
+  outline: none;
+}
+
+/* Knapperne */
+.page-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+.action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ----- OVERBLIK (graf + stats) ----- */
+.overview {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.chart-section, .pie-card, .value-card {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.chart-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.chart-header span {
+  font-size: 0.625rem;
+  color: var(--text-dark);
+}
+.chart-placeholder,
+.pie-chart-placeholder {
+  background: #2B2733;
+  border-radius: 4px;
+}
+.chart-placeholder { height: 300px; }
+.pie-chart-placeholder { height: 200px; margin-bottom: 0.75rem; }
+
+/* Legend til donut */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+}
+.dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 0.5rem;
+}
+.dot.aapl  { background: var(--aapl); }
+.dot.msft  { background: var(--msft); }
+.dot.googl { background: var(--googl); }
+.dot.amzn  { background: var(--amzn); }
+
+/* Total-værdi card */
+.value-card .label {
+  font-size: 0.75rem;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+.value-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* ----- TABEL-SEKTION ----- */
+.table-container {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1rem;
+}
+.table-header {
+  margin-bottom: 1rem;
+}
+.table-header h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 0.5rem;
+  text-align: left;
+}
+th {
+  font-size: 0.75rem;
+  color: var(--text-dark);
+  text-transform: uppercase;
+}
+tr + tr {
+  border-top: 1px solid #2A2A2A;
+}
+td {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+.ticker {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-dark);
+}
+.percent.positive { color: var(--color-positive); }
+.percent.negative { color: var(--color-negative); }
+td.value { font-weight: 700; }
