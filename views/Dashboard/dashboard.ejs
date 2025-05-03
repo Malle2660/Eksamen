@@ -4,33 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PortfolioTracker Dashboard</title>
+
   <!-- Inter font -->
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap">
-  <link rel="stylesheet" href="styles.css">
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
+  >
+
+  <!-- Dit stylesheet fra public-mappen -->
+  <link rel="stylesheet" href="/styledashboard.css">
 </head>
 <body>
   <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <!-- Logo-ikon -->
-        <img src="logo.png" alt="PortfolioTracker Logo" class="logo-icon">
-        <!-- Tekstblok -->
-        <div class="logo-text">
-          <h1>PORTFOLIOTRACKER</h1>
-          <p>ORGANIZING YOUR FINANCES</p>
-        </div>
-        <!-- Pil til at skjule sidebar -->
-        <button class="collapse-btn" aria-label="Skjul sidebar">❮</button>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li><svg><!-- hjem-ikon --></svg><span>Dashboard</span></li>
-          <li><svg><!-- konti-ikon --></svg><span>Accounts</span></li>
-          <li><svg><!-- porteføljer-ikon --></svg><span>Portfolios</span></li>
-        </ul>
-      </nav>
+      <!-- … alt dit sidebar-HTML uændret … -->
     </aside>
 
     <!-- HOVEDINDHOLD -->
@@ -45,22 +33,22 @@
         <div class="card">
           <div class="label">Total værdi</div>
           <div class="value">
-            <div class="change positive"><svg><!-- pil op --></svg>2.4%</div>
-            <div>224.543 DKK</div>
+            <div class="change positive" id="totalChange">–</div>
+            <div id="totalValue">Indlæser…</div>
           </div>
         </div>
         <div class="card">
           <div class="label">Total Realiseret gevinst</div>
           <div class="value">
-            <div class="change positive"><svg><!-- pil op --></svg>5.1%</div>
-            <div>10.241 DKK</div>
+            <div class="change positive" id="realizedChange">–</div>
+            <div id="realizedProfit">Indlæser…</div>
           </div>
         </div>
         <div class="card">
           <div class="label">Total Urealiseret Gevinst</div>
           <div class="value">
-            <div class="change negative"><svg><!-- pil ned --></svg>0.8%</div>
-            <div>25.015 DKK</div>
+            <div class="change negative" id="unrealizedChange">–</div>
+            <div id="unrealizedProfit">Indlæser…</div>
           </div>
         </div>
       </section>
@@ -90,8 +78,8 @@
                 <th>Value</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Rækker… -->
+            <tbody id="tableByValue">
+              <!-- JS fylder rækker her -->
             </tbody>
           </table>
         </div>
@@ -110,16 +98,22 @@
                 <th>Value</th>
               </tr>
             </thead>
-            <tbody>
-              <!-- Rækker… -->
+            <tbody id="tableByProfit">
+              <!-- JS fylder rækker her -->
             </tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
+
+  <!-- Eksponér userId til klienten -->
+  <script>
+    // Bruger 'user' objektet du sendte via res.render(...)
+    window.USER_ID = <%= JSON.stringify(user.id) %>;
+  </script>
+
+  <!-- Dit dashboard-specifikke klient-script -->
+  <script src="/client-dashboard.js"></script>
 </body>
 </html>
-
-
-
