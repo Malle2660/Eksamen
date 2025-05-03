@@ -84,9 +84,10 @@ class TransactionsModel {
         // Check if sufficient balance
         const balanceResult = await pool.request()
             .input('accountId', sql.Int, accountId)
-            .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND closedAccount = 0');
-
-        const balance = balanceResult.recordset[0]?.balance;
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND (closedAccount = 0 OR closedAccount IS NULL)');
+            console.log("Raw balance result:", balanceResult.recordset);
+            const balance = balanceResult.recordset[0]?.balance;
+            console.log("Balance:", balance, "Total Price:", totalPrice);            
         if (balance < totalPrice) throw new Error("Insufficient funds");
 
         // Deduct balance and insert transaction
@@ -104,7 +105,7 @@ class TransactionsModel {
             .input('fee', sql.Float, fee)
             .input('type', sql.NVarChar, 'Buy')
             .query(`
-            INSERT INTO Trades (portfolioID, accountID, securityID, quantity, totalPrice, fee, tradeType, date)
+            INSERT INTO Trades (portfolioID, accountID, stockID, quantity, price, fee, type, date)
             VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
         `);
 
@@ -117,6 +118,64 @@ class TransactionsModel {
 
 
     }
+
+
+
+    async sellSecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
+        const pool = await poolPromise;
+
+        const totalRevenue = quantity * pricePerUnit - fee;
+
+        const balanceResult = await pool.request()
+            .input('portfolioId', sql.Int, portfolioId)
+            .input('securityId', sql.Int, securityId)
+            .query(`SELECT SUM(CASE WHEN type = 'Buy' THEN quantity ELSE -quantity END) AS totalHeld
+            FROM Trades
+            WHERE portfolioID = @portfolioId AND stockID = @securityId
+        `);
+
+
+
+        const totalHeld = balanceResult.recordset[0]?.totalHeld ?? 0;
+        if (totalHeld < quantity) {
+            throw new Error("Du har desværre ikke nok værdipapir til at sælge");
+        }
+
+
+
+        // Opdater saldoen og indsæt transaktionen
+        await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .input('amount', sql.Float, totalRevenue)
+            .query('UPDATE Accounts SET balance = balance + @amount WHERE accountID = @accountId');
+
+
+
+
+        // registrer salget i Trades tabellen
+        await pool.request()
+            .input('portfolioId', sql.Int, portfolioId)
+            .input('accountId', sql.Int, accountId)
+            .input('securityId', sql.Int, securityId)
+            .input('quantity', sql.Float, quantity)
+            .input('price', sql.Float, totalRevenue)
+            .input('fee', sql.Float, fee)
+            .input('type', sql.NVarChar, 'Sell')
+            .query(`
+        INSERT INTO Trades (portfolioID, accountID, stockID, quantity, price, fee, type, date)
+        VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
+    `);
+
+
+        // returner den nye saldo
+        const newBalanceResult = await pool.request()
+            .input('accountId', sql.Int, accountId)
+            .query('SELECT balance FROM Accounts WHERE accountID = @accountId');
+
+        return newBalanceResult.recordset[0].balance;
+
+    }
+
 }
 
 module.exports = new TransactionsModel();
