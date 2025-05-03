@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PortfolioTracker – Growth Tech Portfolio</title>
+
+  <!-- Google-fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap"
+    rel="stylesheet"
+  >
+  <!-- Dit eget stylesheet (skal ligge i public/) -->
+  <link rel="stylesheet" href="/stylegrowth.css">
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/logo.png" alt="PortfolioTracker Logo" class="logo-icon">
+        <div class="logo-text">
+          <h1>PORTFOLIOTRACKER</h1>
+          <p>ORGANIZING YOUR FINANCES</p>
+        </div>
+        <button class="collapse-btn" aria-label="Skjul sidebar">❮</button>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/accounts">Accounts</a></li>
+          <li class="active"><a href="/portfolios">Portfolios</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- HOVEDINDHOLD -->
+    <main class="main-content">
+      <!-- Header med titel + søgefelt og knapper -->
+      <header class="page-header">
+        <h2>Growth Tech Portfolio</h2>
+        <div class="header-controls">
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Søg portefølje…"
+            aria-label="Søg portefølje"
+          >
+          <div class="page-actions">
+            <button class="action-btn" id="btnHistory">Handels Historik</button>
+            <button class="action-btn" id="btnNewTrade">Registrer Handel</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- OVERBLIK: charts + kort -->
+      <section class="overview">
+        <div class="chart-section">
+          <div class="chart-header">
+            <h3>Samlet Værdi af portefølje</h3>
+            <span>Year to date</span>
+          </div>
+          <div class="chart-placeholder"><!-- Line-Chart her via JS --></div>
+        </div>
+
+        <div class="stats-section">
+          <div class="card pie-card">
+            <div class="label">Fordeling af værdi</div>
+            <div class="pie-chart-placeholder"><!-- Donut-Chart via JS --></div>
+            <ul class="legend">
+              <!-- JS udfylder legend-items dynamisk -->
+            </ul>
+          </div>
+          <div class="card value-card">
+            <div class="label">Total værdi i DKK</div>
+            <div class="value" id="totalValue">Indlæser…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABEL OVER AKTIER -->
+      <section class="table-section">
+        <div class="table-container">
+          <div class="table-header">
+            <h4>Aktier i portefølje</h4>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Volume</th>
+                <th>24h Change</th>
+                <th>Price</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody id="holdingsTable">
+              <!-- JS fylder <tr> her -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Inject portfolioId til klienten -->
+  <script>
+    window.PORTFOLIO_ID = <%= JSON.stringify(portfolioId) %>;
+  </script>
+  <!-- Dit klient-script; skal ligge i public/js/ -->
+  <script src="/js/growthTech.js"></script>
+</body>
+</html>

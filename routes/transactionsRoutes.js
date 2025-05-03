@@ -44,6 +44,8 @@ router.get('/account/transactions/:accountId', async (req, res) => {
 
 
 })
+
+
 // === Køb værdipapir ===
 router.post('/trade/buy', async (req, res) => {
     try {
