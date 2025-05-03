@@ -1,58 +1,70 @@
-// routes/dashboard.js
-const express = require('express');
-const {
-  getPortfolioOverviewForUser,
-  getTopByValueForUser,
-  getTopByProfitForUser
-} = require('../models/portfolio');
+// routes/dashboardRoutes.js
+const express            = require('express');
+const router             = express.Router();
 
-const router = express.Router();
-
-// Middleware til at parse & validere userId-parametre
-function parseUserId(req, res, next) {
-  const id = Number(req.params.userId);
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({ message: 'Ugyldigt userId' });
-  }
-  req.userId = id;
-  next();
+// Auth‑guard inline
+function requireAuth(req, res, next) {
+  if (req.session && req.session.user) return next();
+  return res.redirect('/?error=login_required');
 }
 
-// GET /dashboard/metrics/:userId
-router.get('/metrics/:userId', parseUserId, async (req, res) => {
+// Model
+const Portfolio          = require('../models/portfolio');
+
+// Services
+const { getStockQuote }  = require('../services/alphaVantage');
+const { getExchangeRate }= require('../services/ExchangeRate');
+
+router.get('/dashboard', requireAuth, async (req, res, next) => {
   try {
-    const { totalExpected, totalPurchase, totalUnrealized } =
-      await getPortfolioOverviewForUser(req.userId);
-    res.json({
-      totalValue: totalExpected,
-      realized:   totalPurchase,
-      unrealized: totalUnrealized
+    // 🔑 Antag at du har gemt portfolioId på session.user
+    const portfolioId = req.session.user.activePortfolioId;
+
+    // 1) Overblik
+    const overview = await Portfolio.getPortfolioOverview(portfolioId);
+
+    // 2) Holdings
+    const holdings = await Portfolio.getHoldingsForPortfolio(portfolioId);
+
+    // 3) Hent seneste aktiekurser
+    const prices = {};
+    for (const h of holdings) {
+      const quoteData    = await getStockQuote(h.symbol);
+      const ts           = quoteData['Time Series (1min)'];
+      const lastTime     = Object.keys(ts)[0];
+      prices[h.symbol]   = parseFloat(ts[lastTime]['4. close']);
+    }
+
+    // 4) Hent valutakurser fra din ExchangeRate‑service
+    //    Service returnerer et objekt med fx { conversion_rates: { DKK: 6.7, USD:1, ... } }
+    const exchangeData = await getExchangeRate('USD');  
+    // Justér basen efter behov – du kan også kalde med 'DKK' hvis API’en understøtter det
+    const rates = exchangeData.conversion_rates || exchangeData.rates;
+    // -> fx rates['DKK'] giver kursen for DKK
+
+    // 5) Berig holdings med værdi & profit
+    const enriched = holdings.map(h => {
+      const price  = prices[h.symbol];
+      // h.currency fx 'USD' eller 'EUR'
+      const fx     = rates[h.currency] || 1;
+      const value  = price * h.volume * fx;
+      const profit = (price - h.avgCost) * h.volume * fx;
+      return { name: h.symbol, value, profit };
+    });
+
+    // 6) Sortér og tag top 5
+    const topValue  = enriched.slice().sort((a,b)=>b.value  - a.value).slice(0,5);
+    const topProfit = enriched.slice().sort((a,b)=>b.profit - a.profit).slice(0,5);
+
+    // 7) Render med EJS
+    res.render('dashboard', {
+      user:       req.session.user,
+      overview,   // { totalPurchase, totalExpected, totalUnrealized }
+      topValue,
+      topProfit
     });
   } catch (err) {
-    console.error('Metrics error:', err);
-    res.status(500).json({ message: 'Kunne ikke hente metrics' });
-  }
-});
-
-// GET /dashboard/top/value/:userId
-router.get('/top/value/:userId', parseUserId, async (req, res) => {
-  try {
-    const list = await getTopByValueForUser(req.userId, 5);
-    res.json(list);
-  } catch (err) {
-    console.error('Top by value error:', err);
-    res.status(500).json({ message: 'Kunne ikke hente top efter værdi' });
-  }
-});
-
-// GET /dashboard/top/profit/:userId
-router.get('/top/profit/:userId', parseUserId, async (req, res) => {
-  try {
-    const list = await getTopByProfitForUser(req.userId, 5);
-    res.json(list);
-  } catch (err) {
-    console.error('Top by profit error:', err);
-    res.status(500).json({ message: 'Kunne ikke hente top efter profit' });
+    next(err);
   }
 });
 

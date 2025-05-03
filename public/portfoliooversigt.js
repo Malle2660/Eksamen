@@ -1,27 +1,75 @@
-/*
-const API_URL = 'http://localhost:3000'
-// Helper til at vise beskeder (f.eks. fejl) under tabellen
+// public/js/portfolio.js
+
+const API_BASE = ''; // relative calls to your own server
+
+// Show a message in the table‐header area
 function showTableMessage(message, isError = false) {
   let el = document.querySelector('.table-header .message');
   if (el) el.remove();
-
   el = document.createElement('div');
   el.className = `message ${isError ? 'error' : 'success'}`;
   el.textContent = message;
   document.querySelector('.table-header').appendChild(el);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Central fetch + JSON parser with credentials
+async function fetchJSON(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if (!res.ok) {
+    let err = 'Ukendt fejl';
+    try { const body = await res.json(); if (body.message) err = body.message; }
+    catch {}
+    throw new Error(err);
+  }
+  return res.json();
+}
+
+// Fill the <tbody> with portfolio rows
+function populateTable(portfolios) {
+  const tbody = document.querySelector('table tbody');
+  tbody.innerHTML = portfolios.map(p => `
+    <tr>
+      <td>${p.name}</td>
+      <td class="value">${p.value.toLocaleString()} DKK</td>
+      <td>
+        <span class="percent ${p.change >= 0 ? 'positive' : 'negative'}">
+          ${p.change.toFixed(1)}%
+        </span>
+      </td>
+      <td class="value">${p.realizedGain.toLocaleString()} DKK</td>
+    </tr>
+  `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   const userId = window.USER_ID;
   if (!userId) {
     showTableMessage('Ingen bruger fundet. Log ind igen.', true);
     return;
   }
 
-  // 1) Hent og vis alle porteføljer
-  loadPortfolios(userId);
+  // Load & render portfolios
+  async function loadPortfolios() {
+    try {
+      const portfolios = await fetchJSON(`/portfolios/user/${userId}`);
+      populateTable(portfolios);
+      // Update count card
+      const countEl = document.querySelector('.metrics .card .value');
+      if (countEl) countEl.textContent = portfolios.length;
+      showTableMessage(''); // clear any previous message
+    } catch (err) {
+      console.error(err);
+      showTableMessage(`Fejl ved hentning af porteføljer: ${err.message}`, true);
+    }
+  }
 
-  // 2) Sæt knap til “Opret ny” til at kalde createPortfolio
+  await loadPortfolios();
+
+  // “Opret ny portefølje” button
   const createBtn = document.querySelector('.table-header button');
   if (createBtn) {
     createBtn.addEventListener('click', async () => {
@@ -31,62 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
         showTableMessage('Du skal indtaste både navn og account ID.', true);
         return;
       }
-      await createPortfolio(userId, name, accountId);
+      try {
+        await fetchJSON('/portfolios/create', {
+          method: 'POST',
+          body: JSON.stringify({ userId, name, accountId })
+        });
+        showTableMessage('Portefølje oprettet!');
+        await loadPortfolios();
+      } catch (err) {
+        console.error(err);
+        showTableMessage(`Fejl ved oprettelse: ${err.message}`, true);
+      }
     });
   }
 });
-
-async function loadPortfolios(userId) {
-  try {
-    const res = await fetch(`/portfolios/user/${userId}`);
-    if (!res.ok) throw new Error('Kunne ikke hente data');
-    const portfolios = await res.json();
-
-    const tbody = document.querySelector('table tbody');
-    tbody.innerHTML = '';  // ryd eksisterende
-
-    portfolios.forEach(p => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td class="value">${p.value.toLocaleString()} DKK</td>
-        <td>
-          <span class="percent ${p.change >= 0 ? 'positive' : 'negative'}">
-            ${p.change.toFixed(1)}%
-          </span>
-        </td>
-        <td class="value">${p.realizedGain.toLocaleString()} DKK</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // Opdater “Antal porteføljer”‐kort
-    document.querySelector('.metrics .card .value').textContent = portfolios.length;
-  } catch (err) {
-    console.error(err);
-    showTableMessage('Fejl ved hentning af porteføljer', true);
-  }
-}
-
-async function createPortfolio(userId, name, accountId) {
-  try {
-    const res = await fetch('/portfolios/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, name, accountId })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || 'Ukendt fejl ved oprettelse');
-    }
-
-    showTableMessage('Portefølje oprettet!');
-    // genindlæs listen
-    loadPortfolios(userId);
-  } catch (err) {
-    console.error(err);
-    showTableMessage(err.message, true);
-  }
-}
-/*

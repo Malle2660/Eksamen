@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await res.json();
         if (res.ok) {
-          // Session‐cookie er sat, redirect til porteføljer
-          window.location.href = '/portfolios';
+          // Session‐cookie er sat, redirect til dashboard
+          window.location.href = '/dashboard';
         } else {
           showMessage('#login', data.message, true);
         }
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-//window.location.href = '/portfolios';
+
   // — Portefølje‐side logik — 
   const tableContainer = document.querySelector('.tables');
   if (tableContainer) {
@@ -125,55 +125,56 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
+
+  async function loadPortfolios(userId) {
+    try {
+      const res  = await fetch(`/portfolios/user/${userId}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Kunne ikke hente porteføljer');
+      const data = await res.json();
+
+      // Rens og fyld tabel
+      const tbody = document.querySelector('table tbody');
+      tbody.innerHTML = '';
+      data.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.name}</td>
+          <td class="value">${p.value.toLocaleString()} DKK</td>
+          <td><span class="percent ${p.change>=0?'positive':'negative'}">
+              ${p.change.toFixed(1)}%
+            </span>
+          </td>
+          <td class="value">${p.realizedGain.toLocaleString()} DKK</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Opdater kortene
+      document.querySelectorAll('.metrics .card .value')[0].textContent = data.length;
+      const total = data.reduce((sum,p)=> sum+p.value,0);
+      document.querySelectorAll('.metrics .card .value')[1].textContent = total.toLocaleString() + ' DKK';
+    } catch (err) {
+      console.error(err);
+      showMessage('.tables .table-header', 'Fejl ved hentning af porteføljer', true);
+    }
+  }
+
+  async function createPortfolio(userId, name, accountId) {
+    try {
+      const res = await fetch('/portfolios/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId, name, accountId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Fejl ved oprettelse');
+
+      showMessage('.table-header', 'Portefølje oprettet');
+      loadPortfolios(userId);
+    } catch (err) {
+      console.error(err);
+      showMessage('.tables .table-header', err.message, true);
+    }
+  }
+
 });
-
-async function loadPortfolios(userId) {
-  try {
-    const res  = await fetch(`/portfolios/user/${userId}`, { credentials: 'include' });
-    if (!res.ok) throw new Error('Kunne ikke hente porteføljer');
-    const data = await res.json();
-
-    // Rens og fyld tabel
-    const tbody = document.querySelector('table tbody');
-    tbody.innerHTML = '';
-    data.forEach(p => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td class="value">${p.value.toLocaleString()} DKK</td>
-        <td><span class="percent ${p.change>=0?'positive':'negative'}">
-            ${p.change.toFixed(1)}%
-          </span>
-        </td>
-        <td class="value">${p.realizedGain.toLocaleString()} DKK</td>`;
-      tbody.appendChild(tr);
-    });
-
-    // Opdater kortene
-    document.querySelectorAll('.metrics .card .value')[0].textContent = data.length;
-    const total = data.reduce((sum,p)=> sum+p.value,0);
-    document.querySelectorAll('.metrics .card .value')[1].textContent = total.toLocaleString() + ' DKK';
-  } catch (err) {
-    console.error(err);
-    showMessage('.tables .table-header', 'Fejl ved hentning af porteføljer', true);
-  }
-}
-
-async function createPortfolio(userId, name, accountId) {
-  try {
-    const res = await fetch('/portfolios/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ userId, name, accountId })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Fejl ved oprettelse');
-
-    showMessage('.table-header', 'Portefølje oprettet');
-    loadPortfolios(userId);
-  } catch (err) {
-    console.error(err);
-    showMessage('.table-header', err.message, true);
-  }
-}

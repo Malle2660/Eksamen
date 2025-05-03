@@ -1,36 +1,25 @@
+<!-- views/Portføljeoversigt/portfolio.ejs -->
 <!DOCTYPE html>
 <html lang="da">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PortfolioTracker – Porteføljeoversigt</title>
+
   <!-- Inter font -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
     rel="stylesheet"
   />
-  <!-- Din CSS i public/ -->
-  <link rel="stylesheet" href="/styleportføljeoversigt.css" />
+
+  <!-- Dit eget stylesheet -->
+  <link rel="stylesheet" href="/portfolio-oversigt.css" />
 </head>
 <body>
   <div class="app">
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR (samme markup som i dashboard) -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <img src="/logo.png" alt="PortfolioTracker Logo" class="logo-icon" />
-        <div class="logo-text">
-          <h1>PORTFOLIOTRACKER</h1>
-          <p>ORGANIZING YOUR FINANCES</p>
-        </div>
-        <button class="collapse-btn" aria-label="Skjul sidebar">❮</button>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li><span>Dashboard</span></li>
-          <li><span>Accounts</span></li>
-          <li class="active"><span>Portfolios</span></li>
-        </ul>
-      </nav>
+      <!-- … dit sidebar‐HTML … -->
     </aside>
 
     <!-- HOVEDINDHOLD -->
@@ -39,21 +28,31 @@
         <h2>Porteføljeoversigt</h2>
       </header>
 
-      <!-- METRIKKORT for porteføljer -->
+      <!-- METRIKKORT -->
       <section class="metrics">
         <div class="card">
           <div class="label">Antal porteføljer</div>
-          <div class="value">0</div>
+          <div class="value"><%= portfolios.length %></div>
         </div>
         <div class="card">
           <div class="label">Samlet værdi</div>
-          <div class="value">0 DKK</div>
+          <div class="value">
+            <%= portfolios
+                 .reduce((sum,p) => sum + (p.value||0), 0)
+                 .toLocaleString() %> DKK
+          </div>
         </div>
         <div class="card">
           <div class="label">Daglig ændring</div>
           <div class="value">
-            <div class="change positive"><svg><!-- pil op --></svg>0%</div>
-            <div>0 DKK</div>
+            <div class="change <%= dailyChange >= 0 ? 'positive' : 'negative' %>">
+              <!-- pil-ikon kan du indsætte her eller via CSS -->
+              <%= (dailyChange >= 0 ? '+' : '') + dailyChange.toFixed(1) %>%
+            </div>
+            <div>
+              <%= (dailyDKKChange >= 0 ? '+' : '') 
+                   + dailyDKKChange.toLocaleString() %> DKK
+            </div>
           </div>
         </div>
       </section>
@@ -63,7 +62,7 @@
         <div class="table-container">
           <div class="table-header">
             <h4>Alle porteføljer</h4>
-            <button>Opret ny</button>
+            <button id="createPortfolioBtn">Opret ny</button>
           </div>
           <table>
             <thead>
@@ -75,11 +74,23 @@
               </tr>
             </thead>
             <tbody>
-              <!-- portfoliooversigt.js fylder data her -->
+              <% portfolios.forEach(p => { %>
+                <tr>
+                  <td><%= p.name %></td>
+                  <td class="value"><%= p.value.toLocaleString() %> DKK</td>
+                  <td>
+                    <span class="percent <%= p.change >= 0 ? 'positive' : 'negative' %>">
+                      <%= (p.change >= 0 ? '+' : '') + p.change.toFixed(1) %>%
+                    </span>
+                  </td>
+                  <td class="value"><%= p.realizedGain.toLocaleString() %> DKK</td>
+                </tr>
+              <% }) %>
             </tbody>
           </table>
         </div>
 
+        <!-- GRAF‐SEKTION -->
         <div class="table-container">
           <div class="table-header">
             <h4>Porteføljegraf</h4>
@@ -92,11 +103,11 @@
     </main>
   </div>
 
-  <!-- Injektion af session.userId til din client-side -->
+  <!-- Eksponér bruger‐ID til klienten -->
   <script>
     window.USER_ID = <%= userId %>;
   </script>
-  <!-- Loader din client-logic fra public/js/portfoliooversigt.js -->
-  <script src="/js/portfoliooversigt.js"></script>
+  <!-- Klient‐scriptet til porteføljeoversigt -->
+  <script src="/portfoliooversigt.js"></script>
 </body>
 </html>

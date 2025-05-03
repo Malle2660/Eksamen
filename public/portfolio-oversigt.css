@@ -1,3 +1,5 @@
+/* public/css/styles.css */
+
 /* Importér Roboto Slab til overskrifter */
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
 
@@ -51,52 +53,33 @@ ul, a {
   height: 64px;
   display: flex;
   align-items: center;
-  padding: 0;
+  padding: 0 16px;
 }
 .logo-icon {
-  background: var(--sidebar-bg);
   width: 75px;
   height: 64px;
-  margin-left: 0;
-  margin-right: -10px;
-  padding: 0;
-  border-radius: 4px;
   object-fit: contain;
 }
 .logo-text {
-  display: inline-block;
-  text-align: center;
   margin-left: 8px;
 }
 .logo-text h1 {
   font-family: 'Roboto Slab', serif;
-  font-weight: 700;
   font-size: 0.8rem;
-  letter-spacing: 0.1em;
   color: #fff;
-  margin: 0 0 2px 0;
 }
 .logo-text p {
-  font-weight: 600;
   font-size: 0.5rem;
   color: var(--text-light);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  margin: 0;
 }
 .collapse-btn {
   margin-left: auto;
-  margin-right: -16px;
   width: 32px;
   height: 32px;
   background: var(--button-bg);
   border: none;
   border-radius: 50%;
   color: var(--button-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
 }
 
@@ -105,6 +88,7 @@ ul, a {
   margin-top: 16px;
   padding: 0;
 }
+
 /* Erstat svg’er med PNG-ikoner via pseudo-elementer */
 .sidebar-nav li:nth-child(1) svg { display: none; }
 .sidebar-nav li:nth-child(1)::before {
@@ -113,9 +97,11 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('dashboard.png') no-repeat center center;
+  /* Henter fra public/portfoliooversigt/dashboard.png */
+  background: url('/portfoliooversigt/dashboard.png') no-repeat center center;
   background-size: contain;
 }
+
 .sidebar-nav li:nth-child(2) svg { display: none; }
 .sidebar-nav li:nth-child(2)::before {
   content: "";
@@ -123,9 +109,11 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('accounts.png') no-repeat center center;
+  /* Henter fra public/portfoliooversigt/accounts.png */
+  background: url('/portfoliooversigt/accounts.png') no-repeat center center;
   background-size: contain;
 }
+
 .sidebar-nav li:nth-child(3) svg { display: none; }
 .sidebar-nav li:nth-child(3)::before {
   content: "";
@@ -133,15 +121,16 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('portfolios.png') no-repeat center center;
+  /* Henter fra public/portfoliooversigt/portfoliooversigt.png */
+  background: url('/portfoliooversigt/portfoliooversigt.png') no-repeat center center;
   background-size: contain;
 }
+
 /* Generel styling */
 .sidebar-nav li {
   display: flex;
   align-items: center;
-  padding: 8px 0;
-  padding-left: 16px;
+  padding: 8px 16px;
   font-size: 0.875rem;
   color: var(--text-light);
   cursor: pointer;
@@ -153,7 +142,6 @@ ul, a {
   background: rgba(255,255,255,0.05);
 }
 .sidebar-nav svg {
-  flex-shrink: 0;
   width: 20px;
   height: 20px;
   margin-right: 12px;
@@ -281,11 +269,6 @@ tr + tr {
 td {
   font-size: 0.875rem;
   color: var(--text-light);
-}
-td .ticker {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-dark);
 }
 .value {
   font-weight: 700;
