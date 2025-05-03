@@ -1,47 +1,50 @@
 // routes/portfolioRoutes.js
-
-const express   = require('express');
-const router    = express.Router();
+const express = require('express');
+const router = express.Router();
 const Portfolio = require('../models/portfolio');
 
 console.log('Portfolio route loader kører');
 
-// === VIEW‐ROUTE: Porteføljeoversigt ===
-// This must come *before* any /:portfolioId routes
-router.get('/', async (req, res) => {
+// — Auth-guard inline —
+function requireAuth(req, res, next) {
+  if (req.session && req.session.user) return next();
+  return res.redirect('/?error=login_required');
+}
+
+// *** GÆLDER FOR ALLE UNDERSTÅENDE ROUTES ***
+router.use(requireAuth);
+
+// === VIEW-ROUTE: Porteføljeoversigt ===
+router.get('/', async (req, res, next) => {
   try {
-    const userId     = req.session.user.id;
-    const portfolios = await Portfolio.getAllForUser(userId);
+    const user = req.session.user;
+    const portfolios = await Portfolio.getAllForUser(user.id);
 
-    // Beregn total værdi
-    const totalValue = portfolios.reduce((sum, p) => sum + (p.value||0), 0);
-
-    // Daglig procent ændring (gennemsnit)
+    const totalValue = portfolios.reduce((sum, p) => sum + (p.value || 0), 0);
     const dailyChange = portfolios.length
-      ? portfolios.reduce((sum, p) => sum + (p.change||0), 0) / portfolios.length
+      ? portfolios.reduce((sum, p) => sum + (p.change || 0), 0) / portfolios.length
       : 0;
-
-    // Daglig ændring i DKK
     const dailyDKKChange = portfolios.reduce(
-      (sum, p) => sum + ((p.value||0) * ((p.change||0) / 100)),
+      (sum, p) => sum + ((p.value || 0) * ((p.change || 0) / 100)),
       0
     );
 
-    // RENDER flat file: views/portfolio.ejs
     res.render('portfolio', {
-      userId,
+      user,
+      portfolioId: null,
       portfolios,
       totalValue,
       dailyChange,
       dailyDKKChange
     });
+
   } catch (error) {
     console.error('❌ Fejl ved render af porteføljeoversigt:', error);
-    res.status(500).json({ message: 'Der skete en fejl ved visning af porteføljeoversigt' });
+    next(error);
   }
 });
 
-// === Opret en ny portefølje (API) ===
+// === API: Opret en ny portefølje ===
 router.post('/create', async (req, res) => {
   try {
     const { name, accountId } = req.body;
@@ -59,7 +62,7 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// === Hent alle porteføljer for en given bruger (API) ===
+// === API: Hent alle porteføljer for en bruger ===
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -71,7 +74,7 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// === Hent én portefølje (API) ===
+// === API: Hent ét portefølje-objekt ===
 router.get('/:portfolioId', async (req, res) => {
   try {
     const { portfolioId } = req.params;
@@ -86,7 +89,7 @@ router.get('/:portfolioId', async (req, res) => {
   }
 });
 
-// === Portfolio‐summary (API) ===
+// === API: Portefølje-summary ===
 router.get('/:portfolioId/summary', async (req, res) => {
   try {
     const { portfolioId } = req.params;
@@ -94,11 +97,23 @@ router.get('/:portfolioId/summary', async (req, res) => {
     res.json(summary);
   } catch (err) {
     console.error('❌ Fejl ved GET /portfolios/:portfolioId/summary:', err);
-    res.status(500).json({ message: 'Der skete en fejl ved hentning af porteføljesammendrag' });
+    res.status(500).json({ message: 'Der skete en fejl ved hentning af sammendrag' });
   }
 });
 
-// === Opdater en portefølje (API) ===
+// === API: Portefølje-overview ===
+router.get('/:portfolioId/overview', async (req, res) => {
+  try {
+    const { portfolioId } = req.params;
+    const overview = await Portfolio.getPortfolioOverview(portfolioId);
+    res.json(overview);
+  } catch (err) {
+    console.error('❌ Fejl ved GET /portfolios/:portfolioId/overview:', err);
+    res.status(500).json({ message: 'Der skete en fejl ved hentning af overview' });
+  }
+});
+
+// === API: Opdater en portefølje ===
 router.put('/:portfolioId', async (req, res) => {
   try {
     const { portfolioId } = req.params;
@@ -114,7 +129,7 @@ router.put('/:portfolioId', async (req, res) => {
   }
 });
 
-// === Slet en portefølje (API) ===
+// === API: Slet en portefølje ===
 router.delete('/:portfolioId', async (req, res) => {
   try {
     const { portfolioId } = req.params;

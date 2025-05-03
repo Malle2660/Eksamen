@@ -44,7 +44,7 @@ app.use('/api/dashboard', requireAuth, require('./routes/dashboardRoutes'));
 app.use('/api/growth',    requireAuth, growthRoutes);
 
 // — Page views —
-app.get('/',             (req, res) => res.render('index', { error: req.query.error }));
+app.get('/',            (req, res) => res.render('index', { error: req.query.error }));
 app.use('/', dashboardRoutes);
 
 

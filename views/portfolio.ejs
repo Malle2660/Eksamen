@@ -32,27 +32,17 @@
       <section class="metrics">
         <div class="card">
           <div class="label">Antal porteføljer</div>
-          <div class="value"><%= portfolios.length %></div>
+          <div class="value" id="overviewCount">0</div>
         </div>
         <div class="card">
           <div class="label">Samlet værdi</div>
-          <div class="value">
-            <%= portfolios
-                 .reduce((sum,p) => sum + (p.value||0), 0)
-                 .toLocaleString() %> DKK
-          </div>
+          <div class="value" id="overviewTotalValue">0 DKK</div>
         </div>
         <div class="card">
           <div class="label">Daglig ændring</div>
           <div class="value">
-            <div class="change <%= dailyChange >= 0 ? 'positive' : 'negative' %>">
-              <!-- pil-ikon kan du indsætte her eller via CSS -->
-              <%= (dailyChange >= 0 ? '+' : '') + dailyChange.toFixed(1) %>%
-            </div>
-            <div>
-              <%= (dailyDKKChange >= 0 ? '+' : '') 
-                   + dailyDKKChange.toLocaleString() %> DKK
-            </div>
+            <div class="change positive" id="overviewChangePercent">+0.0%</div>
+            <div id="overviewChangeValue">+0 DKK</div>
           </div>
         </div>
       </section>
@@ -73,19 +63,8 @@
                 <th>Realiseret gevinst</th>
               </tr>
             </thead>
-            <tbody>
-              <% portfolios.forEach(p => { %>
-                <tr>
-                  <td><%= p.name %></td>
-                  <td class="value"><%= p.value.toLocaleString() %> DKK</td>
-                  <td>
-                    <span class="percent <%= p.change >= 0 ? 'positive' : 'negative' %>">
-                      <%= (p.change >= 0 ? '+' : '') + p.change.toFixed(1) %>%
-                    </span>
-                  </td>
-                  <td class="value"><%= p.realizedGain.toLocaleString() %> DKK</td>
-                </tr>
-              <% }) %>
+            <tbody id="portfolioTableBody">
+              <!-- JS fylder rækker her -->
             </tbody>
           </table>
         </div>
@@ -103,11 +82,11 @@
     </main>
   </div>
 
-  <!-- Eksponér bruger‐ID til klienten -->
+  <!-- Eksponér bruger‐ID til klienten via session -->
   <script>
-    window.USER_ID = <%= userId %>;
+    window.USER_ID = <%= JSON.stringify(user.id) %>;
   </script>
-  <!-- Klient‐scriptet til porteføljeoversigt -->
-  <script src="/portfoliooversigt.js"></script>
+  <!-- HUSK: scriptet ligger i public/js/portfolio.js -->
+  <script src="/portfolio.js"></script>
 </body>
 </html>
