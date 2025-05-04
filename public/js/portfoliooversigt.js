@@ -1,120 +1,120 @@
-// public/js/portfolio.js
+document.addEventListener('DOMContentLoaded', () => {
+  const tableBody = document.getElementById('portfolioTableBody');
+  const btnCreate = document.getElementById('createPortfolioBtn');
+  const countEl = document.getElementById('overviewCount');
+  const valueEl = document.getElementById('overviewTotalValue');
+  const percentEl = document.getElementById('overviewChangePercent');
+  const dkkChangeEl = document.getElementById('overviewChangeValue');
 
-const API_BASE = ''; // relative calls
+  const userId = window.USER_ID;
 
-// Vis en besked i .table-header
-function showTableMessage(message, isError = false) {
-  let el = document.querySelector('.table-header .message');
-  if (el) el.remove();
-  el = document.createElement('div');
-  el.className = `message ${isError ? 'error' : 'success'}`;
-  el.textContent = message;
-  document.querySelector('.table-header').appendChild(el);
-}
-
-// Central fetch + JSON parser med credentials
-async function fetchJSON(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    ...options
-  });
-  if (!res.ok) {
-    let err = 'Ukendt fejl';
-    try { const body = await res.json(); if (body.message) err = body.message; }
-    catch {}
-    throw new Error(err);
-  }
-  return res.json();
-}
-
-// Fyld <tbody> med porteføljer
-function populateTable(portfolios) {
-  const tbody = document.querySelector('table tbody');
-  tbody.innerHTML = portfolios.map(p => `
-    <tr>
-      <td>${p.name}</td>
-      <td class="value">${p.value.toLocaleString('da-DK')} DKK</td>
-      <td>
-        <span class="percent ${p.change >= 0 ? 'positive' : 'negative'}">
-          ${p.change.toFixed(1)}%
-        </span>
-      </td>
-      <td class="value">${p.realizedGain.toLocaleString('da-DK')} DKK</td>
-    </tr>
-  `).join('');
-}
-
-// ─── Ny: hent portefølje‑oversigt ────────────────────────────────────────────
-async function loadPortfolioOverview(portfolioId) {
-  try {
-    // Kald endpoint i growthRoutes: /growth/portfolio/:id/overview
-    const data = await fetchJSON(`/growth/portfolio/${portfolioId}/overview`);
-    // Vis oversigt i UI (sørg for at du har disse elementer i din EJS)
-    document.getElementById('overviewTotal').textContent     =
-      `${data.totalExpected.toLocaleString('da-DK')} DKK`;
-    document.getElementById('overviewRealized').textContent  =
-      `${data.totalPurchase.toLocaleString('da-DK')} DKK`;
-    document.getElementById('overviewUnrealized').textContent=
-      `${data.totalUnrealized.toLocaleString('da-DK')} DKK`;
-  } catch (err) {
-    showTableMessage(`Kunne ikke hente portefølje‑oversigt: ${err.message}`, true);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const userId      = window.USER_ID;
-  const portfolioId = window.PORTFOLIO_ID;
-
-  if (!userId) {
-    showTableMessage('Ingen bruger fundet. Log ind igen.', true);
-    return;
-  }
-  if (!portfolioId) {
-    showTableMessage('Manglende portefølje‑ID', true);
-    return;
-  }
-
-  // 0) Hent og vis portefølje‑oversigt
-  await loadPortfolioOverview(portfolioId);
-
-  // 1) Load & render portfolios (din eksisterende kode)
   async function loadPortfolios() {
     try {
-      const portfolios = await fetchJSON(`/portfolios/user/${userId}`);
-      populateTable(portfolios);
-      // Update count‑kort (hvis du bruger et sådan)
-      const countEl = document.querySelector('.metrics .card .value');
-      if (countEl) countEl.textContent = portfolios.length;
-      showTableMessage(''); // fjern eventuelle fejlbeskeder
-    } catch (err) {
-      console.error(err);
-      showTableMessage(`Fejl ved hentning af porteføljer: ${err.message}`, true);
-    }
-  }
-  await loadPortfolios();
+      const res = await fetch(`/portfolios/user/${userId}`);
+      const portfolios = await res.json();
+      tableBody.innerHTML = '';
 
-  // 2) “Opret ny portefølje” knap (samme som før)
-  const createBtn = document.querySelector('.table-header button');
-  if (createBtn) {
-    createBtn.addEventListener('click', async () => {
-      const name      = prompt('Navn på ny portefølje:');
-      const accountId = prompt('Account ID:');
-      if (!name || !accountId) {
-        showTableMessage('Du skal indtaste både navn og account ID.', true);
+      if (portfolios.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="7">Ingen porteføljer endnu</td>`;
+        tableBody.appendChild(row);
+        updateMetrics([]);
         return;
       }
-      try {
-        await fetchJSON('/portfolios/create', {
-          method: 'POST',
-          body: JSON.stringify({ userId, name, accountId })
-        });
-        showTableMessage('Portefølje oprettet!');
-        await loadPortfolios();
-      } catch (err) {
-        console.error(err);
-        showTableMessage(`Fejl ved oprettelse: ${err.message}`, true);
-      }
-    });
+
+      portfolios.forEach(p => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${p.name}</td>
+          <td>${(p.expectedValue || 0).toFixed(2)} DKK</td>
+          <td>${(p.unrealizedGain || 0).toFixed(2)} DKK</td>
+          <td>${(p.realizedGain || 0).toFixed(2)} DKK</td>
+          <td>${(p.unrealizedGain || 0).toFixed(2)} DKK</td>
+          <td>${(p.expectedValue || 0).toFixed(2)} DKK</td>
+          <td>${new Date(p.createdAt).toLocaleDateString('da-DK')}</td>
+        `;
+        row.addEventListener('click', () => buyStockFlow(p.portfolioID));
+        tableBody.appendChild(row);
+      });
+
+      updateMetrics(portfolios);
+    } catch (err) {
+      console.error('🚨 Kunne ikke hente porteføljer:', err);
+      alert('Der opstod en fejl ved indlæsning af porteføljer.');
+    }
   }
+
+  function updateMetrics(portfolios) {
+    const total = portfolios.reduce((sum, p) => sum + (p.expectedValue || 0), 0);
+    const avgChange = portfolios.length
+      ? portfolios.reduce((sum, p) => sum + (p.unrealizedGain || 0), 0) / portfolios.length
+      : 0;
+    const dkkChange = avgChange;
+
+    countEl.textContent = portfolios.length;
+    valueEl.textContent = `${total.toFixed(2)} DKK`;
+    percentEl.textContent = `${avgChange.toFixed(2)}%`;
+    dkkChangeEl.textContent = `${dkkChange.toFixed(2)} DKK`;
+  }
+
+  async function buyStockFlow(portfolioId) {
+    const symbol = prompt('Indtast aktiesymbol (f.eks. AAPL):');
+    const amount = prompt('Antal aktier:');
+    const boughtAt = prompt('Pris pr. aktie (DKK):');
+
+    if (!symbol || !amount || !boughtAt) {
+      alert('Alle felter skal udfyldes');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/portfolios/${portfolioId}/add-stock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol, amount, boughtAt })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      alert(data.message || '✅ Aktie tilføjet!');
+      loadPortfolios();
+    } catch (err) {
+      console.error('🚨 Fejl ved tilføjelse af aktie:', err);
+      alert('Kunne ikke tilføje aktien: ' + err.message);
+    }
+  }
+
+  btnCreate.addEventListener('click', async () => {
+    const name = prompt('Navn på portefølje:');
+    const accountId = prompt('Konto-ID (fx 1, 2, 3):');
+
+    if (!name || !accountId) {
+      alert('Du skal udfylde både navn og konto-ID.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/portfolios/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, accountId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || 'Noget gik galt');
+        return;
+      }
+
+      alert('✅ Portefølje oprettet');
+      loadPortfolios();
+    } catch (err) {
+      console.error('🚨 Fejl ved oprettelse:', err);
+      alert('Kunne ikke oprette porteføljen');
+    }
+  });
+
+  loadPortfolios();
 });

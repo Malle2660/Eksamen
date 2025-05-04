@@ -1,4 +1,3 @@
-<!-- views/Portføljeoversigt/portfolio.ejs -->
 <!DOCTYPE html>
 <html lang="da">
 <head>
@@ -6,48 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PortfolioTracker – Porteføljeoversigt</title>
 
-  <!-- Inter font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
-    rel="stylesheet"
-  />
-
-  <!-- Dit eget stylesheet -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/portfolio-oversigt.css" />
 </head>
 <body>
   <div class="app">
-    <!-- SIDEBAR (samme markup som i dashboard) -->
     <aside class="sidebar">
-      <!-- … dit sidebar‐HTML … -->
+      <div class="sidebar-header">
+        <div class="logo-text">
+          <h1>PortfolioTracker</h1>
+          <p>Invest smarter</p>
+        </div>
+      </div>
     </aside>
 
-    <!-- HOVEDINDHOLD -->
     <main class="main-content">
       <header class="page-header">
         <h2>Porteføljeoversigt</h2>
       </header>
 
-      <!-- METRIKKORT -->
       <section class="metrics">
         <div class="card">
           <div class="label">Antal porteføljer</div>
-          <div class="value" id="overviewCount">0</div>
+          <div class="value" id="overviewCount"><%= portfolios.length %></div>
         </div>
         <div class="card">
           <div class="label">Samlet værdi</div>
-          <div class="value" id="overviewTotalValue">0 DKK</div>
+          <div class="value" id="overviewTotalValue"><%= totalValue.toFixed(2) %> DKK</div>
         </div>
         <div class="card">
           <div class="label">Daglig ændring</div>
           <div class="value">
-            <div class="change positive" id="overviewChangePercent">+0.0%</div>
-            <div id="overviewChangeValue">+0 DKK</div>
+            <div class="change positive" id="overviewChangePercent"><%= dailyChange.toFixed(2) %>%</div>
+            <div id="overviewChangeValue"><%= dailyDKKChange.toFixed(2) %> DKK</div>
           </div>
         </div>
       </section>
 
-      <!-- PORTFØLJETABEL -->
       <section class="tables">
         <div class="table-container">
           <div class="table-header">
@@ -61,15 +55,17 @@
                 <th>Værdi</th>
                 <th>24h Change</th>
                 <th>Realiseret gevinst</th>
+                <th>Urealiseret gevinst</th>
+                <th>Forventet værdi</th>
+                <th>Oprettet</th>
               </tr>
             </thead>
             <tbody id="portfolioTableBody">
-              <!-- JS fylder rækker her -->
+              <!-- Fyldes af JS -->
             </tbody>
           </table>
         </div>
 
-        <!-- GRAF‐SEKTION -->
         <div class="table-container">
           <div class="table-header">
             <h4>Porteføljegraf</h4>
@@ -82,11 +78,9 @@
     </main>
   </div>
 
-  <!-- Eksponér bruger‐ID til klienten via session -->
   <script>
     window.USER_ID = <%= JSON.stringify(user.id) %>;
   </script>
-  <!-- HUSK: scriptet ligger i public/ portofoliooversigt.js -->
   <script src="/js/portfoliooversigt.js"></script>
 </body>
 </html>

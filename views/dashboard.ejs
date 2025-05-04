@@ -2,79 +2,63 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PortfolioTracker – Dashboard</title>
-  <!-- Inter font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap"
-    rel="stylesheet"
-  >
-  <!-- Dit stylesheet fra public-mappen -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
   <link rel="stylesheet" href="/styledashboard.css">
 </head>
 <body>
   <div class="app">
-    <!-- SIDEBAR -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <img src="/logo.png" alt="Logo" class="logo-icon">
+        <img src="/logo.png" alt="Logo" class="logo-icon" />
         <div class="logo-text">
           <h1>PORTFOLIOTRACKER</h1>
-          <p>ORGANIZING YOUR FINANCES</p>
+          <p>Organizing your finances</p>
         </div>
-        <button class="collapse-btn" aria-label="Skjul sidebar">❮</button>
+        <button class="collapse-btn">⮞</button>
       </div>
+
       <nav class="sidebar-nav">
         <ul>
-          <li class="active"><span>Dashboard</span></li>
-          <li><a href="/accounts"><span>Accounts</span></a></li>
-          <li><a href="/portfolios"><span>Portfolios</span></a></li>
+          <li class="active">Dashboard</li>
+          <li><a href="/accounts">Accounts</a></li>
+          <li><a href="/portfolios">Portfolios</a></li>
         </ul>
       </nav>
     </aside>
 
-    <!-- HOVEDINDHOLD -->
+    <!-- Main content -->
     <main class="main-content">
-      <!-- Sideoverskrift -->
       <header class="page-header">
         <h2>Dashboard</h2>
       </header>
 
-      <!-- METRIKKORT -->
       <section class="metrics">
         <div class="card">
           <div class="label">Total værdi</div>
-          <div class="value">
-            <div id="totalValue">Indlæser…</div>
-            <div class="change positive" id="totalChange">–</div>
-          </div>
+          <div class="value"><%= overview.totalExpected.toFixed(2) %> DKK</div>
         </div>
         <div class="card">
           <div class="label">Realiseret gevinst</div>
-          <div class="value">
-            <div id="realizedProfit">Indlæser…</div>
-            <div class="change positive" id="realizedChange">–</div>
-          </div>
+          <div class="value">0,00 DKK</div> <!-- Placeholder -->
         </div>
         <div class="card">
           <div class="label">Urealiseret gevinst</div>
-          <div class="value">
-            <div id="unrealizedProfit">Indlæser…</div>
-            <div class="change negative" id="unrealizedChange">–</div>
-          </div>
+          <div class="value"><%= overview.totalUnrealized.toFixed(2) %> DKK</div>
         </div>
       </section>
 
-      <!-- GRAF‐SEKTION -->
       <section class="chart-section">
         <div class="chart-header">
           <h3>Samlet værdi</h3>
           <span>Year to date</span>
         </div>
-        <div class="chart-placeholder">[Chart Placeholder]</div>
+        <div class="chart-placeholder">
+          [Chart Placeholder]
+        </div>
       </section>
 
-      <!-- TABELLER -->
       <section class="tables">
         <div class="table-container">
           <div class="table-header">
@@ -83,11 +67,19 @@
           </div>
           <table>
             <thead>
-              <tr><th>Name</th><th>Value</th></tr>
+              <tr><th>NAME</th><th>VALUE</th></tr>
             </thead>
-            <tbody id="tableByValue"></tbody>
+            <tbody id="tableByValue">
+              <% topValue.forEach(item => { %>
+                <tr>
+                  <td><%= item.symbol %></td>
+                  <td><%= item.value.toFixed(2) %> DKK</td>
+                </tr>
+              <% }) %>
+            </tbody>
           </table>
         </div>
+
         <div class="table-container">
           <div class="table-header">
             <h4>Top 5 efter profit</h4>
@@ -95,22 +87,20 @@
           </div>
           <table>
             <thead>
-              <tr><th>Name</th><th>Profit</th></tr>
+              <tr><th>NAME</th><th>PROFIT</th></tr>
             </thead>
-            <tbody id="tableByProfit"></tbody>
+            <tbody id="tableByProfit">
+              <% topProfit.forEach(item => { %>
+                <tr>
+                  <td><%= item.symbol %></td>
+                  <td><%= item.profit.toFixed(2) %> DKK</td>
+                </tr>
+              <% }) %>
+            </tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
-
-  <!-- Eksponér USER_ID til klient-scriptet -->
-  <script>
-    window.USER_ID = <%= JSON.stringify(user.id) %>;
-  </script>
-  <!-- nederst i views/dashboard.ejs -->
-  <script src="/js/client-dashboard.js"></script>
-
-
 </body>
 </html>
