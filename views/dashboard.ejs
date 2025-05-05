@@ -37,15 +37,15 @@
       <section class="metrics">
         <div class="card">
           <div class="label">Total værdi</div>
-          <div class="value"><%= overview.totalExpected.toFixed(2) %> DKK</div>
+          <div class="value" id="totalValue"><%= (overview.totalExpected || 0).toFixed(2) %> DKK</div>
         </div>
         <div class="card">
           <div class="label">Realiseret gevinst</div>
-          <div class="value">0,00 DKK</div> <!-- Placeholder -->
+          <div class="value" id="realizedProfit">0,00 DKK</div>
         </div>
         <div class="card">
           <div class="label">Urealiseret gevinst</div>
-          <div class="value"><%= overview.totalUnrealized.toFixed(2) %> DKK</div>
+          <div class="value" id="unrealizedProfit"><%= (overview.totalUnrealized || 0).toFixed(2) %> DKK</div>
         </div>
       </section>
 
@@ -102,5 +102,6 @@
       </section>
     </main>
   </div>
+  <script src="/js/client-dashboard.js"></script>
 </body>
 </html>
