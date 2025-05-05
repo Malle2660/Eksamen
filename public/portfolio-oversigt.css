@@ -110,7 +110,7 @@ ul, a {
   height: 24px;
   margin-right: 8px;
   /* Henter fra public/portfoliooversigt/accounts.png */
-  background: url('/portfolio-oversigt/accounts.png') no-repeat center center;
+  background: url('/portfoliooversigt.png/accounts.png') no-repeat center center;
   background-size: contain;
 }
 
@@ -122,7 +122,7 @@ ul, a {
   height: 24px;
   margin-right: 8px;
   /* Henter fra public/portfoliooversigt/portfoliooversigt.png */
-  background: url('/portfolio-oversigt/portfoliooversigt.png') no-repeat center center;
+  background: url('/portfoliooversigt.png/portfoliooversigt.png') no-repeat center center;
   background-size: contain;
 }
 

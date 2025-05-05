@@ -37,7 +37,7 @@
       <section class="metrics">
         <div class="card">
           <div class="label">Total værdi</div>
-          <div class="value" id="totalValue"><%= (overview.totalExpected || 0).toFixed(2) %> DKK</div>
+          <div class="value" id="totalValue"><%= (overview?.totalExpected || 0).toFixed(2) %> DKK</div>
         </div>
         <div class="card">
           <div class="label">Realiseret gevinst</div>
@@ -45,7 +45,7 @@
         </div>
         <div class="card">
           <div class="label">Urealiseret gevinst</div>
-          <div class="value" id="unrealizedProfit"><%= (overview.totalUnrealized || 0).toFixed(2) %> DKK</div>
+          <div class="value" id="unrealizedProfit"><%= (overview?.totalUnrealized || 0).toFixed(2) %> DKK</div>
         </div>
       </section>
 
@@ -66,11 +66,9 @@
             <button>Se alle</button>
           </div>
           <table>
-            <thead>
-              <tr><th>NAME</th><th>VALUE</th></tr>
-            </thead>
+            <thead><tr><th>NAME</th><th>VALUE</th></tr></thead>
             <tbody id="tableByValue">
-              <% topValue.forEach(item => { %>
+              <% (topValue || []).forEach(item => { %>
                 <tr>
                   <td><%= item.symbol %></td>
                   <td><%= item.value.toFixed(2) %> DKK</td>
@@ -86,11 +84,9 @@
             <button>Se alle</button>
           </div>
           <table>
-            <thead>
-              <tr><th>NAME</th><th>PROFIT</th></tr>
-            </thead>
+            <thead><tr><th>NAME</th><th>PROFIT</th></tr></thead>
             <tbody id="tableByProfit">
-              <% topProfit.forEach(item => { %>
+              <% (topProfit || []).forEach(item => { %>
                 <tr>
                   <td><%= item.symbol %></td>
                   <td><%= item.profit.toFixed(2) %> DKK</td>
@@ -102,6 +98,7 @@
       </section>
     </main>
   </div>
+
   <script src="/js/client-dashboard.js"></script>
 </body>
 </html>

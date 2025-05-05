@@ -42,10 +42,19 @@
         </div>
       </section>
 
-      <section class="tables">
+      <section class="charts-tables">
+        <div class="chart-container">
+          <div class="chart-header">
+            <h4>Fordeling af værdi i porteføljer</h4>
+          </div>
+          <canvas id="portfolioPieChart" width="320" height="320"></canvas>
+          <ul id="portfolioPieLegend" class="pie-legend"></ul>
+        </div>
         <div class="table-container">
           <div class="table-header">
             <h4>Alle porteføljer</h4>
+            <input type="text" id="newPortfolioName" placeholder="Navn på portefølje" style="margin-right:8px;">
+            <input type="number" id="newPortfolioAccount" placeholder="Konto-ID" style="width:90px;margin-right:8px;">
             <button id="createPortfolioBtn">Opret ny</button>
           </div>
           <table>
@@ -65,22 +74,88 @@
             </tbody>
           </table>
         </div>
-
-        <div class="table-container">
-          <div class="table-header">
-            <h4>Porteføljegraf</h4>
-          </div>
-          <div class="chart-placeholder" style="height: 320px;">
-            [Chart Placeholder]
-          </div>
-        </div>
       </section>
     </main>
   </div>
 
+  <div id="notification" class="notification" style="display:none"></div>
+
+  <div id="addStockForm" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); background:#232323; color:#fff; padding:2em; border-radius:8px; z-index:10000;">
+    <h3>Tilføj aktie</h3>
+    <input type="text" id="stockSymbol" placeholder="Symbol (f.eks. AAPL)" style="margin-bottom:8px;display:block;">
+    <input type="number" id="stockAmount" placeholder="Antal" style="margin-bottom:8px;display:block;">
+    <input type="number" id="stockPrice" placeholder="Købspris" style="margin-bottom:8px;display:block;">
+    <button id="submitStockBtn">Tilføj</button>
+    <button id="cancelStockBtn" style="margin-left:8px;">Annuller</button>
+  </div>
+
   <script>
     window.USER_ID = <%= JSON.stringify(user.id) %>;
+    console.log('Portfolios:', portfolios);
+
+    const cancelBtn = document.getElementById('cancelStockBtn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        document.getElementById('addStockForm').style.display = 'none';
+      });
+    }
+
+    const submitBtn = document.getElementById('submitStockBtn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', async () => {
+        // ... din kode ...
+      });
+    }
+
+    async function loadPortfolios() {
+      try {
+        const res = await fetch(`/portfolios/user`);
+        const portfolios = await res.json();
+        tableBody.innerHTML = '';
+
+        if (!Array.isArray(portfolios) || portfolios.length === 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td colspan="7">Ingen porteføljer endnu</td>`;
+          tableBody.appendChild(row);
+          updateMetrics([]);
+          updatePieChart([]);
+          return;
+        }
+
+        portfolios.forEach(p => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${p.name || '-'}</td>
+            <td>${p.expectedValue !== undefined ? p.expectedValue.toFixed(2) + ' DKK' : '-'}</td>
+            <td class="${(p.dailyChange || 0) >= 0 ? 'percent positive' : 'percent negative'}">
+              ${(p.dailyChange || 0).toFixed(2)}%
+            </td>
+            <td>${(p.realizedGain || 0).toFixed(2)} DKK</td>
+            <td>${(p.unrealizedGain || 0).toFixed(2)} DKK</td>
+            <td>${(p.expectedValue || 0).toFixed(2)} DKK</td>
+            <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString('da-DK') : '-'}</td>
+            <td><button class="add-stock-btn" data-id="${p.portfolioID}">Tilføj aktie</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        // FLYT EVENT-LISTENERS HERIND!
+        document.querySelectorAll('.add-stock-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const portfolioId = btn.getAttribute('data-id');
+            showAddStockForm(portfolioId);
+          });
+        });
+
+        updateMetrics(portfolios);
+        updatePieChart(portfolios);
+      } catch (err) {
+        console.error('🚨 Kunne ikke hente porteføljer:', err);
+        showNotification('Der opstod en fejl ved indlæsning af porteføljer.', 'error');
+      }
+    }
   </script>
   <script src="/js/portfoliooversigt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
