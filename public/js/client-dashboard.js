@@ -17,16 +17,20 @@ async function fetchJSON(path) {
 }
 
 function updateMetrics({ totalValue, realized, unrealized }) {
-  document.getElementById('totalValue').textContent =
-    `${totalValue.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
-  document.getElementById('realizedProfit').textContent =
-    `${realized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
-  document.getElementById('unrealizedProfit').textContent =
-    `${unrealized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
+  const totalValueEl = document.getElementById('totalValue');
+  const realizedProfitEl = document.getElementById('realizedProfit');
+  const unrealizedProfitEl = document.getElementById('unrealizedProfit');
+  if (totalValueEl)
+    totalValueEl.textContent = `${totalValue.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
+  if (realizedProfitEl)
+    realizedProfitEl.textContent = `${realized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
+  if (unrealizedProfitEl)
+    unrealizedProfitEl.textContent = `${unrealized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
 }
 
 function populateTable(tbodyId, data, key, limit = 5) {
   const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
   const showData = data.slice(0, limit);
   tbody.innerHTML = showData.map(item => `
     <tr>
@@ -50,13 +54,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     populateTable('tableByProfit', topProfit, 'profit');
 
     // "Se alle" knapper – viser hele listen
-    document.querySelector('.table-container:nth-of-type(1) button').addEventListener('click', () => {
-      populateTable('tableByValue', topValue, 'value', topValue.length);
-    });
+    const valueBtn = document.querySelector('.table-container:nth-of-type(1) button');
+    if (valueBtn) {
+      valueBtn.addEventListener('click', () => {
+        populateTable('tableByValue', topValue, 'value', topValue.length);
+      });
+    }
 
-    document.querySelector('.table-container:nth-of-type(2) button').addEventListener('click', () => {
-      populateTable('tableByProfit', topProfit, 'profit', topProfit.length);
-    });
+    const profitBtn = document.querySelector('.table-container:nth-of-type(2) button');
+    if (profitBtn) {
+      profitBtn.addEventListener('click', () => {
+        populateTable('tableByProfit', topProfit, 'profit', topProfit.length);
+      });
+    }
 
   } catch (err) {
     handleError(`❌ Fejl ved indlæsning af dashboard: ${err.message}`);

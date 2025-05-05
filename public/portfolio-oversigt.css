@@ -9,8 +9,8 @@
   --bg-container:   #1B1B19;
   --text-light:     #C3C3C1;
   --text-dark:      #84837E;
-  --color-positive: #46634C;
-  --color-negative: #BD3A3A;
+  --color-positive: #4caf50;
+  --color-negative: #e15759;
   --sidebar-bg:     #513F95;
   --button-bg:      #242424;
   --button-text:    #fff;
@@ -89,7 +89,7 @@ ul, a {
   padding: 0;
 }
 
-/* Erstat svg’er med PNG-ikoner via pseudo-elementer */
+/* Erstat svg'er med PNG-ikoner via pseudo-elementer */
 .sidebar-nav li:nth-child(1) svg { display: none; }
 .sidebar-nav li:nth-child(1)::before {
   content: "";
@@ -98,7 +98,7 @@ ul, a {
   height: 24px;
   margin-right: 8px;
   /* Henter fra public/portfoliooversigt/dashboard.png */
-  background: url('/portfoliooversigt/dashboard.png') no-repeat center center;
+  background: url('/portfoliooversigt.png/dashboard.png') no-repeat center center;
   background-size: contain;
 }
 
@@ -110,7 +110,7 @@ ul, a {
   height: 24px;
   margin-right: 8px;
   /* Henter fra public/portfoliooversigt/accounts.png */
-  background: url('/portfoliooversigt/accounts.png') no-repeat center center;
+  background: url('/portfolio-oversigt/accounts.png') no-repeat center center;
   background-size: contain;
 }
 
@@ -122,7 +122,7 @@ ul, a {
   height: 24px;
   margin-right: 8px;
   /* Henter fra public/portfoliooversigt/portfoliooversigt.png */
-  background: url('/portfoliooversigt/portfoliooversigt.png') no-repeat center center;
+  background: url('/portfolio-oversigt/portfoliooversigt.png') no-repeat center center;
   background-size: contain;
 }
 
@@ -136,8 +136,8 @@ ul, a {
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
-.sidebar-nav li:hover,
-.sidebar-nav li.active {
+.sidebar-nav li.active,
+.sidebar-nav li:hover {
   color: #fff;
   background: rgba(255,255,255,0.05);
 }
@@ -165,6 +165,7 @@ ul, a {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  align-items: flex-end;
 }
 .card {
   background: var(--bg-container);
@@ -183,14 +184,21 @@ ul, a {
   display: flex;
   justify-content: space-between;
 }
-.change {
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
+.add-btn {
+  background: var(--sidebar-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: 2rem;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.change.positive { color: var(--color-positive); }
-.change.negative { color: var(--color-negative); }
-.change svg { margin-right: 0.25rem; width: 12px; height: 12px; }
+.add-btn:hover {
+  background: #6a4fcf;
+}
 
 /* ----- GRAF-SEKTION ----- */
 .chart-section {
@@ -275,3 +283,29 @@ td {
 }
 .percent.positive { color: var(--color-positive); }
 .percent.negative { color: var(--color-negative); }
+
+.charts-tables {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+
+.chart-container {
+  background: var(--bg-container);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pie-legend {
+  margin-top: 1.5rem;
+  padding-left: 0;
+  list-style: none;
+  font-size: 0.95em;
+}
+.pie-legend li {
+  margin-bottom: 0.5em;
+  display: flex;
+  align-items: center;
+}
