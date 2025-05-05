@@ -43,7 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
       portfolios.forEach(p => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${p.name || '-'}</td>
+          <td>
+            <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}">
+              ${p.name || '-'}
+            </a>
+          </td>
           <td>${p.expectedValue !== undefined ? p.expectedValue.toFixed(2) + ' DKK' : '-'}</td>
           <td class="${(p.dailyChange || 0) >= 0 ? 'percent positive' : 'percent negative'}">
             ${(p.dailyChange || 0).toFixed(2)}%
@@ -205,4 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   loadPortfolios();
+});
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('portfolio-link')) {
+    e.preventDefault();
+    const portfolioId = e.target.dataset.id;
+    window.location.href = `/portfolios/${portfolioId}`;
+  }
 });

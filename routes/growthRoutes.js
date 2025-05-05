@@ -6,7 +6,7 @@ const { batchQuotes }   = require('../services/alphaVantage');
 const { latestRates }   = require('../services/ExchangeRate');
 
 // Hent holdings fra din model
-router.get('/portfolio/:portfolioId/holdings', async (req, res) => {
+router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
   try {
     const holdings = await Portfolio.getHoldingsForPortfolio(req.params.portfolioId);
     res.json(holdings);
@@ -17,7 +17,7 @@ router.get('/portfolio/:portfolioId/holdings', async (req, res) => {
 });
 
 // Hent aktiekurser fra Alpha Vantage-servicen
-router.get('/quotes', async (req, res) => {
+router.get('/portfolios/:portfolioId/quotes', async (req, res) => {
   const symbols = req.query.symbols;
   if (!symbols) return res.status(400).json({ message: 'symbols mangler' });
   try {
@@ -30,7 +30,7 @@ router.get('/quotes', async (req, res) => {
 });
 
 // Hent valutakurser
-router.get('/rates', async (req, res) => {
+router.get('/portfolios/:portfolioId/rates', async (req, res) => {
   const base = req.query.base || 'USD';
   try {
     const data = await latestRates(base);
@@ -39,6 +39,12 @@ router.get('/rates', async (req, res) => {
     console.error(err);
     res.status(500).json({ message: 'Kunne ikke hente valutakurser' });
   }
+});
+
+// Render portefølje-siden
+router.get('/portfolios/:portfolioId', async (req, res) => {
+  const portfolioId = req.params.portfolioId;
+  res.render('growthTech', { portfolioId });
 });
 
 module.exports = router;
