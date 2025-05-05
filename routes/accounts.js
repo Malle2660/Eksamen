@@ -19,11 +19,11 @@ router.get('/', async (req, res) => {
 // === Opret konto ===
 router.post('/create', async (req, res) => {
   try {
-    const { userId, currency, bank } = req.body;
-    if (!userId || !currency || !bank) {
+    const { userId, name, currency, bank } = req.body;
+    if (!userId || !name || !currency || !bank) {
       return res.status(400).json({ message: 'Alle felter skal udfyldes' });
     }
-    const account = await accountsModel.createAccount(userId, currency, bank);
+    const account = await accountsModel.createAccount(userId, name, currency, bank);
     res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
   } catch (error) {
     res.status(500).json({ message: 'Fejl ved oprettelse af konto', error: error.message });

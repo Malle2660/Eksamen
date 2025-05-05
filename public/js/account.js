@@ -57,30 +57,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     // Opret konto-knap
-    newBtn.addEventListener('click', async () => {
-      const currency = prompt('Indtast valuta (f.eks. DKK):');
-      if (!currency) return;
-      const bank = prompt('Indtast banknavn:');
-      if (!bank) return;
+    if (newBtn) {
+      newBtn.addEventListener('click', async () => {
+        const name = prompt('Indtast kontonavn:');
+        if (!name) return;
+        const currency = prompt('Indtast valuta (f.eks. DKK):');
+        if (!currency) return;
+        const bank = prompt('Indtast banknavn:');
+        if (!bank) return;
   
-      try {
-        // TODO: udskift 1 med rigtig userId fra session
-        const res = await fetch('/accounts/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: 1, currency, bank })
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || res.statusText);
+        try {
+          // TODO: udskift 1 med rigtig userId fra session
+          const res = await fetch('/accounts/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: 1, name, currency, bank })
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || res.statusText);
+          }
+          alert('Konto oprettet!');
+          loadAccounts();
+        } catch (err) {
+          alert('Fejl: ' + err.message);
+          console.error(err);
         }
-        alert('Konto oprettet!');
-        loadAccounts();
-      } catch (err) {
-        alert('Fejl: ' + err.message);
-        console.error(err);
-      }
-    });
+      });
+    } else {
+      console.error('Knap med id="new-account-btn" blev ikke fundet i DOM\'en!');
+    }
   
     // Initial indlæsning
     loadAccounts();
