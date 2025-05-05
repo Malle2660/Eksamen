@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('newPortfolioName');
   const accountInput = document.getElementById('newPortfolioAccount');
   const countEl = document.getElementById('overviewCount');
-  const valueEl = document.getElementById('overviewTotalValue');
+  const valueEl = document.getElementById('totalValue');
   const percentEl = document.getElementById('overviewChangePercent');
   const dkkChangeEl = document.getElementById('overviewChangeValue');
   const pieChartEl = document.getElementById('portfolioPieChart');
@@ -26,19 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPortfolioId = null;
 
   async function loadPortfolios() {
-    try {
-      const res = await fetch(`/portfolios/user`);
-      const portfolios = await res.json();
-      tableBody.innerHTML = '';
+    const res = await fetch('/portfolios/user');
+    const portfolios = await res.json();
+    console.log(portfolios);
 
+    try {
       if (!Array.isArray(portfolios) || portfolios.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="7">Ingen porteføljer endnu</td>`;
-        tableBody.appendChild(row);
-        updateMetrics([]);
-        updatePieChart([]);
+        if (tableBody) {
+          tableBody.innerHTML = `<tr><td colspan="8">Ingen porteføljer endnu</td></tr>`;
+        }
+        if (countEl) countEl.textContent = '0';
+        if (valueEl) valueEl.textContent = '0.00 DKK';
+        if (percentEl) percentEl.textContent = '0.00%';
+        if (dkkChangeEl) dkkChangeEl.textContent = '0.00 DKK';
         return;
       }
+
+      tableBody.innerHTML = '';
 
       portfolios.forEach(p => {
         const row = document.createElement('tr');
@@ -56,23 +60,27 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${(p.unrealizedGain || 0).toFixed(2)} DKK</td>
           <td>${(p.expectedValue || 0).toFixed(2)} DKK</td>
           <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString('da-DK') : '-'}</td>
-          <td><button class="add-stock-btn" data-id="${p.portfolioID}">Tilføj aktie</button></td>
+          <td><button class="tilfoj-aktie-btn" data-id="${p.portfolioID}">Tilføj aktie</button></td>
         `;
         tableBody.appendChild(row);
       });
 
-      updateMetrics(portfolios);
-      updatePieChart(portfolios);
-
-      document.querySelectorAll('.add-stock-btn').forEach(btn => {
+      document.querySelectorAll('.tilfoj-aktie-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const portfolioId = btn.getAttribute('data-id');
           showAddStockForm(portfolioId);
         });
       });
+
+      updateMetrics(portfolios);
+      updatePieChart(portfolios);
     } catch (err) {
-      console.error('🚨 Kunne ikke hente porteføljer:', err);
+      console.error('Kunne ikke hente porteføljer:', err);
       showNotification('Der opstod en fejl ved indlæsning af porteføljer.', 'error');
+      if (countEl) countEl.textContent = 'Fejl';
+      if (valueEl) valueEl.textContent = 'Fejl';
+      if (percentEl) percentEl.textContent = 'Fejl';
+      if (dkkChangeEl) dkkChangeEl.textContent = 'Fejl';
     }
   }
 
@@ -85,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ? portfolios.reduce((sum, p) => sum + (p.unrealizedGain || 0), 0)
       : 0;
 
-    countEl.textContent = portfolios.length;
+    if (countEl) countEl.textContent = portfolios.length;
     valueEl.textContent = `${total.toFixed(2)} DKK`;
     percentEl.textContent = `${avgChange.toFixed(2)}%`;
     dkkChangeEl.textContent = `${dkkChange.toFixed(2)} DKK`;
@@ -166,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showAddStockForm(portfolioId) {
     currentPortfolioId = portfolioId;
-    document.getElementById('addStockForm').style.display = 'block';
+    document.getElementById('addStockForm').style.display = 'flex';
   }
 
   document.getElementById('cancelStockBtn').addEventListener('click', () => {
@@ -184,6 +192,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      // 1. Hent aktiekurs fra din Alpha Vantage API
+      const stockRes = await fetch(`/api/alpha-vantage/${symbol}`);
+      if (!stockRes.ok) throw new Error('Kunne ikke hente aktiekurs');
+      const stockData = await stockRes.json();
+
+      // 2. Hent valutakurs fra din Exchange Rate API (fx DKK)
+      const currency = 'DKK'; // eller lad brugeren vælge
+      const rateRes = await fetch(`/api/exchange-rate/${currency}`);
+      if (!rateRes.ok) throw new Error('Kunne ikke hente valutakurs');
+      const rateData = await rateRes.json();
+
+      // 3. Brug dataene (fx vis dem, eller brug dem til at beregne noget)
+      alert(
+        `Aktuel kurs for ${symbol}: ${stockData.price || stockData.c || 'ukendt'}\n` +
+        `Valutakurs (${currency}): ${rateData.rate || rateData[currency] || 'ukendt'}`
+      );
+
+      // 4. Tilføj aktien til porteføljen (POST til din egen backend)
       const res = await fetch(`/portfolios/${currentPortfolioId}/add-stock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -198,13 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       showNotification('✅ Aktie tilføjet!', 'success');
       document.getElementById('addStockForm').style.display = 'none';
-      // Ryd felter
       document.getElementById('stockSymbol').value = '';
       document.getElementById('stockAmount').value = '';
       document.getElementById('stockPrice').value = '';
       loadPortfolios();
     } catch (err) {
-      showNotification('Kunne ikke tilføje aktien', 'error');
+      showNotification('Kunne ikke tilføje aktien: ' + err.message, 'error');
     }
   });
 

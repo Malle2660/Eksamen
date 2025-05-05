@@ -51,27 +51,45 @@ function populateTable(tbodyId, data, key, limit = 5) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Hent porteføljer fra backend
+  let portfolios = [];
   try {
-    const metrics = await fetchJSON('/metrics');
-    updateMetrics(metrics);
-
-    const [topValue, topProfit] = await Promise.all([
-      fetchJSON('/top/value'),
-      fetchJSON('/top/profit')
-    ]);
-
-    populateTable('tableByValue', topValue, 'value');
-    populateTable('tableByProfit', topProfit, 'profit');
-
-    document.querySelector('.table-container:nth-of-type(1) button')?.addEventListener('click', () => {
-      populateTable('tableByValue', topValue, 'value', topValue.length);
-    });
-
-    document.querySelector('.table-container:nth-of-type(2) button')?.addEventListener('click', () => {
-      populateTable('tableByProfit', topProfit, 'profit', topProfit.length);
-    });
-
+    const res = await fetch('/portfolios/user');
+    portfolios = await res.json();
   } catch (err) {
-    handleError(`❌ Fejl ved indlæsning af dashboard: ${err.message}`);
+    document.getElementById('totalValue').textContent = 'Fejl!';
+    return;
   }
+
+  // Beregn total værdi, ændringer osv. ud fra API-data
+  const totalValue = portfolios.reduce((sum, p) => sum + (p.expectedValue || 0), 0);
+  const avgChange = portfolios.length
+    ? portfolios.reduce((sum, p) => sum + (p.dailyChange || 0), 0) / portfolios.length
+    : 0;
+
+  // Opdater DOM
+  document.getElementById('totalValue').textContent = totalValue.toLocaleString('da-DK') + ' DKK';
+  document.getElementById('overviewChangePercent').textContent = avgChange.toFixed(2) + '%';
+
+  // ...opdater evt. flere felter og pie chart...
+
+  const tableBody = document.getElementById('portfolioTableBody');
+  tableBody.innerHTML = '';
+  portfolios.forEach(p => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>
+        <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}">
+          ${p.name || '-'}
+        </a>
+      </td>
+      <td>${p.bankAccount || '-'}</td>
+      <td class="${(p.dailyChange || 0) >= 0 ? 'positive' : 'negative'}">
+        ${(p.dailyChange || 0).toFixed(2)}%
+      </td>
+      <td>${p.lastTrade ? new Date(p.lastTrade).toLocaleString('da-DK') : '-'}</td>
+      <td>${(p.expectedValue || 0).toLocaleString('da-DK')} DKK</td>
+    `;
+    tableBody.appendChild(row);
+  });
 });
