@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>PortfolioTracker – Accounts</title>
-  <!-- Inter + Roboto Slab -->
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap">
-  <link rel="stylesheet" href="accounts.css">
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap"/>
+  <!-- Absolut sti så Express statisk server rammer public/accounts.css -->
+  <link rel="stylesheet" href="/accounts.css"/>
 </head>
 <body>
   <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <img src="accounts-logo.png" alt="PortfolioTracker Logo" class="logo-icon">
+        <img src="/accounts-logo.png" alt="Logo" class="logo-icon"/>
         <div class="logo-text">
           <h1>PORTFOLIOTRACKER</h1>
           <p>ORGANIZING YOUR FINANCES</p>
@@ -23,21 +23,19 @@
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li><span>Dashboard</span></li>
-          <li class="active"><span>Accounts</span></li>
-          <li><span>Portfolios</span></li>
+          <li><a href="/">Dashboard</a></li>
+          <li class="active"><a href="/accounts">Accounts</a></li>
+          <li><a href="/portfolios">Portfolios</a></li>
         </ul>
       </nav>
     </aside>
 
     <!-- HOVEDINDHOLD -->
     <main class="main-content">
-      <!-- Sideoverskrift -->
       <header class="page-header">
         <h2>Mine Konti</h2>
       </header>
 
-      <!-- METRIKKORT for Accounts -->
       <section class="metrics">
         <div class="card">
           <div class="label">Antal Konti</div>
@@ -55,7 +53,6 @@
         </div>
       </section>
 
-      <!-- Kontotabel -->
       <section class="tables">
         <div class="table-container" style="grid-column: span 2;">
           <div class="table-header">
@@ -65,64 +62,18 @@
           <table>
             <thead>
               <tr>
-                <th>Konto ID</th>
-                <th>Navn</th>
-                <th>Bank</th>
-                <th>Valuta</th>
-                <th>Saldo</th>
-                <th>Oprettet</th>
-                <th>Status</th>
+                <th>Konto ID</th><th>Navn</th><th>Bank</th>
+                <th>Valuta</th><th>Saldo</th><th>Oprettet</th><th>Status</th>
               </tr>
             </thead>
-            <tbody id="accounts-table-body">
-              <!-- Dynamiske rækker -->
-            </tbody>
+            <tbody id="accounts-table-body"></tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
 
-  <script>
-    // Hent alle konti for den indloggede bruger
-    fetch('/api/accounts')
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById('accounts-table-body');
-        const countEl = document.getElementById('account-count');
-        const totalBalEl = document.getElementById('total-balance');
-        let total = 0;
-        let currencyCount = {};
-
-        data.forEach(acc => {
-          total += acc.balance;
-          currencyCount[acc.currency] = (currencyCount[acc.currency] || 0) + acc.balance;
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${acc.accountID}</td>
-            <td>${acc.name}</td>
-            <td>${acc.bank}</td>
-            <td>${acc.currency}</td>
-            <td class="value">${acc.balance.toFixed(2)} ${acc.currency}</td>
-            <td>${new Date(acc.registrationsDate).toLocaleDateString()}</td>
-            <td>${acc.closedAccount ? 'Lukket' : 'Aktiv'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        countEl.textContent = data.length;
-        totalBalEl.textContent = `${total.toFixed(2)} DKK`;
-
-        // Byg valutafordeling som tekst, fx "DKK: 60%, EUR: 40%"
-        const distParts = [];
-        const grandTotal = Object.values(currencyCount).reduce((a, b) => a + b, 0);
-        for (let cur in currencyCount) {
-          const pct = ((currencyCount[cur] / grandTotal) * 100).toFixed(0);
-          distParts.push(`${cur} ${pct}%`);
-        }
-        document.getElementById('currency-dist').textContent = distParts.join(', ');
-      });
-  </script>
+  <!-- Client-JS -->
+  <script src="/js/account/account.js"></script>
 </body>
 </html>
