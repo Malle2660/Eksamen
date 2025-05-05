@@ -102,5 +102,6 @@ class AccountsModel {
   }
 }
 
-module.exports = new AccountsModel();
+module.exports = router;
+
 

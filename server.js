@@ -1,16 +1,17 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path');
+const path    = require('path');
 const session = require('express-session');
 const { poolPromise } = require('./db/database');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// View engine
+// === VIEW ENGINE ===
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
+// === MIDDLEWARE ===
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -18,45 +19,50 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'megasuperhemmeligt',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 døgn
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 dag
 }));
 
-// === Middleware: kræver login ===
+// === AUTH GUARD ===
 function requireAuth(req, res, next) {
   if (req.session?.user) return next();
   return res.redirect('/?error=login_required');
 }
 
-// === Routes ===
-const authRoutes         = require('./routes/auth');
-const accountsRoutes     = require('./routes/accounts');
-const transactionsRoutes = require('./routes/transactionsRoutes');
-const portfolioRoutes    = require('./routes/portfolioRoutes');
-const exchangeRoutes     = require('./routes/exchangeRateRoutes');
-const alphaRoutes        = require('./routes/alphaVantageRoutes');
-const dashboardRoutes    = require('./routes/dashboardRoutes');
-const growthRoutes       = require('./routes/growthRoutes');
+// === ROUTERS ===
+const authRoutes          = require('./routes/auth');
+const accountsRoutes      = require('./routes/accounts');
+const transactionsRoutes  = require('./routes/transactionsRoutes');
+const portfolioRoutes     = require('./routes/portfolioRoutes');
+const exchangeRoutes      = require('./routes/exchangeRateRoutes');
+const alphaRoutes         = require('./routes/alphaVantageRoutes');
+const dashboardRoutes     = require('./routes/dashboardRoutes');
+const growthRoutes        = require('./routes/growthRoutes');
 
-app.use('/auth', authRoutes);
-app.use('/accounts', requireAuth, accountsRoutes);
-app.use('/transactions', requireAuth, transactionsRoutes);
-app.use('/portfolios', requireAuth, portfolioRoutes);
+// --- JSON‐API ENDPOINTS (før view‐ruterne) ---
 app.use('/api/exchange-rate', requireAuth, exchangeRoutes);
 app.use('/api/alpha-vantage', requireAuth, alphaRoutes);
-app.use('/api/dashboard', requireAuth, dashboardRoutes);
-app.use('/api/growth', requireAuth, growthRoutes);
+app.use('/api/growth',        requireAuth, growthRoutes);
 
-// === Forside og dashboard ===
+// --- CRUD‐ENDPOINTS ---
+app.use('/auth',         authRoutes);
+app.use('/accounts',     requireAuth, accountsRoutes);
+app.use('/transactions', requireAuth, transactionsRoutes);
+app.use('/portfolios',   requireAuth, portfolioRoutes);
+
+// === LANDING PAGE ===
 app.get('/', (req, res) => {
   res.render('index', { error: req.query.error });
 });
 
-app.get('/dashboard', requireAuth, (req, res) => {
-  res.redirect('/api/dashboard/dashboard');
+// === SERVER‐RENDERED DASHBOARD ===
+app.use('/dashboard', requireAuth, dashboardRoutes);
+
+// === 404 HANDLER (fallback) ===
+app.use((req, res) => {
+  res.status(404).send('404 – Siden blev ikke fundet');
 });
 
-// === Start server ===
-const PORT = process.env.PORT || 3000;
+// === START SERVER ===
 (async () => {
   try {
     await poolPromise;
