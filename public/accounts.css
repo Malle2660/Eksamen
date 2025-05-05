@@ -11,7 +11,7 @@
   --color-negative: #BD3A3A;
   --sidebar-bg:     #513F95;
   --button-bg:      #242424;
-  --button-text:    #fff;
+  --button-text:    #ffff;
 }
 
 /* ----- RESET & BASE ----- */
@@ -103,7 +103,7 @@ ul, a {
   margin-top: 16px;
   padding: 0;
 }
-/* Erstat svg’er med PNG-ikoner via pseudo-elementer */
+/* Erstat svg'er med PNG-ikoner via pseudo-elementer */
 .sidebar-nav li:nth-child(1) svg { display: none; }
 .sidebar-nav li:nth-child(1)::before {
   content: "";
@@ -200,6 +200,53 @@ ul, a {
 .change.negative { color: var(--color-negative); }
 .change svg { margin-right: 0.25rem; width: 12px; height: 12px; }
 
+/* Knap styling */
+.close-btn, .reopen-btn, .deposit-btn, .withdraw-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+  margin-right: 4px;
+}
+
+.deposit-btn {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.deposit-btn:hover {
+  background-color: #138496;
+}
+
+.withdraw-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.withdraw-btn:hover {
+  background-color: #e65100;
+}
+
+.close-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.close-btn:hover {
+  background-color: #c82333;
+}
+
+.reopen-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.reopen-btn:hover {
+  background-color: #218838;
+}
+
 /* ----- TABELLER ----- */
 .tables {
   display: grid;
@@ -260,3 +307,18 @@ td {
 }
 .percent.positive { color: var(--color-positive); }
 .percent.negative { color: var(--color-negative); }
+
+.history-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: background-color 0.2s;
+}
+.history-btn:hover {
+  background-color: #343a40;
+}

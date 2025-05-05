@@ -72,10 +72,40 @@ router.get('/api', async (req, res) => {
 // === Hent transaktioner ===
 router.get('/transactions/:accountId', async (req, res) => {
   try {
-    const transactions = await accountsModel.getTransactions(req.params.accountId);
+    const accountId = req.params.accountId;
+    const transactions = await accountsModel.getTransactionsForAccount(accountId);
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: 'Fejl ved hentning af transaktioner', error: error.message });
+  }
+});
+
+// === Indsæt penge på konto ===
+router.post('/deposit', async (req, res) => {
+  try {
+    const { accountId, amount } = req.body;
+    if (!accountId || !amount) {
+      return res.status(400).json({ message: 'Account ID og beløb mangler' });
+    }
+    // Brug din model til at indsætte penge
+    await accountsModel.deposit(accountId, amount);
+    res.json({ message: 'Beløb indsat!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Fejl ved indsættelse af beløb', error: error.message });
+  }
+});
+
+// === Hæv penge fra konto ===
+router.post('/withdraw', async (req, res) => {
+  try {
+    const { accountId, amount } = req.body;
+    if (!accountId || !amount) {
+      return res.status(400).json({ message: 'Account ID og beløb mangler' });
+    }
+    await accountsModel.withdraw(accountId, amount);
+    res.json({ message: 'Beløb hævet!' });
+  } catch (error) {
+    res.status(400).json({ message: error.message || 'Fejl ved hævning af beløb' });
   }
 });
 

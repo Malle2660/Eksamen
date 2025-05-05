@@ -42,17 +42,27 @@ class AccountsModel {
       `);
   }
 
-  // Hæver et beløb fra kontoen (hvis ikke lukket)
+  // Hæver et beløb fra kontoen (hvis ikke lukket og der er dækning)
   async withdraw(accountId, amount) {
     const pool = await poolPromise;
+
+    // (Valgfrit) Tjek dækning
+    const result = await pool.request()
+      .input('accountId', sql.Int, accountId)
+      .query('SELECT balance, closedAccount FROM Accounts WHERE accountID = @accountId');
+    const account = result.recordset[0];
+    if (!account) throw new Error('Konto ikke fundet');
+    if (account.closedAccount) throw new Error('Kontoen er lukket');
+    if (account.balance < amount) throw new Error('Ikke nok penge på kontoen');
+
+    // Træk beløbet fra saldoen
     await pool.request()
       .input('accountId', sql.Int, accountId)
       .input('amount', sql.Float, amount)
       .query(`
         UPDATE Accounts
         SET balance = balance - @amount
-        WHERE accountID = @accountId
-          AND closedAccount = 0;
+        WHERE accountID = @accountId AND closedAccount = 0;
       `);
   }
 
@@ -101,6 +111,23 @@ class AccountsModel {
         FROM Accounts
         WHERE userID = @userId
         ORDER BY registrationsDate DESC;
+      `);
+    return result.recordset;
+  }
+
+  // Hent alle transaktioner for en konto, sorteret nyeste først
+  async getTransactionsForAccount(accountId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('accountId', sql.Int, accountId)
+      .query(`
+        SELECT 
+          date,
+          amount,
+          transactionType
+        FROM Transactions
+        WHERE accountID = @accountId
+        ORDER BY date DESC
       `);
     return result.recordset;
   }
