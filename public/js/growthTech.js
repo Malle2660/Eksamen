@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     const avgChangePct = rows.length ? (totalChangePct/rows.length) : 0;
   
-    // 4) Opdater “kortene”
+    // 4) Opdater "kortene"
     document.querySelector('.value-card .value').textContent =
       totalValue.toLocaleString() + ' DKK';
   
@@ -72,9 +72,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   
     // 6) Bind knapper
-    document.querySelector('.action-btn:nth-child(1)')
+    document.getElementById('btnHistory')
       .addEventListener('click', () => alert('Vis handels‐historik (TODO)'));
-    document.querySelector('.action-btn:nth-child(2)')
+    document.getElementById('btnNewTrade')
       .addEventListener('click', () => alert('Åbn formular til ny handel (TODO)'));
+  
+    document.querySelectorAll('.portfolio-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const portfolioId = this.dataset.id;
+        window.location.href = `/portfolios/${portfolioId}`;
+      });
+    });
   });
   

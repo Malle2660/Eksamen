@@ -56,6 +56,7 @@ app.get('/', (req, res) => {
 
 // === SERVER‐RENDERED DASHBOARD ===
 app.use('/dashboard', requireAuth, dashboardRoutes);
+app.use('/', require('./routes/growthRoutes'));
 
 // === 404 HANDLER (fallback) ===
 app.use((req, res) => {
@@ -73,3 +74,5 @@ app.use((req, res) => {
     process.exit(1);
   }
 })();
+
+
