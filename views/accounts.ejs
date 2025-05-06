@@ -72,6 +72,62 @@
       </section>
 
       <div id="transactions-list"></div>
+
+      <!-- Modal til opret konto -->
+      <div id="create-account-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <h3>Opret ny konto</h3>
+          <form id="create-account-form">
+            <input type="text" id="new-account-name" placeholder="Kontonavn" required style="margin-bottom:8px;display:block;width:100%;">
+            <input type="text" id="new-account-currency" placeholder="Valuta (f.eks. DKK)" required style="margin-bottom:8px;display:block;width:100%;">
+            <input type="text" id="new-account-bank" placeholder="Banknavn" required style="margin-bottom:8px;display:block;width:100%;">
+            <button type="submit" class="modal-btn">Opret</button>
+            <button type="button" id="cancel-create-account" class="modal-btn cancel">Annuller</button>
+          </form>
+          <div id="create-account-error" style="color:#dc3545;margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Modal til indbetaling -->
+      <div id="deposit-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <h3>Indbetaling</h3>
+          <form id="deposit-form">
+            <input type="number" id="deposit-amount" placeholder="Beløb" min="0.01" step="0.01" required style="margin-bottom:8px;display:block;width:100%;">
+            <input type="text" id="deposit-currency" readonly style="margin-bottom:8px;display:block;width:100%;background:#eee;">
+            <button type="submit" class="modal-btn">Indbetal</button>
+            <button type="button" id="cancel-deposit" class="modal-btn cancel">Annuller</button>
+          </form>
+          <div id="deposit-error" style="color:#dc3545;margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Modal til udbetaling -->
+      <div id="withdraw-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <h3>Udbetaling</h3>
+          <form id="withdraw-form">
+            <input type="number" id="withdraw-amount" placeholder="Beløb" min="0.01" step="0.01" required style="margin-bottom:8px;display:block;width:100%;">
+            <input type="text" id="withdraw-currency" readonly style="margin-bottom:8px;display:block;width:100%;background:#eee;">
+            <button type="submit" class="modal-btn">Udbetal</button>
+            <button type="button" id="cancel-withdraw" class="modal-btn cancel">Annuller</button>
+          </form>
+          <div id="withdraw-error" style="color:#dc3545;margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Modal til luk konto -->
+      <div id="close-account-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <h3>Luk konto</h3>
+          <p>Er du sikker på, at du vil lukke denne konto?</p>
+          <form id="close-account-form">
+            <button type="submit" class="modal-btn">Luk konto</button>
+            <button type="button" id="cancel-close-account" class="modal-btn cancel">Annuller</button>
+          </form>
+          <div id="close-account-error" style="color:#dc3545;margin-top:8px;"></div>
+        </div>
+      </div>
     </main>
   </div>
 

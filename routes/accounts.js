@@ -87,7 +87,6 @@ router.post('/deposit', async (req, res) => {
     if (!accountId || !amount) {
       return res.status(400).json({ message: 'Account ID og beløb mangler' });
     }
-    // Brug din model til at indsætte penge
     await accountsModel.deposit(accountId, amount);
     res.json({ message: 'Beløb indsat!' });
   } catch (error) {
@@ -133,5 +132,7 @@ class AccountsModel {
 }
 
 module.exports = router;
+
+let currentHistoryAccountId = null;
 
 

@@ -6,6 +6,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody        = document.getElementById('accounts-table-body');
     const newBtn       = document.getElementById('new-account-btn');
   
+    // Modal-elementer
+    const createAccountModal = document.getElementById('create-account-modal');
+    const createAccountForm = document.getElementById('create-account-form');
+    const createAccountError = document.getElementById('create-account-error');
+    const cancelCreateAccount = document.getElementById('cancel-create-account');
+    const newAccountName = document.getElementById('new-account-name');
+    const newAccountCurrency = document.getElementById('new-account-currency');
+    const newAccountBank = document.getElementById('new-account-bank');
+    const depositModal = document.getElementById('deposit-modal');
+    const depositForm = document.getElementById('deposit-form');
+    const depositAmount = document.getElementById('deposit-amount');
+    const depositCurrency = document.getElementById('deposit-currency');
+    const depositError = document.getElementById('deposit-error');
+    const cancelDeposit = document.getElementById('cancel-deposit');
+    const withdrawModal = document.getElementById('withdraw-modal');
+    const withdrawForm = document.getElementById('withdraw-form');
+    const withdrawAmount = document.getElementById('withdraw-amount');
+    const withdrawCurrency = document.getElementById('withdraw-currency');
+    const withdrawError = document.getElementById('withdraw-error');
+    const cancelWithdraw = document.getElementById('cancel-withdraw');
+    const closeAccountModal = document.getElementById('close-account-modal');
+    const closeAccountForm = document.getElementById('close-account-form');
+    const closeAccountError = document.getElementById('close-account-error');
+    const cancelCloseAccount = document.getElementById('cancel-close-account');
+    let currentDepositAccountId = null;
+    let currentWithdrawAccountId = null;
+    let currentCloseAccountId = null;
+  
     // Hent konti og opdater UI
     async function loadAccounts() {
       try {
@@ -66,55 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Tilføj event listeners til indsæt knapper
       document.querySelectorAll('.deposit-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const amount = prompt('Indtast beløb der skal indsættes:');
-          if (!amount || isNaN(amount) || amount <= 0) {
-            alert('Indtast venligst et gyldigt beløb større end 0');
-            return;
-          }
-
-          try {
-            const res = await fetch('/accounts/deposit', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                accountId: btn.dataset.id,
-                amount: parseFloat(amount)
-              })
-            });
-            
-            if (!res.ok) {
-              const err = await res.json();
-              throw new Error(err.message || 'Fejl ved indsættelse af beløb');
-            }
-            
-            alert('Beløb indsat!');
-            loadAccounts();
-          } catch (err) {
-            alert('Fejl: ' + err.message);
-            console.error(err);
-          }
+        btn.addEventListener('click', () => {
+          // Find kontoens valuta
+          const tr = btn.closest('tr');
+          const currency = tr.querySelector('td:nth-child(4)').textContent;
+          currentDepositAccountId = btn.dataset.id;
+          depositAmount.value = '';
+          depositCurrency.value = currency;
+          depositError.textContent = '';
+          depositModal.style.display = 'flex';
+          depositAmount.focus();
         });
       });
 
       // Tilføj event listeners til luk/åbn knapper
       document.querySelectorAll('.close-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (confirm('Er du sikker på, at du vil lukke denne konto?')) {
-            try {
-              const res = await fetch('/accounts/close', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountId: btn.dataset.id })
-              });
-              if (!res.ok) throw new Error('Fejl ved lukning af konto');
-              alert('Konto lukket!');
-              loadAccounts();
-            } catch (err) {
-              alert('Fejl: ' + err.message);
-              console.error(err);
-            }
-          }
+        btn.addEventListener('click', () => {
+          currentCloseAccountId = btn.dataset.id;
+          if (closeAccountError) closeAccountError.textContent = '';
+          if (closeAccountModal) closeAccountModal.style.display = 'flex';
         });
       });
 
@@ -139,28 +137,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       document.querySelectorAll('.withdraw-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const amount = prompt('Indtast beløb der skal hæves:');
-          if (!amount || isNaN(amount) || amount <= 0) {
-            alert('Indtast venligst et gyldigt beløb større end 0');
-            return;
-          }
-          try {
-            const res = await fetch('/accounts/withdraw', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                accountId: btn.dataset.id,
-                amount: parseFloat(amount)
-              })
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Fejl ved hævning');
-            alert('Beløb hævet!');
-            loadAccounts();
-          } catch (err) {
-            alert('Fejl: ' + err.message);
-            console.error(err);
+        btn.addEventListener('click', () => {
+          const tr = btn.closest('tr');
+          const currency = tr.querySelector('td:nth-child(4)').textContent;
+          currentWithdrawAccountId = btn.dataset.id;
+          if (withdrawAmount) withdrawAmount.value = '';
+          if (withdrawCurrency) withdrawCurrency.value = currency;
+          if (withdrawError) withdrawError.textContent = '';
+          if (withdrawModal) {
+            withdrawModal.style.display = 'flex';
+            withdrawAmount && withdrawAmount.focus();
           }
         });
       });
@@ -172,16 +158,37 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Opret konto-knap
-    if (newBtn) {
-      newBtn.addEventListener('click', async () => {
-        const name = prompt('Indtast kontonavn:');
-        if (!name) return;
-        const currency = prompt('Indtast valuta (f.eks. DKK):');
-        if (!currency) return;
-        const bank = prompt('Indtast banknavn:');
-        if (!bank) return;
+    // Åbn modal når der trykkes på "Opret konto"
+    if (newBtn && createAccountModal && createAccountForm && newAccountName && newAccountCurrency && newAccountBank) {
+      newBtn.addEventListener('click', () => {
+        createAccountError.textContent = '';
+        newAccountName.value = '';
+        newAccountCurrency.value = '';
+        newAccountBank.value = '';
+        createAccountModal.style.display = 'flex';
+        newAccountName.focus();
+      });
+    }
   
+    // Luk modal
+    if (cancelCreateAccount && createAccountModal) {
+      cancelCreateAccount.addEventListener('click', () => {
+        createAccountModal.style.display = 'none';
+      });
+    }
+  
+    // Håndter opret konto-formular
+    if (createAccountForm) {
+      createAccountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        createAccountError.textContent = '';
+        const name = newAccountName.value.trim();
+        const currency = newAccountCurrency.value.trim();
+        const bank = newAccountBank.value.trim();
+        if (!name || !currency || !bank) {
+          createAccountError.textContent = 'Alle felter skal udfyldes!';
+          return;
+        }
         try {
           // TODO: udskift 1 med rigtig userId fra session
           const res = await fetch('/accounts/create', {
@@ -193,15 +200,124 @@ document.addEventListener('DOMContentLoaded', () => {
             const err = await res.json();
             throw new Error(err.message || res.statusText);
           }
-          alert('Konto oprettet!');
+          createAccountModal.style.display = 'none';
           loadAccounts();
         } catch (err) {
-          alert('Fejl: ' + err.message);
-          console.error(err);
+          createAccountError.textContent = 'Fejl: ' + err.message;
         }
       });
-    } else {
-      console.error('Knap med id="new-account-btn" blev ikke fundet i DOM\'en!');
+    }
+  
+    // Håndter indbetalings-formularen
+    if (depositForm) {
+      depositForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        depositError.textContent = '';
+        const amount = depositAmount.value.trim();
+        if (!amount || isNaN(amount) || amount <= 0) {
+          depositError.textContent = 'Indtast venligst et gyldigt beløb større end 0';
+          return;
+        }
+        try {
+          const res = await fetch('/accounts/deposit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              accountId: currentDepositAccountId,
+              amount: parseFloat(amount)
+            })
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Fejl ved indsættelse af beløb');
+          }
+          depositModal.style.display = 'none';
+          loadAccounts();
+          // Opdater evt. historik hvis den vises
+          if (currentHistoryAccountId === currentDepositAccountId) {
+            showTransactions(currentDepositAccountId);
+          }
+        } catch (err) {
+          depositError.textContent = 'Fejl: ' + err.message;
+        }
+      });
+    }
+  
+    // Luk modal på "Annuller"
+    if (cancelDeposit && depositModal) {
+      cancelDeposit.addEventListener('click', () => {
+        depositModal.style.display = 'none';
+      });
+    }
+  
+    // Håndter udbetalings-formularen
+    if (withdrawForm) {
+      withdrawForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        withdrawError.textContent = '';
+        const amount = withdrawAmount.value.trim();
+        if (!amount || isNaN(amount) || amount <= 0) {
+          withdrawError.textContent = 'Indtast venligst et gyldigt beløb større end 0';
+          return;
+        }
+        try {
+          const res = await fetch('/accounts/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              accountId: currentWithdrawAccountId,
+              amount: parseFloat(amount)
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Fejl ved udbetaling');
+          withdrawModal.style.display = 'none';
+          loadAccounts();
+          if (currentHistoryAccountId === currentWithdrawAccountId) {
+            showTransactions(currentWithdrawAccountId);
+          }
+        } catch (err) {
+          withdrawError.textContent = 'Fejl: ' + err.message;
+        }
+      });
+    }
+  
+    // Luk modal på "Annuller"
+    if (cancelWithdraw && withdrawModal) {
+      cancelWithdraw.addEventListener('click', () => {
+        withdrawModal.style.display = 'none';
+      });
+    }
+  
+    // Håndter luk konto-formularen
+    if (closeAccountForm) {
+      closeAccountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        closeAccountError.textContent = '';
+        try {
+          const res = await fetch('/accounts/close', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountId: currentCloseAccountId })
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Fejl ved lukning af konto');
+          }
+          closeAccountModal.style.display = 'none';
+          loadAccounts();
+          if (currentHistoryAccountId === currentCloseAccountId) {
+            showTransactions(currentCloseAccountId);
+          }
+        } catch (err) {
+          closeAccountError.textContent = 'Fejl: ' + err.message;
+        }
+      });
+    }
+    if (cancelCloseAccount && closeAccountModal) {
+      cancelCloseAccount.addEventListener('click', () => {
+        closeAccountModal.style.display = 'none';
+      });
     }
   
     // Initial indlæsning
