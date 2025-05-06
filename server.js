@@ -3,6 +3,7 @@ const express = require('express');
 const path    = require('path');
 const session = require('express-session');
 const { poolPromise } = require('./db/database');
+const requireAuth = require('./middleware/authCheck');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,17 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: 'hemmeligkode', // skift til noget unikt i produktion!
+  secret: process.env.SESSION_SECRET || 'megasuperhemmeligt',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // secure: true kun hvis du bruger HTTPS!
+  cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
-
-// === AUTH GUARD ===
-function requireAuth(req, res, next) {
-  if (req.session?.user) return next();
-  return res.redirect('/?error=login_required');
-}
 
 // === ROUTERS ===
 const authRoutes          = require('./routes/auth');

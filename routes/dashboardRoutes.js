@@ -3,14 +3,8 @@ const router  = express.Router();
 const Portfolio = require('../models/portfolio');
 const { getStockQuote } = require('../services/alphaVantage');
 
-// Auth‐guard
-function requireAuth(req, res, next) {
-  if (req.session?.user) return next();
-  return res.redirect('/?error=login_required');
-}
-
 // === VIEW: Dashboard (EJS) på GET /dashboard ===
-router.get('/', requireAuth, async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const portfolios = await Portfolio.getAllForUser(userId);
@@ -63,7 +57,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 });
 
 // === API: Metrics på GET /dashboard/metrics ===
-router.get('/metrics', requireAuth, async (req, res, next) => {
+router.get('/metrics', async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const portfolios = await Portfolio.getAllForUser(userId);
@@ -100,7 +94,7 @@ router.get('/metrics', requireAuth, async (req, res, next) => {
 });
 
 // === API: Top 5 efter værdi på GET /dashboard/top/value ===
-router.get('/top/value', requireAuth, async (req, res, next) => {
+router.get('/top/value', async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const portfolios = await Portfolio.getAllForUser(userId);
@@ -127,7 +121,7 @@ router.get('/top/value', requireAuth, async (req, res, next) => {
 });
 
 // === API: Top 5 efter profit på GET /dashboard/top/profit ===
-router.get('/top/profit', requireAuth, async (req, res, next) => {
+router.get('/top/profit', async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const portfolios = await Portfolio.getAllForUser(userId);
@@ -154,7 +148,7 @@ router.get('/top/profit', requireAuth, async (req, res, next) => {
 });
 
 // === API: Historisk samlet værdi til grafen ===
-router.get('/history', requireAuth, async (req, res, next) => {
+router.get('/history', async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const portfolios = await Portfolio.getAllForUser(userId);

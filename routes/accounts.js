@@ -6,13 +6,6 @@ const transactionsModel = require('../models/accountsModel'); // eller transacti
 
 const router = express.Router();
 
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Ikke logget ind' });
-  }
-  next();
-}
-
 // ————— VIS accounts-siden —————
 router.get('/', async (req, res) => {
   // Du kan i fremtiden hente data server-side og sende til view:
@@ -24,7 +17,7 @@ router.get('/', async (req, res) => {
 });
 
 // === Opret konto ===
-router.post('/create', requireLogin, async (req, res) => {
+router.post('/create', async (req, res) => {
   const userId = req.session.user.userID;
   const { name, currency, bank } = req.body;
   if (!name || !currency || !bank) {
@@ -72,7 +65,7 @@ router.post('/reopen', async (req, res) => {
 });
 
 // === Se konti for API (bruges af client-JS) ===
-router.get('/api', requireLogin, async (req, res) => {
+router.get('/api', async (req, res) => {
   const userId = req.session.user.userID;
   const accounts = await accountsModel.getAllForUser(userId);
   res.json(accounts);

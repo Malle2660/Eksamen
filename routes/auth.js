@@ -3,10 +3,10 @@
 const express = require('express');
 const bcrypt  = require('bcryptjs');
 const router  = express.Router();
-
 const usersModel        = require('../models/usersModel');
 const accountsModel     = require('../models/accountsModel');
 const transactionsModel = require('../models/transactionsModel');
+const Portfolio = require('../models/portfolio');
 
 // === Opret bruger ===
 router.post('/register', async (req, res) => {
@@ -45,10 +45,7 @@ router.post('/login', async (req, res) => {
     if (!match) {
       return res.status(401).json({ error: 'Forkert brugernavn eller adgangskode' });
     }
-    req.session.user = {
-      userID: user.userID,
-      username: user.username
-    };
+    req.session.user = { userID: user.userID, username: user.username };
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -81,6 +78,16 @@ router.post('/change-password', async (req, res) => {
     console.error('Fejl ved ændring af adgangskode:', err);
     res.status(500).json({ message: 'Fejl ved ændring af adgangskode', error: err.message });
   }
+});
+
+router.get('/secret', (req, res) => {
+  // Implementation of the route
+});
+
+router.get('/user', async (req, res) => {
+  const userId = req.session.user.userID;
+  const portfolios = await Portfolio.getAllForUser(userId);
+  res.json(portfolios);
 });
 
 module.exports = router;

@@ -1,6 +1,6 @@
 // public/client.js
 
-const API_URL = ''; // Tom, så vi bruger relative URL’er: "/auth/..."
+const API_URL = ''; // Tom, så vi bruger relative URL'er: "/auth/..."
 
 function showMessage(selector, message, isError = false) {
   const container = document.querySelector(selector);
@@ -52,15 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = document.getElementById('login-password').value;
 
       try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch('/auth/login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (res.ok) {
-          // Session‐cookie er sat, redirect til dashboard
+          // Session-cookie er sat, redirect til dashboard
           window.location.href = '/dashboard';
         } else {
           showMessage('#login', data.message, true);
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // — Portefølje‐side logik — 
+  // — Portefølje-side logik — 
   const tableContainer = document.querySelector('.tables');
   if (tableContainer) {
     const userId = window.USER_ID;
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hent og vis porteføljer
     loadPortfolios(userId);
 
-    // Bind “Opret ny”
+    // Bind "Opret ny"
     const createBtn = document.querySelector('.table-header button');
     if (createBtn) {
       createBtn.addEventListener('click', async () => {

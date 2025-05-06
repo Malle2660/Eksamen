@@ -25,10 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let pieChart;
   let currentPortfolioId = null;
 
+  const portfolios = JSON.parse(sessionStorage.getItem('portfolios') || '[]');
+
   async function loadPortfolios() {
     try {
-      const res = await fetch('/portfolios/user');
+      const res = await fetch('/portfolios/user', { credentials: 'include' });
       const portfolios = await res.json();
+
+      // Gem portefølje-id'er i sessionStorage
+      const portfolioIds = portfolios.map(p => p.portfolioID);
+      sessionStorage.setItem('portfolioIds', JSON.stringify(portfolioIds));
 
       if (!Array.isArray(portfolios) || portfolios.length === 0) {
         if (tableBody) {
@@ -103,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateMetrics(portfolios);
       updatePieChart(portfolios);
+
+      sessionStorage.setItem('portfolios', JSON.stringify(portfolios));
     } catch (err) {
       console.error('Kunne ikke hente porteføljer:', err);
       showNotification('Der opstod en fejl ved indlæsning af porteføljer.', 'error');
@@ -345,6 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
       showNotification('Kunne ikke tilføje aktien: ' + err.message, 'error');
     }
   });
+
+  sessionStorage.setItem('userId', userId);
 
   loadPortfolios();
 });
