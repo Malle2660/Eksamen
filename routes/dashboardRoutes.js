@@ -12,43 +12,45 @@ function requireAuth(req, res, next) {
 // === VIEW: Dashboard (EJS) på GET /dashboard ===
 router.get('/', requireAuth, async (req, res, next) => {
   try {
-    const portfolioId = req.session.user.activePortfolioId || 1;
-    const overview    = await Portfolio.getPortfolioOverview(portfolioId);
-    const holdings    = await Portfolio.getHoldingsForPortfolio(portfolioId);
+    const userId = req.session.user.id;
+    const portfolios = await Portfolio.getPortfoliosForUser(userId);
 
-    // Hent aktuel pris for hver holding
-    const prices = {};
-    for (const h of holdings) {
-      const data      = await getStockQuote(h.symbol);
-      const ts        = data['Time Series (1min)'];
-      const latestKey = Object.keys(ts)[0];
-      prices[h.symbol] = parseFloat(ts[latestKey]['4. close']);
+    // Saml alle aktier på tværs af porteføljer
+    let allHoldings = [];
+    for (const portfolio of portfolios) {
+      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
     }
 
-    // Berig holdings med value & profit
-    const enriched = holdings.map(h => {
-      const price = prices[h.symbol];
-      const fx    = 1; // USD
-      return {
-        ...h,
-        price,
-        value:  price * h.amount * fx,
-        profit: (price - h.bought_at) * h.amount * fx
-      };
-    });
+    // Hent aktuel pris for hver aktie (fra cache/api)
+    for (const h of allHoldings) {
+      try {
+        const quote = await getStockQuote(h.symbol);
+        h.price = quote.price || 0;
+        console.log(`${h.symbol} quote:`, quote);
+      } catch (e) {
+        h.price = 0;
+      }
+      h.value = (h.amount || 0) * h.price;
+      h.profit = ((h.price - (h.bought_at || 0)) * (h.amount || 0));
+    }
 
     // Top 5 lister
-    const topValue  = enriched.slice().sort((a,b) => b.value  - a.value).slice(0,5);
-    const topProfit = enriched.slice().sort((a,b) => b.profit - a.profit).slice(0,5);
+    const topValue  = allHoldings.slice().sort((a,b) => b.value  - a.value).slice(0,5);
+    const topProfit = allHoldings.slice().sort((a,b) => b.profit - a.profit).slice(0,5);
 
     // Oversigtstal
-    const totalExpected   = enriched.reduce((sum,h) => sum + h.value, 0);
-    const totalUnrealized = enriched.reduce((sum,h) => sum + h.profit, 0);
+    const totalExpected   = allHoldings.reduce((sum,h) => sum + h.value, 0);
+    const totalUnrealized = allHoldings.reduce((sum,h) => sum + h.profit, 0);
+
+    console.log('topValue:', topValue);
+    console.log('topProfit:', topProfit);
+    console.log('Alle aktier:', allHoldings);
 
     res.render('dashboard', {
       user: req.session.user,
       overview: {
-        totalPurchase: overview.totalPurchase,
+        totalPurchase: 0, // Kan beregnes hvis ønsket
         totalExpected,
         totalUnrealized
       },
@@ -63,35 +65,33 @@ router.get('/', requireAuth, async (req, res, next) => {
 // === API: Metrics på GET /dashboard/metrics ===
 router.get('/metrics', requireAuth, async (req, res, next) => {
   try {
-    const portfolioId = req.session.user.activePortfolioId || 1;
-    const holdings    = await Portfolio.getHoldingsForPortfolio(portfolioId);
+    const userId = req.session.user.id;
+    const portfolios = await Portfolio.getPortfoliosForUser(userId);
 
-    // Hent priser
-    const prices = {};
-    for (const h of holdings) {
-      const data      = await getStockQuote(h.symbol);
-      const ts        = data['Time Series (1min)'];
-      const latestKey = Object.keys(ts)[0];
-      prices[h.symbol] = parseFloat(ts[latestKey]['4. close']);
+    let totalValue = 0;
+    let totalUnrealized = 0;
+    let totalRealized = 0; // Hvis du har realiseret gevinst
+
+    for (const portfolio of portfolios) {
+      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
+      for (const stock of stocks) {
+        let price = 0;
+        try {
+          const quote = await getStockQuote(stock.symbol);
+          price = quote.price || 0;
+        } catch (e) { price = 0; }
+        let rate = 1;
+        if (stock.currency && stock.currency !== 'DKK') {
+          // ...hent valutakurs...
+        }
+        totalValue += (stock.amount || 0) * price * rate;
+        // totalUnrealized += ... (hvis du vil vise gevinst)
+      }
     }
-
-    const enriched = holdings.map(h => {
-      const price = prices[h.symbol];
-      const fx    = 1;
-      return {
-        ...h,
-        price,
-        value:  price * h.amount * fx,
-        profit: (price - h.bought_at) * h.amount * fx
-      };
-    });
-
-    const totalValue   = enriched.reduce((sum,h) => sum + h.value, 0);
-    const totalUnrealized = enriched.reduce((sum,h) => sum + h.profit, 0);
 
     res.json({
       totalValue,
-      realized:   0,
+      realized: totalRealized,
       unrealized: totalUnrealized
     });
   } catch (err) {
@@ -102,25 +102,24 @@ router.get('/metrics', requireAuth, async (req, res, next) => {
 // === API: Top 5 efter værdi på GET /dashboard/top/value ===
 router.get('/top/value', requireAuth, async (req, res, next) => {
   try {
-    const portfolioId = req.session.user.activePortfolioId || 1;
-    const holdings    = await Portfolio.getHoldingsForPortfolio(portfolioId);
+    const userId = req.session.user.id;
+    const portfolios = await Portfolio.getPortfoliosForUser(userId);
 
-    // Hent priser
-    const prices = {};
-    for (const h of holdings) {
-      const data      = await getStockQuote(h.symbol);
-      const ts        = data['Time Series (1min)'];
-      const latestKey = Object.keys(ts)[0];
-      prices[h.symbol] = parseFloat(ts[latestKey]['4. close']);
+    let allHoldings = [];
+    for (const portfolio of portfolios) {
+      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
     }
 
-    const enriched = holdings.map(h => ({
-      ...h,
-      price: prices[h.symbol],
-      value: prices[h.symbol] * h.amount
-    }));
+    for (const h of allHoldings) {
+      try {
+        const quote = await getStockQuote(h.symbol);
+        h.price = quote.price || 0;
+      } catch (e) { h.price = 0; }
+      h.value = (h.amount || 0) * h.price;
+    }
 
-    const topValue = enriched.sort((a,b) => b.value - a.value).slice(0,5);
+    const topValue = allHoldings.sort((a,b) => b.value - a.value).slice(0,5);
     res.json(topValue);
   } catch (err) {
     next(err);
@@ -130,26 +129,82 @@ router.get('/top/value', requireAuth, async (req, res, next) => {
 // === API: Top 5 efter profit på GET /dashboard/top/profit ===
 router.get('/top/profit', requireAuth, async (req, res, next) => {
   try {
-    const portfolioId = req.session.user.activePortfolioId || 1;
-    const holdings    = await Portfolio.getHoldingsForPortfolio(portfolioId);
+    const userId = req.session.user.id;
+    const portfolios = await Portfolio.getPortfoliosForUser(userId);
 
-    // Hent priser
-    const prices = {};
-    for (const h of holdings) {
-      const data      = await getStockQuote(h.symbol);
-      const ts        = data['Time Series (1min)'];
-      const latestKey = Object.keys(ts)[0];
-      prices[h.symbol] = parseFloat(ts[latestKey]['4. close']);
+    let allHoldings = [];
+    for (const portfolio of portfolios) {
+      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
     }
 
-    const enriched = holdings.map(h => ({
-      ...h,
-      price: prices[h.symbol],
-      profit: (prices[h.symbol] - h.bought_at) * h.amount
+    for (const h of allHoldings) {
+      try {
+        const quote = await getStockQuote(h.symbol);
+        h.price = quote.price || 0;
+      } catch (e) { h.price = 0; }
+      h.profit = ((h.price - (h.bought_at || 0)) * (h.amount || 0));
+    }
+
+    const topProfit = allHoldings.sort((a,b) => b.profit - a.profit).slice(0,5);
+    res.json(topProfit);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// === API: Historisk samlet værdi til grafen ===
+router.get('/history', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.session.user.id;
+    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+
+    // Find alle stocks for brugerens porteføljer
+    let allStocks = [];
+    for (const portfolio of portfolios) {
+      // Brug Stock.getAllForPortfolio for at få stockID!
+      const stocks = await require('../models/stock').getAllForPortfolio(portfolio.portfolioID);
+      allStocks = allStocks.concat(stocks.map(s => ({ ...s, portfolioID: portfolio.portfolioID })));
+    }
+
+    // Hent prisdata for de sidste 30 dage for alle stocks
+    const pool = await require('../db/database').poolPromise;
+    const days = 30;
+    const dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - days);
+
+    // Hent alle pricehistory-rows for disse stocks og dato-interval
+    const stockIds = allStocks.map(s => s.stockID).filter(Boolean);
+    if (stockIds.length === 0) return res.json([]);
+
+    const result = await pool.request()
+      .input('dateFrom', require('mssql').DateTime, dateFrom)
+      .query(`
+        SELECT stockID, price, date
+        FROM PriceHistory
+        WHERE stockID IN (${stockIds.join(',')})
+          AND date >= @dateFrom
+        ORDER BY date ASC
+      `);
+
+    // Saml daglig værdi
+    const dailyValue = {};
+    for (const row of result.recordset) {
+      // Find antal aktier for denne stockID
+      const stock = allStocks.find(s => s.stockID === row.stockID);
+      if (!stock) continue;
+      const dateKey = row.date.toISOString().slice(0, 10);
+      if (!dailyValue[dateKey]) dailyValue[dateKey] = 0;
+      dailyValue[dateKey] += (stock.amount || 0) * row.price;
+    }
+
+    // Formatér til array til graf
+    const graphData = Object.entries(dailyValue).map(([date, value]) => ({
+      date,
+      value
     }));
 
-    const topProfit = enriched.sort((a,b) => b.profit - a.profit).slice(0,5);
-    res.json(topProfit);
+    res.json(graphData);
   } catch (err) {
     next(err);
   }

@@ -3,6 +3,9 @@ const router = express.Router();
 const Portfolio = require('../models/portfolio');
 const Stock = require('../models/stock');
 const alphaVantage = require('../services/alphaVantage');
+const { getStockQuote } = require('../services/alphaVantage');
+const { getExchangeRate } = require('../services/exchangeRate');
+const { getPortfoliosForUser, getStocksForPortfolio } = require('../models/portfolio');
 
 // Middleware: kræver login
 function requireAuth(req, res, next) {
@@ -33,52 +36,43 @@ router.get('/', requireAuth, async (req, res) => {
 
 // === GET: API – hent porteføljer for logget bruger
 router.get('/user', requireAuth, async (req, res) => {
-  try {
-    const userId = req.session.user.id;
-    const portfolios = await Portfolio.getAllForUser(userId);
+  const userId = req.session.user.id;
+  const portfolios = await Portfolio.getPortfoliosForUser(userId);
 
-    const enriched = await Promise.all(
-      portfolios.map(async (p) => {
-        const stocks = await Stock.getAllForPortfolio(p.portfolioID);
+  for (const portfolio of portfolios) {
+    let totalValue = 0;
+    const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
 
-        let expectedValue = 0;
-        let unrealizedGain = 0;
+    for (const stock of stocks) {
+      // 1. Hent aktuel aktiekurs fra Alpha Vantage (cache bruges automatisk)
+      let price = 0;
+      try {
+        const quote = await getStockQuote(stock.symbol);
+        price = quote.price || 0;
+      } catch (e) {
+        price = 0; // fallback hvis kurs ikke kan hentes
+      }
 
-        for (const stock of stocks) {
-          try {
-            const data = await alphaVantage.getStockQuote(stock.symbol);
-            const timeSeries = data?.['Time Series (1min)'];
-
-            if (!timeSeries) {
-              console.warn(`⚠️ Manglende timeSeries for ${stock.symbol}`, data);
-              continue;
-            }
-
-            const latestKey = Object.keys(timeSeries)[0];
-            const latestPrice = parseFloat(timeSeries[latestKey]['4. close']);
-
-            expectedValue += latestPrice * stock.amount;
-            unrealizedGain += (latestPrice - stock.bought_at) * stock.amount;
-          } catch (err) {
-            console.warn(`⚠️ API-fejl for ${stock.symbol}:`, err.message);
-          }
+      // 2. Hent valutakurs hvis nødvendigt (fx hvis aktien er i USD og du vil vise i DKK)
+      let rate = 1;
+      if (stock.currency && stock.currency !== 'DKK') {
+        try {
+          const rates = await getExchangeRate('DKK');
+          rate = rates[stock.currency] || 1;
+        } catch (e) {
+          rate = 1; // fallback hvis valutakurs ikke kan hentes
         }
+      }
 
-        return {
-          ...p,
-          createdAt: p.registrationDate || new Date(),
-          realizedGain: 0, // placeholder
-          unrealizedGain,
-          expectedValue
-        };
-      })
-    );
+      // 3. Beregn værdi for denne aktie
+      totalValue += (stock.amount || 0) * price * rate;
+    }
 
-    res.json(enriched);
-  } catch (err) {
-    console.error('❌ Fejl ved GET /portfolios/user:', err);
-    res.status(500).json({ message: 'Fejl ved hentning af porteføljer' });
+    portfolio.expectedValue = totalValue;
+    // ...beregn evt. realiseret/urealiseret gevinst osv...
   }
+
+  res.json(portfolios);
 });
 
 // === POST: Opret ny portefølje

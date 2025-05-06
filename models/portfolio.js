@@ -74,6 +74,50 @@ const Portfolio = {
         WHERE s.portfolio_id = @portfolioId
       `);
     return result.recordset[0];
+  },
+
+  getPortfoliosForUser: async (userId) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('userId', sql.Int, userId)
+      .query('SELECT * FROM Portfolios WHERE userID = @userId');
+    return result.recordset;
+  },
+
+  getStocksForPortfolio: async (portfolioId) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .query(`
+        SELECT 
+          s.symbol,
+          s.amount,
+          s.bought_at
+        FROM Stocks s
+        WHERE s.portfolio_id = @portfolioId
+      `);
+    return result.recordset;
+  },
+
+  calculateExpectedValue: async (portfolioID) => {
+    let totalValue = 0;
+    const stocks = await Portfolio.getStocksForPortfolio(portfolioID);
+    for (const stock of stocks) {
+      let price = 0;
+      try {
+        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        price = quote.price || 0;
+      } catch (e) { price = 0; }
+      let rate = 1;
+      if (stock.currency && stock.currency !== 'DKK') {
+        try {
+          const rates = await require('../services/exchangeRate').getExchangeRate('DKK');
+          rate = rates[stock.currency] || 1;
+        } catch (e) { rate = 1; }
+      }
+      totalValue += (stock.amount || 0) * price * rate;
+    }
+    return totalValue;
   }
 };
 

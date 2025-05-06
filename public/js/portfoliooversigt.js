@@ -26,11 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPortfolioId = null;
 
   async function loadPortfolios() {
-    const res = await fetch('/portfolios/user');
-    const portfolios = await res.json();
-    console.log(portfolios);
-
     try {
+      const res = await fetch('/portfolios/user');
+      const portfolios = await res.json();
+
       if (!Array.isArray(portfolios) || portfolios.length === 0) {
         if (tableBody) {
           tableBody.innerHTML = `<tr><td colspan="8">Ingen porteføljer endnu</td></tr>`;
@@ -65,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.appendChild(row);
       });
 
+      // Bind knapper EFTER tabellen er genereret!
       document.querySelectorAll('.tilfoj-aktie-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const portfolioId = btn.getAttribute('data-id');
@@ -199,14 +199,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. Hent valutakurs fra din Exchange Rate API (fx DKK)
       const currency = 'DKK'; // eller lad brugeren vælge
-      const rateRes = await fetch(`/api/exchange-rate/${currency}`);
-      if (!rateRes.ok) throw new Error('Kunne ikke hente valutakurs');
-      const rateData = await rateRes.json();
+      let rate = 1;
+      if (currency !== 'DKK') {
+        const rateRes = await fetch(`/api/exchange-rate/${currency}`);
+        const rateData = await rateRes.json();
+        rate = rateData.rate || rateData[currency] || 'ukendt';
+      }
 
       // 3. Brug dataene (fx vis dem, eller brug dem til at beregne noget)
       alert(
         `Aktuel kurs for ${symbol}: ${stockData.price || stockData.c || 'ukendt'}\n` +
-        `Valutakurs (${currency}): ${rateData.rate || rateData[currency] || 'ukendt'}`
+        `Valutakurs (${currency}): ${rate}`
       );
 
       // 4. Tilføj aktien til porteføljen (POST til din egen backend)

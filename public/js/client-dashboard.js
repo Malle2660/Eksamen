@@ -75,21 +75,106 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const tableBody = document.getElementById('portfolioTableBody');
   tableBody.innerHTML = '';
-  portfolios.forEach(p => {
+  for (const portfolio of portfolios) {
+    const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>
-        <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}">
-          ${p.name || '-'}
+        <a href="/portfolios/${portfolio.portfolioID}" class="portfolio-link" data-id="${portfolio.portfolioID}">
+          ${portfolio.name || '-'}
         </a>
       </td>
-      <td>${p.bankAccount || '-'}</td>
-      <td class="${(p.dailyChange || 0) >= 0 ? 'positive' : 'negative'}">
-        ${(p.dailyChange || 0).toFixed(2)}%
+      <td>${portfolio.bankAccount || '-'}</td>
+      <td class="${(portfolio.dailyChange || 0) >= 0 ? 'positive' : 'negative'}">
+        ${(portfolio.dailyChange || 0).toFixed(2)}%
       </td>
-      <td>${p.lastTrade ? new Date(p.lastTrade).toLocaleString('da-DK') : '-'}</td>
-      <td>${(p.expectedValue || 0).toLocaleString('da-DK')} DKK</td>
+      <td>${portfolio.lastTrade ? new Date(portfolio.lastTrade).toLocaleString('da-DK') : '-'}</td>
+      <td>${(portfolio.expectedValue || 0).toLocaleString('da-DK')} DKK</td>
     `;
     tableBody.appendChild(row);
+  }
+
+  const stocks = await require('../models/stock').getAllForPortfolio(p.portfolioID);
+  allStocks = allStocks.concat(stocks.map(s => ({ ...s, portfolioID: p.portfolioID })));
+
+  console.log('allStocks:', allStocks);
+  const stockIds = allStocks.map(s => s.stockID).filter(Boolean);
+  console.log('stockIds:', stockIds);
+
+  // Efter du har hentet porteføljer fra backend:
+  const labels = portfolios.map(p => p.name);
+  const data = portfolios.map(p => p.expectedValue || 0);
+
+  const ctx = document.getElementById('portfolioPie').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: [
+          '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7'
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
   });
+
+  updateChart(portfolios);
+  await loadValueHistory();
 });
+
+function updateChart(newPortfolios) {
+  chart.data.labels = newPortfolios.map(p => p.name);
+  chart.data.datasets[0].data = newPortfolios.map(p => p.expectedValue || 0);
+  chart.update();
+}
+
+async function loadValueHistory() {
+  try {
+    const data = await fetchJSON('/history'); // eller '/api/dashboard/history'
+    // data = [{ date: '2024-05-01', value: 12345 }, ...]
+    renderValueChart(data);
+  } catch (err) {
+    console.error('Kunne ikke hente grafdata:', err);
+  }
+}
+
+function renderValueChart(history) {
+  const ctx = document.getElementById('totalValueChart').getContext('2d');
+  const labels = history.map(point => point.date);
+  const values = history.map(point => point.value);
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Samlet værdi',
+        data: values,
+        borderColor: '#4e79a7',
+        backgroundColor: 'rgba(78,121,167,0.1)',
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => value.toLocaleString('da-DK') + ' DKK'
+          }
+        }
+      }
+    }
+  });
+}

@@ -111,7 +111,7 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('accounts-dashboard.png') no-repeat center center;
+  background: url('/accounts.png/accounts-dashboard.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li:nth-child(2) svg { display: none; }
@@ -121,7 +121,7 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('accounts-accounts.png') no-repeat center center;
+  background: url('/accounts.png/accounts-accounts.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li:nth-child(3) svg { display: none; }
@@ -131,7 +131,7 @@ ul, a {
   width: 24px;
   height: 24px;
   margin-right: 8px;
-  background: url('accounts-portfolios.png') no-repeat center center;
+  background: url('/accounts.png/accounts-portfolios.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li {
