@@ -190,11 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         try {
-          // TODO: udskift 1 med rigtig userId fra session
           const res = await fetch('/accounts/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: 1, name, currency, bank })
+            body: JSON.stringify({ name, currency, bank })
           });
           if (!res.ok) {
             const err = await res.json();

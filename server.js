@@ -16,10 +16,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'megasuperhemmeligt',
+  secret: 'hemmeligkode', // skift til noget unikt i produktion!
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 dag
+  cookie: { secure: false } // secure: true kun hvis du bruger HTTPS!
 }));
 
 // === AUTH GUARD ===

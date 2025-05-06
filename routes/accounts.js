@@ -19,8 +19,12 @@ router.get('/', async (req, res) => {
 // === Opret konto ===
 router.post('/create', async (req, res) => {
   try {
-    const { userId, name, currency, bank } = req.body;
-    if (!userId || !name || !currency || !bank) {
+    if (!req.session.user || !req.session.user.userID) {
+      return res.status(401).json({ message: 'Ikke logget ind' });
+    }
+    const userId = req.session.user.userID;
+    const { name, currency, bank } = req.body;
+    if (!name || !currency || !bank) {
       return res.status(400).json({ message: 'Alle felter skal udfyldes' });
     }
     const account = await accountsModel.createAccount(userId, name, currency, bank);
@@ -33,9 +37,18 @@ router.post('/create', async (req, res) => {
 // === Luk konto ===
 router.post('/close', async (req, res) => {
   try {
+    if (!req.session.user || !req.session.user.userID) {
+      return res.status(401).json({ message: 'Ikke logget ind' });
+    }
+    const userId = req.session.user.userID;
     const { accountId } = req.body;
     if (!accountId) {
       return res.status(400).json({ message: 'Account ID mangler' });
+    }
+    // Tjek ejerskab
+    const accounts = await accountsModel.getAllForUser(userId);
+    if (!accounts.some(acc => acc.accountID == accountId)) {
+      return res.status(403).json({ message: 'Du har ikke adgang til denne konto' });
     }
     await accountsModel.closeAccount(accountId);
     res.json({ message: 'Konto lukket!' });
@@ -61,8 +74,11 @@ router.post('/reopen', async (req, res) => {
 // === Se konti for API (bruges af client-JS) ===
 router.get('/api', async (req, res) => {
   try {
-    // TODO: filtrer på logget-ind bruger
-    const accounts = await accountsModel.getAllForUser(/* userId */ 1);
+    if (!req.session.user || !req.session.user.userID) {
+      return res.status(401).json({ message: 'Ikke logget ind' });
+    }
+    const userId = req.session.user.userID;
+    const accounts = await accountsModel.getAllForUser(userId);
     res.json(accounts);
   } catch (err) {
     res.status(500).json({ message: 'Fejl ved hentning af konti', error: err.message });
@@ -83,9 +99,17 @@ router.get('/transactions/:accountId', async (req, res) => {
 // === Indsæt penge på konto ===
 router.post('/deposit', async (req, res) => {
   try {
+    if (!req.session.user || !req.session.user.userID) {
+      return res.status(401).json({ message: 'Ikke logget ind' });
+    }
+    const userId = req.session.user.userID;
     const { accountId, amount } = req.body;
     if (!accountId || !amount) {
       return res.status(400).json({ message: 'Account ID og beløb mangler' });
+    }
+    const accounts = await accountsModel.getAllForUser(userId);
+    if (!accounts.some(acc => acc.accountID == accountId)) {
+      return res.status(403).json({ message: 'Du har ikke adgang til denne konto' });
     }
     await accountsModel.deposit(accountId, amount);
     res.json({ message: 'Beløb indsat!' });
