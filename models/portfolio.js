@@ -138,6 +138,33 @@ const Portfolio = {
       total += (stock.amount || 0) * (price - (stock.bought_at || 0));
     }
     return total;
+  },
+
+  // Hent alle holdings for en portefølje (med pris og værdi)
+  getHoldingsForPortfolio: async (portfolioId) => {
+    const stocks = await Portfolio.getStocksForPortfolio(portfolioId);
+    const holdings = [];
+    for (const stock of stocks) {
+      let price = 0;
+      try {
+        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        price = quote.price || 0;
+      } catch (e) { price = 0; }
+      // Hvis du har currency på stock, hent valutakurs
+      let rate = 1;
+      if (stock.currency && stock.currency !== 'DKK') {
+        try {
+          const { getExchangeRate } = require('../services/exchangeRate');
+          rate = await getExchangeRate(stock.currency, 'DKK');
+        } catch (e) { rate = 1; }
+      }
+      holdings.push({
+        ...stock,
+        price,
+        value: (stock.amount || 0) * price * rate
+      });
+    }
+    return holdings;
   }
 };
 
