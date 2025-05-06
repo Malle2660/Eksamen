@@ -47,4 +47,8 @@ router.get('/portfolios/:portfolioId', async (req, res) => {
   res.render('growthTech', { portfolioId });
 });
 
+router.get('/portfolios/:portfolioId/history', async (req, res) => {
+  // Returnér [{date: '2024-05-01', value: 12345}, ...]
+});
+
 module.exports = router;

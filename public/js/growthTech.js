@@ -84,5 +84,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = `/portfolios/${portfolioId}`;
       });
     });
+  
+    // 1. Beregn fordeling
+    const distribution = rows.map(r => ({
+      label: r.name,
+      value: r.value
+    }));
+  
+    // 2. Tegn donut/pie chart (fx med Chart.js eller bare med SVG/Canvas)
+    const pieCtx = document.querySelector('.pie-chart-placeholder');
+    pieCtx.innerHTML = '<canvas id="pieChart"></canvas>';
+    new Chart(document.getElementById('pieChart'), {
+      type: 'pie',
+      data: {
+        labels: distribution.map(d => d.label),
+        datasets: [{
+          data: distribution.map(d => d.value),
+          backgroundColor: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f']
+        }]
+      }
+    });
+  
+    // 3. Opdater legend
+    const legend = document.querySelector('.pie-card .legend');
+    legend.innerHTML = distribution.map((d,i) => `
+      <li>
+        <span class="legend-color" style="background:${['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'][i]}"></span>
+        ${d.label}: ${d.value.toLocaleString()} DKK
+      </li>
+    `).join('');
   });
   
