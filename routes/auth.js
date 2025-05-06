@@ -32,33 +32,27 @@ router.post('/register', async (req, res) => {
 
 // === Login ===
 router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Alle felter skal udfyldes' });
-    }
-
     const user = await usersModel.findByUsername(username);
     if (!user) {
-      return res.status(401).json({ message: 'Ugyldigt brugernavn eller adgangskode' });
+      return res.status(401).json({ error: 'Forkert brugernavn eller adgangskode' });
     }
-
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-      return res.status(401).json({ message: 'Ugyldigt brugernavn eller adgangskode' });
+    if (!user.password) {
+      return res.status(500).json({ error: 'Brugerens adgangskode mangler i databasen' });
     }
-
-    // --- Sæt session på succesfuldt login ---
+    const match = bcrypt.compareSync(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: 'Forkert brugernavn eller adgangskode' });
+    }
     req.session.user = {
-      id:       user.userID || user.id,
+      userID: user.userID,
       username: user.username
     };
-
-    // Returnér et simpelt JSON-svar
-    res.json({ message: 'OK', userId: req.session.user.id });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Fejl ved login:', err);
-    res.status(500).json({ message: 'Fejl ved login', error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Serverfejl' });
   }
 });
 

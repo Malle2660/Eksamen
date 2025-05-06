@@ -6,6 +6,13 @@ const transactionsModel = require('../models/accountsModel'); // eller transacti
 
 const router = express.Router();
 
+function requireLogin(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Ikke logget ind' });
+  }
+  next();
+}
+
 // ————— VIS accounts-siden —————
 router.get('/', async (req, res) => {
   // Du kan i fremtiden hente data server-side og sende til view:
@@ -17,21 +24,14 @@ router.get('/', async (req, res) => {
 });
 
 // === Opret konto ===
-router.post('/create', async (req, res) => {
-  try {
-    if (!req.session.user || !req.session.user.userID) {
-      return res.status(401).json({ message: 'Ikke logget ind' });
-    }
-    const userId = req.session.user.userID;
-    const { name, currency, bank } = req.body;
-    if (!name || !currency || !bank) {
-      return res.status(400).json({ message: 'Alle felter skal udfyldes' });
-    }
-    const account = await accountsModel.createAccount(userId, name, currency, bank);
-    res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
-  } catch (error) {
-    res.status(500).json({ message: 'Fejl ved oprettelse af konto', error: error.message });
+router.post('/create', requireLogin, async (req, res) => {
+  const userId = req.session.user.userID;
+  const { name, currency, bank } = req.body;
+  if (!name || !currency || !bank) {
+    return res.status(400).json({ message: 'Alle felter skal udfyldes' });
   }
+  const account = await accountsModel.createAccount(userId, name, currency, bank);
+  res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
 });
 
 // === Luk konto ===
@@ -72,17 +72,10 @@ router.post('/reopen', async (req, res) => {
 });
 
 // === Se konti for API (bruges af client-JS) ===
-router.get('/api', async (req, res) => {
-  try {
-    if (!req.session.user || !req.session.user.userID) {
-      return res.status(401).json({ message: 'Ikke logget ind' });
-    }
-    const userId = req.session.user.userID;
-    const accounts = await accountsModel.getAllForUser(userId);
-    res.json(accounts);
-  } catch (err) {
-    res.status(500).json({ message: 'Fejl ved hentning af konti', error: err.message });
-  }
+router.get('/api', requireLogin, async (req, res) => {
+  const userId = req.session.user.userID;
+  const accounts = await accountsModel.getAllForUser(userId);
+  res.json(accounts);
 });
 
 // === Hent transaktioner ===
