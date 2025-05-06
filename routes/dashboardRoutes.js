@@ -13,7 +13,7 @@ function requireAuth(req, res, next) {
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
-    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
     // Saml alle aktier på tværs af porteføljer
     let allHoldings = [];
@@ -66,7 +66,7 @@ router.get('/', requireAuth, async (req, res, next) => {
 router.get('/metrics', requireAuth, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
-    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
     let totalValue = 0;
     let totalUnrealized = 0;
@@ -103,7 +103,7 @@ router.get('/metrics', requireAuth, async (req, res, next) => {
 router.get('/top/value', requireAuth, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
-    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
@@ -130,7 +130,7 @@ router.get('/top/value', requireAuth, async (req, res, next) => {
 router.get('/top/profit', requireAuth, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
-    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
@@ -157,7 +157,7 @@ router.get('/top/profit', requireAuth, async (req, res, next) => {
 router.get('/history', requireAuth, async (req, res, next) => {
   try {
     const userId = req.session.user.id;
-    const portfolios = await Portfolio.getPortfoliosForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
     // Find alle stocks for brugerens porteføljer
     let allStocks = [];
