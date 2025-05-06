@@ -5,7 +5,7 @@ const Portfolio      = require('../models/portfolio');
 const { batchQuotes }   = require('../services/alphaVantage');
 const { latestRates }   = require('../services/ExchangeRate');
 
-// Hent holdings fra din model
+// Hent holdings fra din modelen 
 router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
   try {
     const holdings = await Portfolio.getHoldingsForPortfolio(req.params.portfolioId);
