@@ -1,7 +1,7 @@
 const { sql, poolPromise } = require('../db/database');
 
 const Portfolio = {
-  // Hent ALLE porteføljer for en bruger
+  // Hent alle porteføljer for en bruger
   getAllForUser: async (userId) => {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -19,7 +19,7 @@ const Portfolio = {
     return result.recordset[0];
   },
 
-  // Opret ny portefølje med brugerID
+  // Opret ny portefølje
   create: async (name, accountId, userId) => {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -41,49 +41,7 @@ const Portfolio = {
       .query('DELETE FROM Portfolios WHERE portfolioID = @portfolioId');
   },
 
-  // Dashboard: aktiebeholdning
-  getHoldingsForPortfolio: async (portfolioId) => {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('portfolioId', sql.Int, portfolioId)
-      .query(`
-        SELECT 
-          s.symbol,
-          s.amount AS volume,
-          s.bought_at AS avgCost,
-          a.currency
-        FROM Stocks s
-        JOIN Portfolios p ON s.portfolio_id = p.portfolioID
-        JOIN Accounts a ON p.accountID = a.accountID
-        WHERE p.portfolioID = @portfolioId
-      `);
-    return result.recordset;
-  },
-
-  // Dashboard: samlet værdi og profit (placeholder)
-  getPortfolioOverview: async (portfolioId) => {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('portfolioId', sql.Int, portfolioId)
-      .query(`
-        SELECT
-          ISNULL(SUM(s.amount * s.bought_at), 0) AS totalPurchase,
-          0 AS totalExpected,
-          0 AS totalUnrealized
-        FROM Stocks s
-        WHERE s.portfolio_id = @portfolioId
-      `);
-    return result.recordset[0];
-  },
-
-  getPortfoliosForUser: async (userId) => {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query('SELECT * FROM Portfolios WHERE userID = @userId');
-    return result.recordset;
-  },
-
+  // Hent alle aktier for en portefølje
   getStocksForPortfolio: async (portfolioId) => {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -99,25 +57,87 @@ const Portfolio = {
     return result.recordset;
   },
 
-  calculateExpectedValue: async (portfolioID) => {
+  // GAK (gennemsnitlig anskaffelseskurs) for én aktie i en portefølje
+  getGAKForStock: async (portfolioId, symbol) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .input('symbol', sql.NVarChar(10), symbol)
+      .query(`
+        SELECT 
+          SUM(s.amount * s.bought_at) AS totalPurchase,
+          SUM(s.amount) AS totalAmount
+        FROM Stocks s
+        WHERE s.portfolio_id = @portfolioId AND s.symbol = @symbol
+      `);
+    const row = result.recordset[0];
+    if (!row || !row.totalAmount) return 0;
+    return row.totalPurchase / row.totalAmount;
+  },
+
+  // Samlet erhvervelsespris for en portefølje
+  getTotalPurchaseForPortfolio: async (portfolioId) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .query(`
+        SELECT ISNULL(SUM(s.amount * s.bought_at), 0) AS totalPurchase
+        FROM Stocks s
+        WHERE s.portfolio_id = @portfolioId
+      `);
+    return result.recordset[0].totalPurchase;
+  },
+
+  // Forventet værdi for en portefølje (alle aktier)
+  getExpectedValueForPortfolio: async (portfolioId) => {
     let totalValue = 0;
-    const stocks = await Portfolio.getStocksForPortfolio(portfolioID);
+    const stocks = await Portfolio.getStocksForPortfolio(portfolioId);
     for (const stock of stocks) {
       let price = 0;
       try {
         const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
         price = quote.price || 0;
       } catch (e) { price = 0; }
-      let rate = 1;
-      if (stock.currency && stock.currency !== 'DKK') {
-        try {
-          const rates = await require('../services/exchangeRate').getExchangeRate('DKK');
-          rate = rates[stock.currency] || 1;
-        } catch (e) { rate = 1; }
-      }
-      totalValue += (stock.amount || 0) * price * rate;
+      totalValue += (stock.amount || 0) * price;
     }
     return totalValue;
+  },
+
+  // Urealiseret gevinst/tab for én aktie
+  getUnrealizedForStock: async (portfolioId, symbol) => {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .input('symbol', sql.NVarChar(10), symbol)
+      .query(`
+        SELECT SUM(s.amount * s.bought_at) AS totalPurchase, SUM(s.amount) AS totalAmount
+        FROM Stocks s
+        WHERE s.portfolio_id = @portfolioId AND s.symbol = @symbol
+      `);
+    const row = result.recordset[0];
+    if (!row || !row.totalAmount) return 0;
+    let price = 0;
+    try {
+      const quote = await require('../services/alphaVantage').getStockQuote(symbol);
+      price = quote.price || 0;
+    } catch (e) { price = 0; }
+    const expectedValue = row.totalAmount * price;
+    return expectedValue - row.totalPurchase;
+  },
+
+  // Samlet urealiseret gevinst/tab for en portefølje
+  getTotalUnrealizedForPortfolio: async (portfolioId) => {
+    const stocks = await Portfolio.getStocksForPortfolio(portfolioId);
+    let total = 0;
+    for (const stock of stocks) {
+      let price = 0;
+      try {
+        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        price = quote.price || 0;
+      } catch (e) { price = 0; }
+      total += (stock.amount || 0) * (price - (stock.bought_at || 0));
+    }
+    return total;
   }
 };
 

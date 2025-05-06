@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!Array.isArray(portfolios) || portfolios.length === 0) {
         if (tableBody) {
-          tableBody.innerHTML = `<tr><td colspan="8">Ingen porteføljer endnu</td></tr>`;
+          tableBody.innerHTML = `<tr><td colspan="11">Ingen porteføljer endnu</td></tr>`;
         }
         if (countEl) countEl.textContent = '0';
         if (valueEl) valueEl.textContent = '0.00 DKK';
@@ -43,7 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tableBody.innerHTML = '';
 
-      portfolios.forEach(p => {
+      for (const p of portfolios) {
+        // Hent ekstra data for porteføljen
+        const [totalPurchase, totalUnrealized] = await Promise.all([
+          fetch(`/portfolios/${p.portfolioID}/total-purchase`).then(r => r.json()).then(d => d.totalPurchase),
+          fetch(`/portfolios/${p.portfolioID}/total-unrealized`).then(r => r.json()).then(d => d.totalUnrealized)
+        ]);
+
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>
@@ -51,24 +57,47 @@ document.addEventListener('DOMContentLoaded', () => {
               ${p.name || '-'}
             </a>
           </td>
+          <td>${totalPurchase !== undefined ? totalPurchase.toFixed(2) + ' DKK' : '-'}</td>
           <td>${p.expectedValue !== undefined ? p.expectedValue.toFixed(2) + ' DKK' : '-'}</td>
-          <td class="${(p.dailyChange || 0) >= 0 ? 'percent positive' : 'percent negative'}">
-            ${(p.dailyChange || 0).toFixed(2)}%
-          </td>
-          <td>${(p.realizedGain || 0).toFixed(2)} DKK</td>
-          <td>${(p.unrealizedGain || 0).toFixed(2)} DKK</td>
-          <td>${(p.expectedValue || 0).toFixed(2)} DKK</td>
+          <td>${totalUnrealized !== undefined ? totalUnrealized.toFixed(2) + ' DKK' : '-'}</td>
           <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString('da-DK') : '-'}</td>
           <td><button class="tilfoj-aktie-btn" data-id="${p.portfolioID}">Tilføj aktie</button></td>
+          <td><button class="vis-aktier-btn" data-id="${p.portfolioID}">Vis aktier</button></td>
+          <td><button class="slet-portfolio-btn" data-id="${p.portfolioID}">Slet</button></td>
         `;
         tableBody.appendChild(row);
-      });
+      }
 
       // Bind knapper EFTER tabellen er genereret!
       document.querySelectorAll('.tilfoj-aktie-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const portfolioId = btn.getAttribute('data-id');
           showAddStockForm(portfolioId);
+        });
+      });
+      document.querySelectorAll('.vis-aktier-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const portfolioId = btn.getAttribute('data-id');
+          await showStocksForPortfolio(portfolioId);
+        });
+      });
+      document.querySelectorAll('.slet-portfolio-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const portfolioId = btn.getAttribute('data-id');
+          if (confirm('Er du sikker på, at du vil slette denne portefølje?')) {
+            try {
+              const res = await fetch(`/portfolios/${portfolioId}`, { method: 'DELETE' });
+              const data = await res.json();
+              if (res.ok) {
+                showNotification('Portefølje slettet!', 'success');
+                loadPortfolios();
+              } else {
+                showNotification(data.message || 'Kunne ikke slette portefølje', 'error');
+              }
+            } catch (err) {
+              showNotification('Fejl ved sletning', 'error');
+            }
+          }
         });
       });
 
@@ -81,6 +110,87 @@ document.addEventListener('DOMContentLoaded', () => {
       if (valueEl) valueEl.textContent = 'Fejl';
       if (percentEl) percentEl.textContent = 'Fejl';
       if (dkkChangeEl) dkkChangeEl.textContent = 'Fejl';
+    }
+  }
+
+  async function showStocksForPortfolio(portfolioId) {
+    try {
+      const res = await fetch(`/portfolios/${portfolioId}/stocks`);
+      const stocks = await res.json();
+      if (!Array.isArray(stocks) || stocks.length === 0) {
+        showNotification('Ingen aktier i denne portefølje.', 'info');
+        return;
+      }
+      // Saml aktier med samme symbol
+      const grouped = {};
+      for (const s of stocks) {
+        if (!grouped[s.symbol]) grouped[s.symbol] = { ...s, amount: 0, totalBuy: 0 };
+        grouped[s.symbol].amount += s.amount;
+        grouped[s.symbol].totalBuy += s.amount * s.bought_at;
+      }
+      // Byg rækker med beregninger
+      const rows = await Promise.all(Object.values(grouped).map(async s => {
+        // GAK
+        const gak = s.amount ? s.totalBuy / s.amount : 0;
+        // Forventet værdi
+        let expectedValue = '-';
+        let price = 0;
+        try {
+          const quoteRes = await fetch(`/api/alpha-vantage/${s.symbol}`);
+          const quote = await quoteRes.json();
+          if (quote && quote.price) {
+            price = quote.price;
+            expectedValue = (s.amount * price).toFixed(2) + ' DKK';
+          }
+        } catch (e) { expectedValue = '-'; }
+        // Urealiseret gevinst/tab
+        const unrealized = price ? (s.amount * (price - gak)) : 0;
+        return `
+          <tr>
+            <td>${s.symbol}</td>
+            <td>${s.amount}</td>
+            <td>${s.totalBuy.toFixed(2)} DKK</td>
+            <td>${gak.toFixed(2)} DKK</td>
+            <td>${expectedValue}</td>
+            <td style="color:${unrealized >= 0 ? 'green' : 'red'}">${unrealized.toFixed(2)} DKK</td>
+          </tr>
+        `;
+      }));
+      // Modal HTML
+      let modal = document.getElementById('stocksModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'stocksModal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        document.body.appendChild(modal);
+      }
+      modal.innerHTML = `
+        <div style="background:#fff;padding:2rem;border-radius:8px;min-width:600px;max-width:90vw;max-height:80vh;overflow:auto;box-shadow:0 2px 16px #0002;">
+          <h2>Aktier i portefølje</h2>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr style="background:#f5f5f5">
+              <th>Symbol</th><th>Antal</th><th>Købspris</th><th>GAK</th><th>Forventet værdi</th><th>Urealiseret gevinst/tab</th>
+            </tr>
+            ${rows.join('')}
+          </table>
+          <button id="closeStocksModal" style="margin-top:1rem;float:right;">Luk</button>
+        </div>
+      `;
+      modal.style.display = 'flex';
+      document.getElementById('closeStocksModal').onclick = () => {
+        modal.style.display = 'none';
+      };
+    } catch (err) {
+      showNotification('Kunne ikke hente aktier for porteføljen.', 'error');
     }
   }
 
