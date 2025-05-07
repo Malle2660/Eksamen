@@ -8,12 +8,24 @@ const router = express.Router();
 
 // ————— VIS accounts-siden —————
 router.get('/', async (req, res) => {
-  // Du kan i fremtiden hente data server-side og sende til view:
-  // const data = await accountsModel.getAllForUser( … );
-  // res.render('accounts', { accounts: data });
-
-  // Nu bare render viewet
-  res.render('accounts');
+  try {
+    const userId = 1; // Hardcoded for now
+    const accounts = await accountsModel.getAccountsByUserId(userId);
+    const totalBalance = await accountsModel.getTotalBalance(userId);
+    
+    res.render('accounts', { 
+      accounts, 
+      totalBalance,
+      error: null 
+    });
+  } catch (err) {
+    console.error('Fejl ved hentning af konti:', err);
+    res.render('accounts', { 
+      accounts: [], 
+      totalBalance: 0,
+      error: 'Kunne ikke hente konti' 
+    });
+  }
 });
 
 // === Opret konto ===

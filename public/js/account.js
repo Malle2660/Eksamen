@@ -49,15 +49,18 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Render antal, samlet balance og valutafordeling
     function renderMetrics(accounts) {
+      // Kun aktive konti (closedAccount === 0)
+      const activeAccounts = accounts.filter(acc => acc.closedAccount === 0 || acc.closedAccount === false);
+  
       let total        = 0;
       const byCurrency = {};
   
-      accounts.forEach(acc => {
+      activeAccounts.forEach(acc => {
         total += acc.balance;
         byCurrency[acc.currency] = (byCurrency[acc.currency] || 0) + acc.balance;
       });
   
-      countEl.textContent    = accounts.length;
+      countEl.textContent    = activeAccounts.length;
       totalBalEl.textContent = `${total.toFixed(2)} DKK`;
   
       const grandTotal = Object.values(byCurrency).reduce((a,b) => a + b, 0);
@@ -328,6 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
         showTransactions(btn.dataset.id);
       });
     });
+
+    // Tilføj dette i din DOMContentLoaded callback i public/js/account.js
+    const backBtn = document.getElementById('back-to-dashboard-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        window.location.href = '/dashboard';
+      });
+    }
   });
   
   async function showTransactions(accountId) {
@@ -364,4 +375,30 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Fejl: ' + err.message);
     }
   }
+  
+  // Funktion til at opdatere den samlede saldo
+  async function updateTotalBalance() {
+    try {
+        const response = await fetch('/accounts');
+        const data = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newTotalBalance = doc.querySelector('.total-balance .balance-amount').textContent;
+        document.querySelector('.total-balance .balance-amount').textContent = newTotalBalance;
+    } catch (error) {
+        console.error('Fejl ved opdatering af samlet saldo:', error);
+    }
+  }
+
+  // Opdater samlet saldo når en konto ændres
+  document.addEventListener('DOMContentLoaded', () => {
+    const accountForms = document.querySelectorAll('form[data-account-form]');
+    accountForms.forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Eksisterende form handling...
+            await updateTotalBalance();
+        });
+    });
+  });
   
