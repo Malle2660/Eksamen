@@ -179,3 +179,7 @@ function renderValueChart(history) {
   }
 });
 }
+
+document.getElementById('back-to-login-btn').addEventListener('click', function() {
+  window.location.href = '/';
+});

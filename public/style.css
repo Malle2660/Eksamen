@@ -181,3 +181,71 @@ td, th {
     display: none;
     /* Elementet bliver usynligt og optager ikke plads */
 }
+
+.sidebar-logo {
+    display: block;
+    margin: 24px auto 32px auto;
+    max-width: 120px;
+    height: auto;
+}
+
+.sidebar-header {
+    background: #6C5BA7;
+    padding: 24px 20px 20px 20px;
+    display: flex;
+    align-items: center;
+}
+
+.logo-icon {
+    height: 48px;
+    margin-right: 16px;
+}
+
+.logo-text h1 {
+    color: #fff;
+    font-size: 20px;
+    margin: 0;
+    letter-spacing: 1px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+}
+
+.logo-text p {
+    color: #fff;
+    font-size: 11px;
+    margin: 0;
+    letter-spacing: 1px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+}
+
+.collapse-btn {
+    margin-left: auto;
+    margin-right: -16px;
+    width: 32px;
+    height: 32px;
+    background: #242424;
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+}
+
+.collapse-btn span {
+    width: 32px;
+    height: 32px;
+    background: #231F20;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapse-btn span span {
+    font-size: 22px;
+    color: #fff;
+}
