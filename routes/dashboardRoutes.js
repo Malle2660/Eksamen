@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const Portfolio = require('../models/portfolio');
-const { getStockQuote } = require('../services/alphaVantage');
+const { getStockQuote } = require('../services/finnhub');
 const sql = require('mssql');
 
 // === VIEW: Dashboard (EJS) på GET /dashboard ===

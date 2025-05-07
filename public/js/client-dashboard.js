@@ -176,6 +176,6 @@ function renderValueChart(history) {
           }
         }
       }
-    }
-  });
+  }
+});
 }

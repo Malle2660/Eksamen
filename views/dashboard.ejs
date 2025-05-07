@@ -101,5 +101,25 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/client-dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx = document.getElementById('totalValueChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['2024-05-01', '2024-05-02'],
+          datasets: [{
+            label: 'Samlet værdi',
+            data: [10000, 12000],
+            borderColor: '#4e79a7',
+            backgroundColor: 'rgba(78,121,167,0.1)',
+            tension: 0.4,
+            pointRadius: 0,
+            fill: true
+          }]
+        }
+      });
+    });
+  </script>
 </body>
 </html>

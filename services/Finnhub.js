@@ -1,15 +1,16 @@
 const { sql, poolPromise } = require('../db/database');
 const fetch = require('node-fetch');
 
-async function fetchFromAlphaVantage(symbol) {
-  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
-  const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+async function fetchFromFinnhub(symbol) {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`;
   const response = await fetch(url);
   const data = await response.json();
-  console.log('Alpha Vantage response:', data);
-  // Alpha Vantage returnerer prisen i dette felt:
-  const price = parseFloat(data['Global Quote']?.['05. price']);
-  if (!price) throw new Error('Kunne ikke hente pris fra Alpha Vantage');
+  console.log('Finnhub response:', data);
+
+  // Finnhub returnerer prisen i 'c' feltet (current price)
+  const price = parseFloat(data.c);
+  if (!price) throw new Error('Kunne ikke hente pris fra Finnhub');
   return price;
 }
 
@@ -29,8 +30,8 @@ async function getStockQuote(symbol) {
       return { price: cached.price };
     }
   }
-  // 2. Ellers hent fra Alpha Vantage
-  const price = await fetchFromAlphaVantage(symbol);
+  // 2. Ellers hent fra Finnhub
+  const price = await fetchFromFinnhub(symbol);
   // 3. Gem i cache
   await pool.request()
     .input('symbol', symbol)

@@ -2,8 +2,9 @@
 const express        = require('express');
 const router         = express.Router();
 const Portfolio      = require('../models/portfolio');
-const { batchQuotes }   = require('../services/alphaVantage');
+const { batchQuotes }   = require('../services/finnhub');
 const { latestRates }   = require('../services/ExchangeRate');
+const { getStockQuote } = require('../services/finnhub');
 
 // Hent holdings fra din  model test
 router.get('/portfolios/:portfolioId/holdings', async (req, res) => {

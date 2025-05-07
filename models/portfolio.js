@@ -97,7 +97,7 @@ const Portfolio = {
     for (const stock of stocks) {
       let price = 0;
       try {
-        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        const quote = await require('../services/finnhub').getStockQuote(stock.symbol);
         price = quote.price || 0;
       } catch (e) { price = 0; }
       totalValue += (stock.amount || 0) * price;
@@ -120,7 +120,7 @@ const Portfolio = {
     if (!row || !row.totalAmount) return 0;
     let price = 0;
     try {
-      const quote = await require('../services/alphaVantage').getStockQuote(symbol);
+      const quote = await require('../services/finnhub').getStockQuote(symbol);
       price = quote.price || 0;
     } catch (e) { price = 0; }
     const expectedValue = row.totalAmount * price;
@@ -134,7 +134,7 @@ const Portfolio = {
     for (const stock of stocks) {
       let price = 0;
       try {
-        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        const quote = await require('../services/finnhub').getStockQuote(stock.symbol);
         price = quote.price || 0;
       } catch (e) { price = 0; }
       total += (stock.amount || 0) * (price - (stock.bought_at || 0));
@@ -149,7 +149,7 @@ const Portfolio = {
     for (const stock of stocks) {
       let price = 0;
       try {
-        const quote = await require('../services/alphaVantage').getStockQuote(stock.symbol);
+        const quote = await require('../services/finnhub').getStockQuote(stock.symbol);
         price = quote.price || 0;
       } catch (e) { price = 0; }
       // Hvis du har currency på stock, hent valutakurs

@@ -29,14 +29,15 @@ const accountsRoutes      = require('./routes/accounts');
 const transactionsRoutes  = require('./routes/transactionsRoutes');
 const portfolioRoutes     = require('./routes/portfolioRoutes');
 const exchangeRoutes      = require('./routes/exchangeRateRoutes');
-const alphaRoutes         = require('./routes/alphaVantageRoutes');
+
 const dashboardRoutes     = require('./routes/dashboardRoutes');
 const growthRoutes        = require('./routes/growthRoutes');
+const finnhubRoutes        = require('./routes/finnhubRoutes');
 
 // --- JSON‐API ENDPOINTS (før view‐ruterne) ---
 app.use('/api/exchange-rate', requireAuth, exchangeRoutes);
-app.use('/api/alpha-vantage', requireAuth, alphaRoutes);
 app.use('/api/growth',        requireAuth, growthRoutes);
+app.use('/api/finnhub',        requireAuth, finnhubRoutes);
 
 // --- CRUD‐ENDPOINTS ---
 app.use('/auth',         authRoutes);

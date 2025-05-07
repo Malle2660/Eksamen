@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Portfolio = require('../models/portfolio');
 const Stock = require('../models/stock');
-const { getStockQuote } = require('../services/alphaVantage');
+const { getStockQuote } = require('../services/finnhub');
 const { getExchangeRate } = require('../services/exchangeRate');
 
 
@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
 // === GET: API – hent porteføljer for logget bruger (med forventet værdi)
 router.get('/user', async (req, res) => {
   const userId = req.session.user.userID;
-  const portfolios = await Portfolio.getAllForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
   // Tilføj beregninger for hver portefølje
   const result = [];
@@ -39,9 +39,9 @@ router.get('/user', async (req, res) => {
     const unrealizedGain = await Portfolio.getTotalUnrealizedForPortfolio(p.portfolioID);
     // Tilføj evt. dailyChange hvis du har det
     result.push({
-      ...p,
+          ...p,
       expectedValue,
-      unrealizedGain,
+          unrealizedGain,
       dailyChange: 0 // eller beregn rigtigt hvis du har data
     });
   }
