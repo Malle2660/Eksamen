@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!res.ok) {
             const err = await res.json();
             throw new Error(err.message || 'Fejl ved indsættelse af beløb');
-          }
+        }
           depositModal.style.display = 'none';
           loadAccounts();
           // Opdater evt. historik hvis den vises

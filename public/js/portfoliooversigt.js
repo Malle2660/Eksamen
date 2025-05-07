@@ -356,6 +356,13 @@ document.addEventListener('DOMContentLoaded', () => {
   sessionStorage.setItem('userId', userId);
 
   loadPortfolios();
+
+  const backBtn = document.getElementById('back-to-dashboard-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.location.href = '/dashboard';
+    });
+  }
 });
 
 document.addEventListener('click', function(e) {

@@ -58,10 +58,12 @@ ul, a {
   padding: 0;
 }
 .logo-icon {
+  background: var(--sidebar-bg);
   width: 75px;
   height: 64px;
   margin-left: 0;
   margin-right: -10px;
+  padding: 0;
   border-radius: 4px;
   object-fit: contain;
 }
@@ -76,15 +78,16 @@ ul, a {
   font-size: 0.8rem;
   letter-spacing: 0.1em;
   color: #fff;
-  margin-bottom: 2px;
+  margin: 0 0 2px 0;
 }
 .logo-text p {
   font-weight: 600;
   font-size: 0.5rem;
-  letter-spacing: 0.15em;
   color: var(--text-light);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   white-space: nowrap;
+  margin: 0;
 }
 .collapse-btn {
   margin-left: auto;
@@ -110,27 +113,30 @@ ul, a {
 .sidebar-nav li:nth-child(1)::before {
   content: "";
   display: inline-block;
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   margin-right: 8px;
-  background: url('dashboard.png') no-repeat center center;
+  background: url('/accounts.png/accounts-dashboard.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li:nth-child(2) svg { display: none; }
 .sidebar-nav li:nth-child(2)::before {
   content: "";
   display: inline-block;
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   margin-right: 8px;
-  background: url('accounts.png') no-repeat center center;
+  background: url('/accounts.png/accounts-accounts.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li:nth-child(3) svg { display: none; }
 .sidebar-nav li:nth-child(3)::before {
   content: "";
   display: inline-block;
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   margin-right: 8px;
-  background: url('portfolios.png') no-repeat center center;
+  background: url('/accounts.png/accounts-portfolios.png') no-repeat center center;
   background-size: contain;
 }
 .sidebar-nav li {
@@ -142,13 +148,15 @@ ul, a {
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
-.sidebar-nav li:hover {
+.sidebar-nav li:hover,
+.sidebar-nav li.active {
   background: rgba(255,255,255,0.05);
   color: #fff;
 }
 .sidebar-nav svg {
   flex-shrink: 0;
-  width: 20px; height: 20px;
+  width: 20px;
+  height: 20px;
   margin-right: 12px;
   fill: var(--text-light);
 }

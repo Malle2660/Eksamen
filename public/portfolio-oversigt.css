@@ -53,35 +53,58 @@ ul, a {
   height: 64px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0;
 }
 .logo-icon {
   width: 75px;
   height: 64px;
+  margin-left: 0;
+  margin-right: -10px;
+  border-radius: 4px;
   object-fit: contain;
 }
 .logo-text {
+  display: inline-block;
+  text-align: center;
   margin-left: 8px;
 }
 .logo-text h1 {
   font-family: 'Roboto Slab', serif;
+  font-weight: 700;
   font-size: 0.8rem;
+  letter-spacing: 0.1em;
   color: #fff;
+  margin-bottom: 2px;
 }
 .logo-text p {
+  font-weight: 600;
   font-size: 0.5rem;
+  letter-spacing: 0.15em;
   color: var(--text-light);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .collapse-btn {
   margin-left: auto;
+  margin-right: -16px;
   width: 32px;
   height: 32px;
-  background: var(--button-bg);
+  background: #231F20;
   border: none;
   border-radius: 50%;
-  color: var(--button-text);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  font-size: 22px;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+  box-shadow: none;
+  outline: none;
 }
+/* Ingen hover, ingen active, ingen focus! */
 
 /* ----- NAVIGATION ----- */
 .sidebar-nav ul {

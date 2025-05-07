@@ -4,24 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PortfolioTracker – Porteføljeoversigt</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/portfolio-oversigt.css" />
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="sidebar-header">
+        <img src="/accounts.png/accounts-logo.png" alt="Logo" class="logo-icon"/>
         <div class="logo-text">
-          <h1>PortfolioTracker</h1>
-          <p>Invest smarter</p>
+          <h1>PORTFOLIOTRACKER</h1>
+          <p>ORGANIZING YOUR FINANCES</p>
         </div>
+        <button id="back-to-dashboard-btn" class="collapse-btn" aria-label="Skjul sidebar">❮</button>
       </div>
       <nav class="sidebar-nav">
         <ul>
-          <li class="active">Dashboard</li>
-          <li>Accounts</li>
-          <li>Portfolios</li>
+          <li><a href="/">Dashboard</a></li>
+          <li><a href="/accounts">Accounts</a></li>
+          <li class="active"><a href="/portfolios">Portfolios</a></li>
         </ul>
       </nav>
     </aside>

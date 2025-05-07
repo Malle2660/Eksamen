@@ -113,5 +113,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${d.label}: ${d.value.toLocaleString()} DKK
       </li>
     `).join('');
+  
+    document.addEventListener('DOMContentLoaded', function() {
+      var backBtn = document.getElementById('back-to-portfolios-btn');
+      if (backBtn) {
+        backBtn.addEventListener('click', function() {
+          window.location.href = '/portfolios';
+        });
+      }
+    });
   });
   

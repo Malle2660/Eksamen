@@ -33,10 +33,10 @@ router.post('/create', async (req, res) => {
   const userId = req.session.user.userID;
   const { name, currency, bank } = req.body;
   if (!name || !currency || !bank) {
-    return res.status(400).json({ message: 'Alle felter skal udfyldes' });
-  }
-  const account = await accountsModel.createAccount(userId, name, currency, bank);
-  res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
+      return res.status(400).json({ message: 'Alle felter skal udfyldes' });
+    }
+    const account = await accountsModel.createAccount(userId, name, currency, bank);
+    res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
 });
 
 // === Luk konto ===
@@ -80,7 +80,7 @@ router.post('/reopen', async (req, res) => {
 router.get('/api', async (req, res) => {
   const userId = req.session.user.userID;
   const accounts = await accountsModel.getAllForUser(userId);
-  res.json(accounts);
+    res.json(accounts);
 });
 
 // === Hent transaktioner ===
