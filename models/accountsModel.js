@@ -151,6 +151,32 @@ class AccountsModel {
       `);
     return result.recordset;
   }
+
+  async getAccountsByUserId(userId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('userId', sql.Int, userId)
+        .query(`
+            SELECT * FROM accounts 
+            WHERE userId = @userId 
+            AND closedAccount = 0
+            ORDER BY accountName
+        `);
+    return result.recordset;
+  }
+
+  async getTotalBalance(userId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+        .input('userId', sql.Int, userId)
+        .query(`
+            SELECT SUM(balance) as totalBalance 
+            FROM accounts 
+            WHERE userId = @userId 
+            AND closedAccount = 0
+        `);
+    return result.recordset[0].totalBalance || 0;
+  }
 }
 
 module.exports = new AccountsModel();

@@ -1,0 +1,23 @@
+.total-balance-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.total-balance-container h2 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+}
+
+.total-balance {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.balance-amount {
+    font-family: 'Courier New', monospace;
+} 
