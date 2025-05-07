@@ -48,9 +48,11 @@ const Portfolio = {
       .input('portfolioId', sql.Int, portfolioId)
       .query(`
         SELECT 
+          s.id AS stockID,
           s.symbol,
           s.amount,
-          s.bought_at
+          s.bought_at,
+          s.portfolio_id
         FROM Stocks s
         WHERE s.portfolio_id = @portfolioId
       `);

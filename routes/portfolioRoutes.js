@@ -31,7 +31,22 @@ router.get('/', async (req, res) => {
 router.get('/user', async (req, res) => {
   const userId = req.session.user.userID;
   const portfolios = await Portfolio.getAllForUser(userId);
-  res.json(portfolios);
+
+  // Tilføj beregninger for hver portefølje
+  const result = [];
+  for (const p of portfolios) {
+    const expectedValue = await Portfolio.getExpectedValueForPortfolio(p.portfolioID);
+    const unrealizedGain = await Portfolio.getTotalUnrealizedForPortfolio(p.portfolioID);
+    // Tilføj evt. dailyChange hvis du har det
+    result.push({
+      ...p,
+      expectedValue,
+      unrealizedGain,
+      dailyChange: 0 // eller beregn rigtigt hvis du har data
+    });
+  }
+
+  res.json(result);
 });
 
 // === POST: Opret ny portefølje

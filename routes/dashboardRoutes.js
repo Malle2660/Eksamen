@@ -2,11 +2,12 @@ const express = require('express');
 const router  = express.Router();
 const Portfolio = require('../models/portfolio');
 const { getStockQuote } = require('../services/alphaVantage');
+const sql = require('mssql');
 
 // === VIEW: Dashboard (EJS) på GET /dashboard ===
 router.get('/', async (req, res, next) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
     // Saml alle aktier på tværs af porteføljer
@@ -59,7 +60,7 @@ router.get('/', async (req, res, next) => {
 // === API: Metrics på GET /dashboard/metrics ===
 router.get('/metrics', async (req, res, next) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
     let totalValue = 0;
@@ -96,7 +97,7 @@ router.get('/metrics', async (req, res, next) => {
 // === API: Top 5 efter værdi på GET /dashboard/top/value ===
 router.get('/top/value', async (req, res, next) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
     let allHoldings = [];
@@ -123,7 +124,7 @@ router.get('/top/value', async (req, res, next) => {
 // === API: Top 5 efter profit på GET /dashboard/top/profit ===
 router.get('/top/profit', async (req, res, next) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
     let allHoldings = [];
@@ -150,7 +151,7 @@ router.get('/top/profit', async (req, res, next) => {
 // === API: Historisk samlet værdi til grafen ===
 router.get('/history', async (req, res, next) => {
   try {
-    const userId = req.session.user.id;
+    const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
     // Find alle stocks for brugerens porteføljer
@@ -172,7 +173,7 @@ router.get('/history', async (req, res, next) => {
     if (stockIds.length === 0) return res.json([]);
 
     const result = await pool.request()
-      .input('dateFrom', require('mssql').DateTime, dateFrom)
+      .input('dateFrom', sql.DateTime, dateFrom)
       .query(`
         SELECT stockID, price, date
         FROM PriceHistory
@@ -198,10 +199,26 @@ router.get('/history', async (req, res, next) => {
       value
     }));
 
+    console.log('History data:', graphData);
     res.json(graphData);
   } catch (err) {
     next(err);
   }
+});
+
+// === DEBUG: Se alle aktier for brugerens porteføljer ===
+router.get('/debug/stocks', async (req, res) => {
+  const portfolios = await Portfolio.getAllForUser(req.session.user.userID);
+  console.log('DEBUG: Portfolios:', portfolios);
+  console.log('DEBUG: Session user:', req.session.user);
+  let allStocks = [];
+  for (const p of portfolios) {
+    console.log('DEBUG: Henter aktier for portfolioID:', p.portfolioID);
+    const stocks = await Portfolio.getStocksForPortfolio(p.portfolioID);
+    console.log('DEBUG: Fandt aktier:', stocks);
+    allStocks = allStocks.concat(stocks);
+  }
+  res.json(allStocks);
 });
 
 module.exports = router;

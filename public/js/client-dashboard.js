@@ -136,8 +136,9 @@ function updateChart(newPortfolios) {
 
 async function loadValueHistory() {
   try {
-    const data = await fetchJSON('/history'); // eller '/api/dashboard/history'
+    const data = await fetch('/dashboard/history');
     // data = [{ date: '2024-05-01', value: 12345 }, ...]
+    console.log('Chart data:', data);
     renderValueChart(data);
   } catch (err) {
     console.error('Kunne ikke hente grafdata:', err);

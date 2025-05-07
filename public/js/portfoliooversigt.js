@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let pieChart;
   let currentPortfolioId = null;
 
-  const portfolios = JSON.parse(sessionStorage.getItem('portfolios') || '[]');
 
   async function loadPortfolios() {
     try {
