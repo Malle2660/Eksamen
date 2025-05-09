@@ -96,7 +96,19 @@
               </tr>
             </thead>
             <tbody id="holdingsTable">
-              <!-- JS fylder <tr> her -->
+              <% if (!holdings || holdings.length === 0) { %>
+                <tr><td colspan="5">Ingen aktier i denne portefølje endnu.</td></tr>
+              <% } else { %>
+                <% holdings.forEach(function(stock) { %>
+                  <tr>
+                    <td><%= stock.symbol %></td>
+                    <td><%= stock.amount %></td>
+                    <td><%= stock.bought_at %></td>
+                    <td><%= stock.price %></td>
+                    <td><%= (stock.amount * stock.price).toFixed(2) %> DKK</td>
+                  </tr>
+                <% }) %>
+              <% } %>
             </tbody>
           </table>
         </div>
@@ -120,7 +132,7 @@
         </div>
         <div class="form-group">
           <label for="price">Pris per aktie:</label>
-          <input type="number" id="price" name="price" step="0.01" required>
+          <input type="number" id="price" name="price" step="0.01" required readonly>
         </div>
         <div class="form-group">
           <label for="fee">Gebyr:</label>
@@ -153,7 +165,7 @@
         </div>
         <div class="form-group">
           <label for="sellPrice">Pris per aktie:</label>
-          <input type="number" id="sellPrice" name="sellPrice" step="0.01" required>
+          <input type="number" id="sellPrice" name="sellPrice" step="0.01" required readonly>
         </div>
         <div class="form-group">
           <label for="sellFee">Gebyr:</label>

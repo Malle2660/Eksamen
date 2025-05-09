@@ -30,18 +30,18 @@ router.get('/', async (req, res) => {
 // === GET: API – hent porteføljer for logget bruger (med forventet værdi)
 router.get('/user', async (req, res) => {
   const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
+  const portfolios = await Portfolio.getAllForUser(userId);
 
   // Tilføj beregninger for hver portefølje
   const result = [];
   for (const p of portfolios) {
-    const expectedValue = await Portfolio.getExpectedValueForPortfolio(p.portfolioID);
+    const expectedValue = await Portfolio.getExpectedValueFromHoldings(p.portfolioID);
     const unrealizedGain = await Portfolio.getTotalUnrealizedForPortfolio(p.portfolioID);
     // Tilføj evt. dailyChange hvis du har det
     result.push({
-          ...p,
+      ...p,
       expectedValue,
-          unrealizedGain,
+      unrealizedGain,
       dailyChange: 0 // eller beregn rigtigt hvis du har data
     });
   }
@@ -94,15 +94,12 @@ router.post('/:portfolioId/add-stock', async (req, res) => {
 // Hent én specifik portefølje
 router.get('/:portfolioId', async (req, res) => {
   const portfolioId = parseInt(req.params.portfolioId);
-  // Hent portefølje og aktier fra DB
   const portfolio = await Portfolio.getById(portfolioId);
-  const stocks = await Portfolio.getStocksForPortfolio(portfolioId);
-  // ...hent evt. flere data, fx beregninger, grafer osv.
+  const holdings = await Portfolio.getHoldingsForPortfolio(portfolioId);
   res.render('growthTech', {
     portfolioId,
     portfolio,
-    stocks,
-    // evt. flere data til graf, piechart osv.
+    holdings,
   });
 });
 
@@ -181,6 +178,34 @@ router.get('/portfolios', async (req, res) => {
   const userId = req.session.user.userID;
   const portfolios = await Portfolio.getAllForUser(userId);
   res.json(portfolios);
+});
+
+router.get('/api/stock-price/:symbol', async (req, res) => {
+  const symbol = req.params.symbol;
+  try {
+    const quote = await getStockQuote(symbol);
+    res.json({ price: quote.price });
+  } catch (err) {
+    res.status(500).json({ message: 'Kunne ikke hente aktiekurs' });
+  }
+});
+
+// Hent holdings (samme som GrowthTech)
+router.get('/:portfolioId/holdings', async (req, res) => {
+  try {
+    const holdings = await Portfolio.getHoldingsForPortfolio(parseInt(req.params.portfolioId));
+    res.json(holdings);
+  } catch (err) {
+    res.status(500).json({ message: 'Fejl ved hentning af holdings', error: err.message });
+  }
+});
+
+// Vis detaljer for én portefølje
+router.get('/:portfolioID', async (req, res) => {
+  const portfolioID = req.params.portfolioID;
+  const portfolio = await Portfolio.getById(portfolioID); // Hent evt. portefølje-info
+  const holdings = await Portfolio.getHoldingsForPortfolio(portfolioID);
+  res.render('portfolio_detail', { portfolio, holdings });
 });
 
 module.exports = router;

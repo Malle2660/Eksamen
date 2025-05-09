@@ -97,14 +97,25 @@
   <!-- Modal til Tilføj aktie -->
   <div id="addStockForm" class="modal" style="display:none;">
     <div class="modal-content">
-      <h3>Tilføj aktie</h3>
-      <input type="text" id="stockSymbol" placeholder="Symbol (f.eks. AAPL)">
-      <input type="number" id="stockAmount" placeholder="Antal">
-      <input type="number" id="stockPrice" placeholder="Købspris">
-      <div class="modal-actions">
-        <button id="submitStockBtn" class="add-btn">Tilføj</button>
-        <button id="cancelStockBtn" class="cancel-btn">Annuller</button>
-      </div>
+      <h3>Køb aktie</h3>
+      <form id="buyStockForm">
+        <label for="stockSelect">Vælg aktie:</label>
+        <select id="stockSelect">
+          <option value="AAPL">Apple (AAPL)</option>
+          <option value="TSLA">Tesla (TSLA)</option>
+          <option value="MSFT">Microsoft (MSFT)</option>
+          <!-- Tilføj flere aktier herm der skal tilføjes flere--> 
+        </select>
+        <label for="accountSelect">Vælg konto:</label>
+        <select id="accountSelect" required>
+          <!-- Fyldes med brugerens konti via JS -->
+        </select>
+        <input type="number" id="stockAmount" placeholder="Antal" min="1" required>
+        <input type="text" id="unitPrice" placeholder="Pris pr. aktie" readonly>
+        <input type="text" id="stockPrice" placeholder="Købspris" readonly required>
+        <button type="submit" class="add-btn">Køb aktie</button>
+        <button type="button" id="cancelStockBtn" class="cancel-btn">Annuller</button>
+      </form>
     </div>
   </div>
 
@@ -113,5 +124,14 @@
   </script>
   <script src="/js/portfoliooversigt.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('portfolio-link')) {
+        e.preventDefault();
+        const portfolioId = e.target.dataset.id;
+        window.location.href = `/portfolios/${portfolioId}`;
+      }
+    });
+  </script>
 </body> 
 </html>

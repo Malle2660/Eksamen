@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td class="value">${r.value ? r.value.toFixed(2) : '-'} USD</td>
         <td>
           <button class="buy-btn" data-symbol="${r.symbol}">Køb</button>
-          <button class="sell-btn" data-symbol="${r.symbol}">Sælg</button>
+          <button class="sell-btn" data-symbol="${r.symbol}" data-stockid="${r.id}">Sælg</button>
         </td>
       </tr>
     `).join('');
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         try {
-            const res = await fetch('/api/stocks/buy', {
+            const res = await fetch('/growth/stocks/buy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
@@ -196,11 +196,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.sell-btn').forEach(btn => {
       btn.addEventListener('click', async function() {
         const symbol = this.dataset.symbol;
+        const stockID = this.dataset.stockid;
         sellStockSymbolInput.value = symbol;
+        sellStockSymbolInput.dataset.stockid = stockID;
+        // Find markedsprisen fra holdings-arrayet:
+        const aktie = holdings.find(h => h.symbol === symbol);
+        sellPriceInput.value = aktie ? aktie.price : '';
         sellQuantityInput.value = '';
-        sellPriceInput.value = '';
         sellFeeInput.value = 0;
-        // Indlæs konti til dropdown
         await loadSellAccounts();
         sellModal.style.display = 'block';
       });
@@ -240,13 +243,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const formData = {
         portfolioId,
         accountId: sellAccountSelect.value,
+        stockID: Number(sellStockSymbolInput.dataset.stockid),
         symbol: sellStockSymbolInput.value,
         quantity: parseInt(sellQuantityInput.value),
-        pricePerUnit: parseFloat(sellPriceInput.value),
+        pricePerUnit: parseFloat(sellPriceInput.value.toString().replace(',', '.')),
         fee: parseFloat(sellFeeInput.value)
       };
       try {
-        const res = await fetch('/api/stocks/sell', {
+        const res = await fetch('/growth/stocks/sell', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -271,8 +275,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', async function() {
         const symbol = this.dataset.symbol;
         document.getElementById('stockSymbol').value = symbol;
+        // Find markedsprisen fra holdings-arrayet:
+        const aktie = holdings.find(h => h.symbol === symbol);
+        document.getElementById('price').value = aktie ? aktie.price : '';
         document.getElementById('quantity').value = '';
-        document.getElementById('price').value = '';
         document.getElementById('fee').value = 0;
         await loadAccounts();
         modal.style.display = "block";

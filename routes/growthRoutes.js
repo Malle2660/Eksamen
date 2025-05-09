@@ -6,6 +6,7 @@ const { batchQuotes }   = require('../services/finnhub');
 const { latestRates }   = require('../services/exchangeRate');
 const { getStockQuote } = require('../services/finnhub');
 const TransactionsModel = require('../models/transactionsModel');
+const { sql, poolPromise } = require('../db/database');
 
 // Hent holdings fra din  model test
 router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
@@ -62,17 +63,17 @@ router.post('/stocks/buy', async (req, res) => {
         const pool = await poolPromise;
         let stockResult = await pool.request()
             .input('symbol', sql.NVarChar, symbol)
-            .query('SELECT stockID FROM Stocks WHERE symbol = @symbol');
+            .query('SELECT id FROM Stocks WHERE symbol = @symbol');
             
         let stockId;
         if (stockResult.recordset.length === 0) {
             // Opret ny aktie
             const insertResult = await pool.request()
                 .input('symbol', sql.NVarChar, symbol)
-                .query('INSERT INTO Stocks (symbol) OUTPUT INSERTED.stockID VALUES (@symbol)');
-            stockId = insertResult.recordset[0].stockID;
+                .query('INSERT INTO Stocks (symbol) OUTPUT INSERTED.id VALUES (@symbol)');
+            stockId = insertResult.recordset[0].id;
         } else {
-            stockId = stockResult.recordset[0].stockID;
+            stockId = stockResult.recordset[0].id;
         }
 
         // 2. Køb aktien via TransactionsModel
@@ -101,24 +102,18 @@ router.post('/stocks/buy', async (req, res) => {
 
 router.post('/stocks/sell', async (req, res) => {
     try {
-        const { portfolioId, accountId, symbol, quantity, pricePerUnit, fee } = req.body;
+        const { portfolioId, accountId, stockID, quantity, pricePerUnit, fee } = req.body;
 
-        // Find stockID ud fra symbol
-        const pool = await poolPromise;
-        let stockResult = await pool.request()
-            .input('symbol', sql.NVarChar, symbol)
-            .query('SELECT stockID FROM Stocks WHERE symbol = @symbol');
-
-        if (stockResult.recordset.length === 0) {
-            return res.status(400).json({ success: false, message: 'Aktien findes ikke' });
+        // Brug stockID direkte, ingen grund til at slå op via symbol!
+        if (!stockID) {
+            return res.status(400).json({ success: false, message: 'stockID mangler' });
         }
-        const stockId = stockResult.recordset[0].stockID;
 
         // Sælg aktien via TransactionsModel
         const newBalance = await TransactionsModel.sellSecurity(
             portfolioId,
             accountId,
-            stockId,
+            stockID,
             quantity,
             pricePerUnit,
             fee

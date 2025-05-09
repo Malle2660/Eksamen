@@ -1,4 +1,4 @@
- // Importer korrekt fra database.js
+const { sql, poolPromise } = require('../db/database');
 
 class TransactionsModel {
     // Indsæt penge på konto

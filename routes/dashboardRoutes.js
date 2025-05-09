@@ -13,8 +13,8 @@ router.get('/', async (req, res, next) => {
     // Saml alle aktier på tværs af porteføljer
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     // Hent aktuel pris for hver aktie (fra cache/api)
@@ -68,18 +68,9 @@ router.get('/metrics', async (req, res, next) => {
     let totalRealized = 0; // Hvis du har realiseret gevinst
 
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      for (const stock of stocks) {
-        let price = 0;
-        try {
-          const quote = await getStockQuote(stock.symbol);
-          price = quote.price || 0;
-        } catch (e) { price = 0; }
-        let rate = 1;
-        if (stock.currency && stock.currency !== 'DKK') {
-          // ...hent valutakurs...
-        }
-        totalValue += (stock.amount || 0) * price * rate;
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      for (const h of holdings) {
+        totalValue += h.value || 0;
         // totalUnrealized += ... (hvis du vil vise gevinst)
       }
     }
@@ -102,8 +93,8 @@ router.get('/top/value', async (req, res, next) => {
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     for (const h of allHoldings) {
@@ -129,8 +120,8 @@ router.get('/top/profit', async (req, res, next) => {
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     for (const h of allHoldings) {

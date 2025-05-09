@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let pieChart;
   let currentPortfolioId = null;
-
+  let currentPrice = 0;
 
   async function loadPortfolios() {
     try {
@@ -58,17 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>
-            <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}">
+            <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}" style="color:#a48cff;font-weight:600;cursor:pointer;">
               ${p.name || '-'}
             </a>
           </td>
-          <td>${totalPurchase !== undefined ? totalPurchase.toFixed(2) + ' DKK' : '-'}</td>
-          <td>${p.expectedValue !== undefined ? p.expectedValue.toFixed(2) + ' DKK' : '-'}</td>
-          <td>${totalUnrealized !== undefined ? totalUnrealized.toFixed(2) + ' DKK' : '-'}</td>
-          <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString('da-DK') : '-'}</td>
-          <td><button class="tilfoj-aktie-btn" data-id="${p.portfolioID}">Tilføj aktie</button></td>
-          <td><button class="vis-aktier-btn" data-id="${p.portfolioID}">Vis aktier</button></td>
-          <td><button class="slet-portfolio-btn" data-id="${p.portfolioID}">Slet</button></td>
+          <td>${(typeof p.value === 'number' ? p.value.toFixed(2) : '0.00')} DKK</td>
+          <td>${(typeof p.dailyChange === 'number' ? p.dailyChange.toFixed(2) : '0.00')} DKK</td>
+          <td>${(typeof p.realizedGain === 'number' ? p.realizedGain.toFixed(2) : '0.00')} DKK</td>
+          <td>${(typeof p.unrealizedGain === 'number' ? p.unrealizedGain.toFixed(2) : '-')}</td>
+          <td>${(typeof p.expectedValue === 'number' ? p.expectedValue.toFixed(2) : '-')}</td>
+          <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-'}</td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary tilfoj-aktie-btn" data-id="${p.portfolioID}">Tilføj aktie</button>
+              <button class="btn btn-secondary vis-aktier-btn" data-id="${p.portfolioID}">Vis aktier</button>
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-danger slet-portfolio-btn" data-id="${p.portfolioID}">Slet</button>
+          </td>
         `;
         tableBody.appendChild(row);
       }
@@ -122,47 +130,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function showStocksForPortfolio(portfolioId) {
     try {
-      const res = await fetch(`/portfolios/${portfolioId}/stocks`);
-      const stocks = await res.json();
-      if (!Array.isArray(stocks) || stocks.length === 0) {
+      const res = await fetch(`/portfolios/${portfolioId}/holdings`);
+      const holdings = await res.json();
+      if (!Array.isArray(holdings) || holdings.length === 0) {
         showNotification('Ingen aktier i denne portefølje.', 'info');
         return;
       }
-      // Saml aktier med samme symbol
-      const grouped = {};
-      for (const s of stocks) {
-        if (!grouped[s.symbol]) grouped[s.symbol] = { ...s, amount: 0, totalBuy: 0 };
-        grouped[s.symbol].amount += s.amount;
-        grouped[s.symbol].totalBuy += s.amount * s.bought_at;
-      }
-      // Byg rækker med beregninger
-      const rows = await Promise.all(Object.values(grouped).map(async s => {
-        // GAK
-        const gak = s.amount ? s.totalBuy / s.amount : 0;
-        // Forventet værdi
-        let expectedValue = '-';
-        let price = 0;
-        try {
-          const quoteRes = await fetch(`/api/alpha-vantage/${s.symbol}`);
-          const quote = await quoteRes.json();
-          if (quote && quote.price) {
-            price = quote.price;
-            expectedValue = (s.amount * price).toFixed(2) + ' DKK';
-          }
-        } catch (e) { expectedValue = '-'; }
-        // Urealiseret gevinst/tab
-        const unrealized = price ? (s.amount * (price - gak)) : 0;
-        return `
-          <tr>
-            <td>${s.symbol}</td>
-            <td>${s.amount}</td>
-            <td>${s.totalBuy.toFixed(2)} DKK</td>
-            <td>${gak.toFixed(2)} DKK</td>
-            <td>${expectedValue}</td>
-            <td style="color:${unrealized >= 0 ? 'green' : 'red'}">${unrealized.toFixed(2)} DKK</td>
-          </tr>
-        `;
-      }));
+      // Byg rækker med beregninger (samme som GrowthTech)
+      const rows = holdings.map(s => `
+        <tr>
+          <td>${s.symbol}</td>
+          <td>${s.amount}</td>
+          <td>${s.price ? s.price.toFixed(2) : '-'} DKK</td>
+          <td>${s.value ? s.value.toFixed(2) : '-'} DKK</td>
+        </tr>
+      `);
       // Modal HTML
       let modal = document.getElementById('stocksModal');
       if (!modal) {
@@ -185,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <h2>Aktier i portefølje</h2>
           <table style="width:100%;border-collapse:collapse;">
             <tr style="background:#f5f5f5">
-              <th>Symbol</th><th>Antal</th><th>Købspris</th><th>GAK</th><th>Forventet værdi</th><th>Urealiseret gevinst/tab</th>
+              <th>Symbol</th><th>Antal</th><th>Markedspris</th><th>Værdi</th>
             </tr>
             ${rows.join('')}
           </table>
@@ -289,67 +271,100 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function showAddStockForm(portfolioId) {
+  // Åbn modal
+  async function showAddStockForm(portfolioId) {
     currentPortfolioId = portfolioId;
     document.getElementById('addStockForm').style.display = 'flex';
+
+    // Hent konti og fyld dropdown
+    const res = await fetch('/accounts/api');
+    const accounts = await res.json();
+    const select = document.getElementById('accountSelect');
+    select.innerHTML = accounts
+      .filter(acc => !acc.closedAccount)
+      .map(acc => `<option value="${acc.accountID}">${acc.name} (${acc.balance.toFixed(2)} DKK)</option>`)
+      .join('');
+    // Sæt default aktie og hent pris
+    document.getElementById('stockSelect').dispatchEvent(new Event('change'));
   }
 
+  // Luk modal
   document.getElementById('cancelStockBtn').addEventListener('click', () => {
     document.getElementById('addStockForm').style.display = 'none';
   });
 
-  document.getElementById('submitStockBtn').addEventListener('click', async () => {
-    const symbol = document.getElementById('stockSymbol').value.trim();
-    const amount = document.getElementById('stockAmount').value.trim();
-    const boughtAt = document.getElementById('stockPrice').value.trim();
+  // Når aktie vælges, hent markedspris
+  document.getElementById('stockSelect').addEventListener('change', async function() {
+    const symbol = this.value;
+    const unitPriceInput = document.getElementById('unitPrice');
+    unitPriceInput.value = 'Henter…';
+    try {
+      const res = await fetch(`/portfolios/api/stock-price/${symbol}`);
+      const data = await res.json();
+      if (data && typeof data.price === 'number' && data.price > 0) {
+        currentPrice = data.price;
+        updatePriceFields();
+      } else {
+        currentPrice = 0;
+        unitPriceInput.value = '-';
+        document.getElementById('stockPrice').value = '-';
+        showNotification('Kunne ikke hente aktiepris fra API.', 'error');
+      }
+    } catch (err) {
+      currentPrice = 0;
+      unitPriceInput.value = '-';
+      document.getElementById('stockPrice').value = '-';
+      showNotification('Fejl ved hentning af aktiepris.', 'error');
+    }
+  });
 
-    if (!symbol || !amount || !boughtAt) {
-      showNotification('Alle felter skal udfyldes', 'error');
+  // Når antal ændres, opdater totalprisen
+  document.getElementById('stockAmount').addEventListener('input', updatePriceFields);
+
+  function updatePriceFields() {
+    const amount = parseInt(document.getElementById('stockAmount').value) || 0;
+    const unitPriceInput = document.getElementById('unitPrice');
+    if (currentPrice > 0) {
+      unitPriceInput.value = currentPrice.toFixed(2);
+      const total = currentPrice * amount;
+      document.getElementById('stockPrice').value = total > 0 ? total.toFixed(2) : '';
+    } else {
+      unitPriceInput.value = '-';
+      document.getElementById('stockPrice').value = '-';
+    }
+  }
+
+  // Håndter køb af aktie
+  document.getElementById('buyStockForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const symbol = document.getElementById('stockSelect').value;
+    const amount = document.getElementById('stockAmount').value;
+    const boughtAt = document.getElementById('stockPrice').value;
+    const accountId = document.getElementById('accountSelect').value;
+
+    if (!symbol || !amount || !boughtAt || boughtAt === '-' || !accountId) {
+      showNotification('Alle felter skal udfyldes og pris skal være tilgængelig.', 'error');
       return;
     }
 
     try {
-      // 1. Hent aktiekurs fra din Alpha Vantage API
-      const stockRes = await fetch(`/api/alpha-vantage/${symbol}`);
-      if (!stockRes.ok) throw new Error('Kunne ikke hente aktiekurs');
-      const stockData = await stockRes.json();
-
-      // 2. Hent valutakurs fra din Exchange Rate API (fx DKK)
-      const currency = 'DKK'; // eller lad brugeren vælge
-      let rate = 1;
-      if (currency !== 'DKK') {
-        const rateRes = await fetch(`/api/exchange-rate/${currency}`);
-        const rateData = await rateRes.json();
-        rate = rateData.rate || rateData[currency] || 'ukendt';
-      }
-
-      // 3. Brug dataene (fx vis dem, eller brug dem til at beregne noget)
-      alert(
-        `Aktuel kurs for ${symbol}: ${stockData.price || stockData.c || 'ukendt'}\n` +
-        `Valutakurs (${currency}): ${rate}`
-      );
-
-      // 4. Tilføj aktien til porteføljen (POST til din egen backend)
       const res = await fetch(`/portfolios/${currentPortfolioId}/add-stock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, amount, boughtAt })
+        body: JSON.stringify({ symbol, amount, boughtAt, accountId })
       });
-
       const data = await res.json();
       if (!res.ok) {
         showNotification(data.message || 'Noget gik galt', 'error');
         return;
       }
-
-      showNotification('✅ Aktie tilføjet!', 'success');
+      showNotification('✅ Aktie købt!', 'success');
       document.getElementById('addStockForm').style.display = 'none';
-      document.getElementById('stockSymbol').value = '';
       document.getElementById('stockAmount').value = '';
       document.getElementById('stockPrice').value = '';
       loadPortfolios();
     } catch (err) {
-      showNotification('Kunne ikke tilføje aktien: ' + err.message, 'error');
+      showNotification('Kunne ikke købe aktien: ' + err.message, 'error');
     }
   });
 
