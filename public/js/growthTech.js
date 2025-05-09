@@ -122,5 +122,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
     });
+
+    // Modal handling
+    const modal = document.getElementById('buyStockModal');
+    const btnNewTrade = document.getElementById('btnNewTrade');
+    const closeBtn = document.querySelector('.close');
+    const buyStockForm = document.getElementById('buyStockForm');
+
+    // Åbn modal
+    btnNewTrade.onclick = () => {
+        loadAccounts(); // Indlæs konti først
+        modal.style.display = "block";
+    }
+
+    // Luk modal
+    closeBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (e) => {
+        if (e.target == modal) modal.style.display = "none";
+    }
+
+    // Indlæs konti til dropdown
+    async function loadAccounts() {
+        try {
+            const res = await fetch('/api/accounts', {
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Kunne ikke hente konti');
+            const accounts = await res.json();
+            
+            const select = document.getElementById('accountId');
+            select.innerHTML = accounts.map(acc => 
+                `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
+            ).join('');
+        } catch (err) {
+            alert('Fejl ved indlæsning af konti: ' + err.message);
+        }
+    }
+
+    // Håndter køb af aktie
+    buyStockForm.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            portfolioId,
+            accountId: document.getElementById('accountId').value,
+            symbol: document.getElementById('stockSymbol').value,
+            quantity: parseInt(document.getElementById('quantity').value),
+            pricePerUnit: parseFloat(document.getElementById('price').value),
+            fee: parseFloat(document.getElementById('fee').value)
+        };
+
+        try {
+            const res = await fetch('/api/stocks/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+                credentials: 'include'
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || 'Kunne ikke købe aktie');
+            }
+
+            const result = await res.json();
+            alert(`Aktie købt! Ny saldo: ${result.newBalance} DKK`);
+            modal.style.display = "none";
+            loadPortfolios(); // Genindlæs portefølje
+        } catch (err) {
+            alert('Fejl ved køb af aktie: ' + err.message);
+        }
+    };
   });
   

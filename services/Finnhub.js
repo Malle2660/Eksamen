@@ -49,4 +49,14 @@ async function getStockQuote(symbol) {
   return { price };
 }
 
-module.exports = { getStockQuote };
+async function batchQuotes(symbols) {
+  // symbols = 'AAPL,TSLA'
+  const arr = symbols.split(',').filter(Boolean); // filtrer tomme
+  const results = {};
+  for (const symbol of arr) {
+    results[symbol] = await getStockQuote(symbol);
+  }
+  return { 'Stock Quotes': arr.map(s => ({ '1. symbol': s, '2. price': results[s].price })) };
+}
+
+module.exports = { getStockQuote, batchQuotes };

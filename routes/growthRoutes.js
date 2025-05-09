@@ -5,6 +5,7 @@ const Portfolio      = require('../models/portfolio');
 const { batchQuotes }   = require('../services/finnhub');
 const { latestRates }   = require('../services/ExchangeRate');
 const { getStockQuote } = require('../services/finnhub');
+const TransactionsModel = require('../models/transactionsModel');
 
 // Hent holdings fra din  model test
 router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
@@ -17,7 +18,7 @@ router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
   }
 });
 
-// Hent aktiekurser fra Alpha Vantage-servicen
+// Hent aktiekurser fra FinHub
 router.get('/portfolios/:portfolioId/quotes', async (req, res) => {
   const symbols = req.query.symbols;
   if (!symbols) return res.status(400).json({ message: 'symbols mangler' });
@@ -50,6 +51,52 @@ router.get('/portfolios/:portfolioId', async (req, res) => {
 
 router.get('/portfolios/:portfolioId/history', async (req, res) => {
   // Returnér [{date: '2024-05-01', value: 12345}, ...]
+});
+
+// Køb aktie
+router.post('/stocks/buy', async (req, res) => {
+    try {
+        const { portfolioId, accountId, symbol, quantity, pricePerUnit, fee } = req.body;
+        
+        // 1. Tjek om aktien findes i databasen, ellers opret den
+        const pool = await poolPromise;
+        let stockResult = await pool.request()
+            .input('symbol', sql.NVarChar, symbol)
+            .query('SELECT stockID FROM Stocks WHERE symbol = @symbol');
+            
+        let stockId;
+        if (stockResult.recordset.length === 0) {
+            // Opret ny aktie
+            const insertResult = await pool.request()
+                .input('symbol', sql.NVarChar, symbol)
+                .query('INSERT INTO Stocks (symbol) OUTPUT INSERTED.stockID VALUES (@symbol)');
+            stockId = insertResult.recordset[0].stockID;
+        } else {
+            stockId = stockResult.recordset[0].stockID;
+        }
+
+        // 2. Køb aktien via TransactionsModel
+        const newBalance = await TransactionsModel.buySecurity(
+            portfolioId,
+            accountId,
+            stockId,
+            quantity,
+            pricePerUnit,
+            fee
+        );
+
+        res.json({ 
+            success: true, 
+            newBalance,
+            message: 'Aktie købt succesfuldt'
+        });
+    } catch (err) {
+        console.error('Fejl ved køb af aktie:', err);
+        res.status(400).json({ 
+            success: false, 
+            message: err.message || 'Kunne ikke købe aktie'
+        });
+  }
 });
 
 module.exports = router;
