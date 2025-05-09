@@ -92,6 +92,7 @@
                 <th>24h Change</th>
                 <th>Price</th>
                 <th>Value</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="holdingsTable">
@@ -136,11 +137,44 @@
     </div>
   </div>
 
-  <!-- Inject portfolioId til klienten -->
+  <!-- Sælg Aktie Modal -->
+  <div id="sellStockModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Sælg Aktie</h2>
+      <form id="sellStockForm">
+        <div class="form-group">
+          <label for="sellStockSymbol">Aktie Symbol:</label>
+          <input type="text" id="sellStockSymbol" name="sellStockSymbol" readonly required>
+        </div>
+        <div class="form-group">
+          <label for="sellQuantity">Antal:</label>
+          <input type="number" id="sellQuantity" name="sellQuantity" min="1" required>
+        </div>
+        <div class="form-group">
+          <label for="sellPrice">Pris per aktie:</label>
+          <input type="number" id="sellPrice" name="sellPrice" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="sellFee">Gebyr:</label>
+          <input type="number" id="sellFee" name="sellFee" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label for="sellAccountId">Vælg Konto:</label>
+          <select id="sellAccountId" name="sellAccountId" required>
+            <!-- Fyldes dynamisk med JS -->
+          </select>
+        </div>
+        <button type="submit" class="action-btn">Sælg Aktie</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inject portfolioId til klienten og scripts -->
   <script>
-    window.PORTFOLIO_ID = <%= JSON.stringify(portfolioId) %>;
+    window.PORTFOLIO_ID = <%- JSON.stringify(portfolioId) %>;
   </script>
-  <!-- Dit klient-script; skal ligge i public/js/ -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/growthTech.js"></script>
 </body>
 </html>

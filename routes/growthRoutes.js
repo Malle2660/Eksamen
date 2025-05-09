@@ -3,7 +3,7 @@ const express        = require('express');
 const router         = express.Router();
 const Portfolio      = require('../models/portfolio');
 const { batchQuotes }   = require('../services/finnhub');
-const { latestRates }   = require('../services/ExchangeRate');
+const { latestRates }   = require('../services/exchangeRate');
 const { getStockQuote } = require('../services/finnhub');
 const TransactionsModel = require('../models/transactionsModel');
 
@@ -97,6 +97,45 @@ router.post('/stocks/buy', async (req, res) => {
             message: err.message || 'Kunne ikke købe aktie'
         });
   }
+});
+
+router.post('/stocks/sell', async (req, res) => {
+    try {
+        const { portfolioId, accountId, symbol, quantity, pricePerUnit, fee } = req.body;
+
+        // Find stockID ud fra symbol
+        const pool = await poolPromise;
+        let stockResult = await pool.request()
+            .input('symbol', sql.NVarChar, symbol)
+            .query('SELECT stockID FROM Stocks WHERE symbol = @symbol');
+
+        if (stockResult.recordset.length === 0) {
+            return res.status(400).json({ success: false, message: 'Aktien findes ikke' });
+        }
+        const stockId = stockResult.recordset[0].stockID;
+
+        // Sælg aktien via TransactionsModel
+        const newBalance = await TransactionsModel.sellSecurity(
+            portfolioId,
+            accountId,
+            stockId,
+            quantity,
+            pricePerUnit,
+            fee
+        );
+
+        res.json({
+            success: true,
+            newBalance,
+            message: 'Aktie solgt succesfuldt'
+        });
+    } catch (err) {
+        console.error('Fejl ved salg af aktie:', err);
+        res.status(400).json({
+            success: false,
+            message: err.message || 'Kunne ikke sælge aktie'
+        });
+    }
 });
 
 module.exports = router;

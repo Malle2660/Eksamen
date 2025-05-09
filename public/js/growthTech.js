@@ -18,56 +18,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       return alert(`Fejl ved hentning af holdings: ${err.message}`);
     }
   
-    // 2) Hent kurser for alle tickers
-    const symbols = holdings.map(h => h.ticker).join(',');
-    let quotesData;
-    try {
-      const res = await fetch(`/portfolios/${portfolioId}/quotes?symbols=${symbols}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Kurser ikke fundet');
-      quotesData = await res.json();
-    } catch (err) {
-      return alert(`Fejl ved hentning af kurser: ${err.message}`);
-    }
+    // 2) Du behøver IKKE hente quotes igen – price og value er allerede i holdings!
   
-    // 3) Slå sammen og beregn totalværdi + change
-    let totalValue = 0, totalChangePct = 0;
-    const quotes = quotesData['Stock Quotes'] || [];
-    const rows = holdings.map(h => {
-      const q = quotes.find(q => q['1. symbol'] === h.ticker) || {};
-      const price     = parseFloat(q['2. price']      || 0);
-      const changePct = parseFloat((q['4. price change percent'] || '0%').replace('%',''));
-      const value     = h.volume * price;
-  
-      totalValue     += value;
-      totalChangePct += changePct;
-      return { ...h, price, changePct, value };
+    // 3) Beregn totalværdi og evt. gennemsnitlig ændring (hvis du har changePct)
+    let totalValue = 0;
+    holdings.forEach(h => {
+      totalValue += h.value || 0;
     });
-    const avgChangePct = rows.length ? (totalChangePct/rows.length) : 0;
   
     // 4) Opdater "kortene"
     document.querySelector('.value-card .value').textContent =
       totalValue.toLocaleString() + ' DKK';
   
-    const pctEl = document.querySelector('.overview .change');
-    pctEl.textContent = (avgChangePct>=0?'+':'') + avgChangePct.toFixed(1) + '%';
-    pctEl.classList.toggle('positive', avgChangePct>=0);
-    pctEl.classList.toggle('negative', avgChangePct<0);
-  
     // 5) Fyld tabellen
     const tbody = document.querySelector('table tbody');
-    tbody.innerHTML = rows.map(r => `
+    tbody.innerHTML = holdings.map(r => `
       <tr>
-        <td>${r.name}<br><span class="ticker">${r.ticker}</span></td>
-        <td>${r.volume} stk.</td>
+        <td>${r.symbol}</td>
+        <td>${r.amount} stk.</td>
         <td>
-          <span class="percent ${r.changePct>=0 ? 'positive' : 'negative'}">
-            ${(r.changePct>=0?'+':'')+r.changePct.toFixed(2)}%
+          <span class="percent">
+            -
           </span>
         </td>
-        <td>${r.price.toFixed(2)} USD</td>
-        <td class="value">${r.value.toFixed(2)} USD</td>
+        <td>${r.price ? r.price.toFixed(2) : '-'} USD</td>
+        <td class="value">${r.value ? r.value.toFixed(2) : '-'} USD</td>
+        <td>
+          <button class="buy-btn" data-symbol="${r.symbol}">Køb</button>
+          <button class="sell-btn" data-symbol="${r.symbol}">Sælg</button>
+        </td>
       </tr>
     `).join('');
   
@@ -85,13 +64,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   
-    // 1. Beregn fordeling
-    const distribution = rows.map(r => ({
-      label: r.name,
+    // 1. Beregn fordeling (brug symbol som label)
+    const sortedHoldings = [...holdings].sort((a, b) => (b.value || 0) - (a.value || 0));
+    const topHoldings = sortedHoldings.slice(0, 5);
+    const distribution = topHoldings.map(r => ({
+      label: r.symbol,
       value: r.value
     }));
   
-    // 2. Tegn donut/pie chart (fx med Chart.js eller bare med SVG/Canvas)
+    // 2. Tegn donut/pie chart (kun top 5)
     const pieCtx = document.querySelector('.pie-chart-placeholder');
     pieCtx.innerHTML = '<canvas id="pieChart"></canvas>';
     new Chart(document.getElementById('pieChart'), {
@@ -105,12 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   
-    // 3. Opdater legend
+    // 3. Opdater legend (kun top 5)
     const legend = document.querySelector('.pie-card .legend');
     legend.innerHTML = distribution.map((d,i) => `
       <li>
         <span class="legend-color" style="background:${['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'][i]}"></span>
-        ${d.label}: ${d.value.toLocaleString()} DKK
+        ${d.label}: ${d.value ? d.value.toLocaleString() : 0} DKK
       </li>
     `).join('');
   
@@ -143,20 +124,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Indlæs konti til dropdown
     async function loadAccounts() {
-        try {
-            const res = await fetch('/api/accounts', {
-                credentials: 'include'
-            });
-            if (!res.ok) throw new Error('Kunne ikke hente konti');
-            const accounts = await res.json();
-            
-            const select = document.getElementById('accountId');
-            select.innerHTML = accounts.map(acc => 
-                `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
-            ).join('');
-        } catch (err) {
-            alert('Fejl ved indlæsning af konti: ' + err.message);
+      try {
+        const res = await fetch('/accounts/api', {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Kunne ikke hente konti');
+        const accounts = await res.json();
+        const select = document.getElementById('accountId');
+        if (accounts.length === 0) {
+          select.innerHTML = '<option>Ingen konti tilgængelige</option>';
+          select.disabled = true;
+          document.querySelectorAll('.buy-btn').forEach(btn => btn.disabled = true);
+        } else {
+          select.disabled = false;
+          document.querySelectorAll('.buy-btn').forEach(btn => btn.disabled = false);
+          select.innerHTML = accounts.map(acc =>
+            `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
+          ).join('');
         }
+      } catch (err) {
+        alert('Fejl ved indlæsning af konti: ' + err.message);
+      }
     }
 
     // Håndter køb af aktie
@@ -193,5 +181,104 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Fejl ved køb af aktie: ' + err.message);
         }
     };
+
+    // --- SÆLG AKTIE MODAL ---
+    const sellModal = document.getElementById('sellStockModal');
+    const sellForm = document.getElementById('sellStockForm');
+    const sellCloseBtn = sellModal.querySelector('.close');
+    const sellStockSymbolInput = document.getElementById('sellStockSymbol');
+    const sellQuantityInput = document.getElementById('sellQuantity');
+    const sellPriceInput = document.getElementById('sellPrice');
+    const sellFeeInput = document.getElementById('sellFee');
+    const sellAccountSelect = document.getElementById('sellAccountId');
+
+    // Åbn modal når der klikkes på en sælg-knap
+    document.querySelectorAll('.sell-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const symbol = this.dataset.symbol;
+        sellStockSymbolInput.value = symbol;
+        sellQuantityInput.value = '';
+        sellPriceInput.value = '';
+        sellFeeInput.value = 0;
+        // Indlæs konti til dropdown
+        await loadSellAccounts();
+        sellModal.style.display = 'block';
+      });
+    });
+
+    // Luk modal
+    sellCloseBtn.onclick = () => sellModal.style.display = 'none';
+    window.addEventListener('click', (e) => {
+      if (e.target == sellModal) sellModal.style.display = 'none';
+    });
+
+    // Indlæs konti til dropdown (genbrug loadAccounts, men til andet select)
+    async function loadSellAccounts() {
+      try {
+        const res = await fetch('/accounts/api', { credentials: 'include' });
+        if (!res.ok) throw new Error('Kunne ikke hente konti');
+        const accounts = await res.json();
+        if (accounts.length === 0) {
+          sellAccountSelect.innerHTML = '<option>Ingen konti tilgængelige</option>';
+          sellAccountSelect.disabled = true;
+          document.querySelectorAll('.sell-btn').forEach(btn => btn.disabled = true);
+        } else {
+          sellAccountSelect.disabled = false;
+          document.querySelectorAll('.sell-btn').forEach(btn => btn.disabled = false);
+          sellAccountSelect.innerHTML = accounts.map(acc =>
+            `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
+          ).join('');
+        }
+      } catch (err) {
+        alert('Fejl ved indlæsning af konti: ' + err.message);
+      }
+    }
+
+    // Håndter salg af aktie
+    sellForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = {
+        portfolioId,
+        accountId: sellAccountSelect.value,
+        symbol: sellStockSymbolInput.value,
+        quantity: parseInt(sellQuantityInput.value),
+        pricePerUnit: parseFloat(sellPriceInput.value),
+        fee: parseFloat(sellFeeInput.value)
+      };
+      try {
+        const res = await fetch('/api/stocks/sell', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'include'
+        });
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || 'Kunne ikke sælge aktie');
+        }
+        const result = await res.json();
+        alert(`Aktie solgt! Ny saldo: ${result.newBalance} DKK`);
+        sellModal.style.display = 'none';
+        // Genindlæs portefølje eller holdings hvis ønsket
+        location.reload();
+      } catch (err) {
+        alert('Fejl ved salg af aktie: ' + err.message);
+      }
+    };
+
+    // Åbn køb-modal fra tabel-knap
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const symbol = this.dataset.symbol;
+        document.getElementById('stockSymbol').value = symbol;
+        document.getElementById('quantity').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('fee').value = 0;
+        await loadAccounts();
+        modal.style.display = "block";
+      });
+    });
+
+    console.log(holdings);
   });
   

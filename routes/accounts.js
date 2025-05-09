@@ -132,29 +132,4 @@ router.post('/withdraw', async (req, res) => {
 
 module.exports = router;
 
-// Models/accountsModel.js
-const { sql, poolPromise } = require('../db/database');
-
-class AccountsModel {
-  // … dine eksisterende metoder …
-
-  // Hent alle konti for en bruger
-  async getAllForUser(userId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query(`
-        SELECT accountID, name, bank, currency, balance, registrationsDate, closedAccount
-        FROM Accounts
-        WHERE userID = @userId
-        ORDER BY registrationsDate DESC;
-      `);
-    return result.recordset;
-  }
-}
-
-module.exports = router;
-
-let currentHistoryAccountId = null;
-
 
