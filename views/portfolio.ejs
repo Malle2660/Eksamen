@@ -104,7 +104,15 @@
           <option value="AAPL">Apple (AAPL)</option>
           <option value="TSLA">Tesla (TSLA)</option>
           <option value="MSFT">Microsoft (MSFT)</option>
-          <!-- Tilføj flere aktier herm der skal tilføjes flere--> 
+          <option value="GOOGL">Alphabet (GOOGL)</option>
+          <option value="AMZN">Amazon (AMZN)</option>
+          <option value="NVDA">Nvidia (NVDA)</option>
+          <option value="META">Meta Platforms (META)</option>
+          <option value="BRK.B">Berkshire Hathaway (BRK.B)</option>
+          <option value="JPM">JPMorgan Chase (JPM)</option>
+          <option value="V">Visa (V)</option>
+          <option value="UNH">UnitedHealth (UNH)</option>
+          <option value="XOM">Exxon Mobil (XOM)</option>
         </select>
         <label for="accountSelect">Vælg konto:</label>
         <select id="accountSelect" required>
@@ -124,14 +132,5 @@
   </script>
   <script src="/js/portfoliooversigt.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('portfolio-link')) {
-        e.preventDefault();
-        const portfolioId = e.target.dataset.id;
-        window.location.href = `/portfolios/${portfolioId}`;
-      }
-    });
-  </script>
 </body> 
 </html>

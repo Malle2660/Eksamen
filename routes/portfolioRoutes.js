@@ -1,23 +1,34 @@
 const express = require('express');
 const router = express.Router();
+const sql = require('mssql');
 const Portfolio = require('../models/portfolio');
-const Stock = require('../models/stock');
+const TransactionsModel = require('../models/transactionsModel');
 const { getStockQuote } = require('../services/finnhub');
-const { getExchangeRate } = require('../services/exchangeRate');
-
-
-
 
 // === GET: Porteføljeoversigt (HTML-side)
 router.get('/', async (req, res) => {
-  console.log('SESSION:', req.session.user);
   try {
     const portfolios = await Portfolio.getAllForUser(req.session.user.userID);
+    // Beregn værdier dynamisk ud fra trades
+    const result = [];
+    for (const p of portfolios) {
+      const expectedValue = Math.round(await Portfolio.getExpectedValueFromHoldings(p.portfolioID) * 100) / 100;
+      let unrealizedGain = 0;
+      try {
+        unrealizedGain = Math.round(await Portfolio.getTotalUnrealizedFromHoldings(p.portfolioID) * 100) / 100;
+      } catch (e) {}
+      result.push({
+        ...p,
+        expectedValue,
+        unrealizedGain,
+        dailyChange: 0 // eller beregn rigtigt hvis du har data
+      });
+    }
     res.render('portfolio', {
       user: req.session.user,
       portfolioId: null,
-      portfolios,
-      totalValue: 0,
+      portfolios: result,
+      totalValue: result.reduce((sum, p) => sum + (p.expectedValue || 0), 0),
       dailyChange: 0,
       dailyDKKChange: 0
     });
@@ -30,22 +41,22 @@ router.get('/', async (req, res) => {
 // === GET: API – hent porteføljer for logget bruger (med forventet værdi)
 router.get('/user', async (req, res) => {
   const userId = req.session.user.userID;
-  const portfolios = await Portfolio.getAllForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
 
-  // Tilføj beregninger for hver portefølje
   const result = [];
   for (const p of portfolios) {
-    const expectedValue = await Portfolio.getExpectedValueFromHoldings(p.portfolioID);
-    const unrealizedGain = await Portfolio.getTotalUnrealizedForPortfolio(p.portfolioID);
-    // Tilføj evt. dailyChange hvis du har det
+    const expectedValue = Math.round(await Portfolio.getExpectedValueFromHoldings(p.portfolioID) * 100) / 100;
+    let unrealizedGain = 0;
+    try {
+      unrealizedGain = Math.round(await Portfolio.getTotalUnrealizedFromHoldings(p.portfolioID) * 100) / 100;
+    } catch (e) {}
     result.push({
-      ...p,
+          ...p,
       expectedValue,
-      unrealizedGain,
+          unrealizedGain,
       dailyChange: 0 // eller beregn rigtigt hvis du har data
     });
   }
-
   res.json(result);
 });
 
@@ -65,29 +76,51 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// === POST: Tilføj aktie til portefølje
+// === POST: Køb aktie til portefølje
 router.post('/:portfolioId/add-stock', async (req, res) => {
   try {
     const { portfolioId } = req.params;
-    const { symbol, amount, boughtAt } = req.body;
-    if (!symbol || !amount || !boughtAt) {
+    const { symbol, amount, boughtAt, accountId } = req.body;
+    
+    if (!symbol || !amount || !boughtAt || !accountId) {
       return res.status(400).json({ message: 'Alle felter er påkrævet' });
     }
-    const added = await Stock.addToPortfolio(
-      parseInt(portfolioId),
-      symbol.toUpperCase(),
-      parseInt(amount),
-      parseFloat(boughtAt)
-    );
-    if (added) {
-      console.log('✅ Aktie tilføjet:', added);
-      res.status(201).json({ success: true, message: '✅ Aktie tilføjet' });
+
+    // Først opret eller find stock ID
+    const pool = await require('../db/database').poolPromise;
+    let stockResult = await pool.request()
+      .input('symbol', sql.NVarChar(10), symbol.toUpperCase())
+      .query('SELECT id FROM Stocks WHERE symbol = @symbol');
+    
+    let stockId;
+    if (stockResult.recordset.length === 0) {
+      // Opret ny stock hvis den ikke findes
+      const insertResult = await pool.request()
+        .input('symbol', sql.NVarChar(10), symbol.toUpperCase())
+        .query('INSERT INTO Stocks (symbol) OUTPUT INSERTED.id VALUES (@symbol)');
+      stockId = insertResult.recordset[0].id;
     } else {
-      res.status(500).json({ message: 'Kunne ikke tilføje aktie' });
+      stockId = stockResult.recordset[0].id;
     }
+
+    // Køb aktien via TransactionsModel
+    const newBalance = await TransactionsModel.buySecurity(
+      parseInt(portfolioId),
+      parseInt(accountId),
+      stockId,
+      parseInt(amount),
+      parseFloat(boughtAt),
+      0 // fee
+    );
+
+    res.status(201).json({ 
+      success: true, 
+      message: '✅ Aktie købt',
+      newBalance 
+    });
   } catch (err) {
     console.error('❌ Fejl i POST /:portfolioId/add-stock:', err);
-    res.status(500).json({ message: 'Fejl ved tilføjelse af aktie', error: err.message });
+    res.status(500).json({ message: 'Fejl ved køb af aktie', error: err.message });
   }
 });
 
@@ -103,16 +136,6 @@ router.get('/:portfolioId', async (req, res) => {
   });
 });
 
-// Hent alle aktier for en portefølje
-router.get('/:portfolioId/stocks', async (req, res) => {
-  try {
-    const stocks = await Portfolio.getStocksForPortfolio(parseInt(req.params.portfolioId));
-    res.json(stocks);
-  } catch (err) {
-    res.status(500).json({ message: 'Fejl ved hentning af aktier', error: err.message });
-  }
-});
-
 // GAK for én aktie i en portefølje
 router.get('/:portfolioId/gak/:symbol', async (req, res) => {
   try {
@@ -126,7 +149,7 @@ router.get('/:portfolioId/gak/:symbol', async (req, res) => {
 // Samlet erhvervelsespris for en portefølje
 router.get('/:portfolioId/total-purchase', async (req, res) => {
   try {
-    const total = await Portfolio.getTotalPurchaseForPortfolio(parseInt(req.params.portfolioId));
+    const total = await Portfolio.getTotalPurchaseFromTrades(parseInt(req.params.portfolioId));
     res.json({ totalPurchase: total });
   } catch (err) {
     res.status(500).json({ message: 'Fejl ved hentning af total purchase', error: err.message });
@@ -136,28 +159,18 @@ router.get('/:portfolioId/total-purchase', async (req, res) => {
 // Forventet værdi for en portefølje
 router.get('/:portfolioId/expected-value', async (req, res) => {
   try {
-    const value = await Portfolio.getExpectedValueForPortfolio(parseInt(req.params.portfolioId));
-    res.json({ expectedValue: value });
+    const value = await Portfolio.getExpectedValueFromHoldings(parseInt(req.params.portfolioId));
+    res.json({ expectedValue: Math.round(value * 100) / 100 });
   } catch (err) {
     res.status(500).json({ message: 'Fejl ved hentning af expected value', error: err.message });
-  }
-});
-
-// Urealiseret gevinst/tab for én aktie
-router.get('/:portfolioId/unrealized/:symbol', async (req, res) => {
-  try {
-    const unrealized = await Portfolio.getUnrealizedForStock(parseInt(req.params.portfolioId), req.params.symbol);
-    res.json({ unrealized });
-  } catch (err) {
-    res.status(500).json({ message: 'Fejl ved hentning af unrealized', error: err.message });
   }
 });
 
 // Samlet urealiseret gevinst/tab for en portefølje
 router.get('/:portfolioId/total-unrealized', async (req, res) => {
   try {
-    const total = await Portfolio.getTotalUnrealizedForPortfolio(parseInt(req.params.portfolioId));
-    res.json({ totalUnrealized: total });
+    const total = await Portfolio.getTotalUnrealizedFromHoldings(parseInt(req.params.portfolioId));
+    res.json({ totalUnrealized: Math.round(total * 100) / 100 });
   } catch (err) {
     res.status(500).json({ message: 'Fejl ved hentning af total unrealized', error: err.message });
   }
@@ -200,12 +213,9 @@ router.get('/:portfolioId/holdings', async (req, res) => {
   }
 });
 
-// Vis detaljer for én portefølje
-router.get('/:portfolioID', async (req, res) => {
-  const portfolioID = req.params.portfolioID;
-  const portfolio = await Portfolio.getById(portfolioID); // Hent evt. portefølje-info
-  const holdings = await Portfolio.getHoldingsForPortfolio(portfolioID);
-  res.render('portfolio_detail', { portfolio, holdings });
+router.get('/:portfolioId/trades', async (req, res) => {
+  const trades = await Portfolio.getTradesForPortfolio(parseInt(req.params.portfolioId));
+  res.json(trades);
 });
 
 module.exports = router;

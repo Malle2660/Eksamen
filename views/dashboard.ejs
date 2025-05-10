@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard</title>
   <link rel="stylesheet" href="/styledashboard.css">
+  <style>
+    #totalValueChart {
+      max-width: 100%;
+      height: 200px;
+    }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -37,15 +43,15 @@
       <section class="metrics">
         <div class="card">
           <div class="label">Total værdi</div>
-          <div class="value" id="totalValue"><%= (overview?.totalExpected || 0).toFixed(2) %> DKK</div>
+          <div class="value" id="totalValue"><%= (overview?.totalExpected || 0).toFixed(2) %> USD</div>
         </div>
         <div class="card">
           <div class="label">Realiseret gevinst</div>
-          <div class="value" id="realizedProfit">0,00 DKK</div>
+          <div class="value" id="realizedProfit">0,00 USD</div>
         </div>
         <div class="card">
           <div class="label">Urealiseret gevinst</div>
-          <div class="value" id="unrealizedProfit"><%= (overview?.totalUnrealized || 0).toFixed(2) %> DKK</div>
+          <div class="value" id="unrealizedProfit"><%= (overview?.totalUnrealized || 0).toFixed(2) %> USD</div>
         </div>
       </section>
 
@@ -55,7 +61,7 @@
           <span>Year to date</span>
         </div>
         <div class="chart-placeholder">
-          <canvas id="totalValueChart" width="900" height="300"></canvas>
+          <canvas id="totalValueChart" width="600" height="200"></canvas>
         </div>
       </section>
 
@@ -71,7 +77,7 @@
               <% (topValue || []).forEach(item => { %>
                 <tr>
                   <td><%= item.symbol %></td>
-                  <td><%= item.value.toFixed(2) %> DKK</td>
+                  <td><%= item.value.toFixed(2) %> USD</td>
                 </tr>
               <% }) %>
             </tbody>
@@ -89,7 +95,7 @@
               <% (topProfit || []).forEach(item => { %>
                 <tr>
                   <td><%= item.symbol %></td>
-                  <td><%= item.profit.toFixed(2) %> DKK</td>
+                  <td><%= item.profit.toFixed(2) %> USD</td>
                 </tr>
               <% }) %>
             </tbody>
@@ -102,15 +108,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/client-dashboard.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       const ctx = document.getElementById('totalValueChart').getContext('2d');
+      // Hent historik-data fra din API
+      const res = await fetch('/dashboard/history');
+      const history = await res.json();
+      // Debug: Se hvad du får fra backend
+      console.log('History:', history);
+
+      // Hvis history er tom, vis en tom graf
+      const labels = history.map(h => h.date);
+      const data = history.map(h => h.value);
+
       new Chart(ctx, {
         type: 'line',
         data: {
-          labels: ['2024-05-01', '2024-05-02'],
+          labels,
           datasets: [{
             label: 'Samlet værdi',
-            data: [10000, 12000],
+            data,
             borderColor: '#4e79a7',
             backgroundColor: 'rgba(78,121,167,0.1)',
             tension: 0.4,

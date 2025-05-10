@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
     // 4) Opdater "kortene"
     document.querySelector('.value-card .value').textContent =
-      totalValue.toLocaleString() + ' DKK';
+      totalValue.toLocaleString() + ' USD';
   
     // 5) Fyld tabellen
     const tbody = document.querySelector('table tbody');
@@ -51,10 +51,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   
     // 6) Bind knapper
-    document.getElementById('btnHistory')
-      .addEventListener('click', () => alert('Vis handels‐historik (TODO)'));
-    document.getElementById('btnNewTrade')
-      .addEventListener('click', () => alert('Åbn formular til ny handel (TODO)'));
+    document.getElementById('trade-history-btn')
+      .addEventListener('click', async function() {
+        const portfolioId = window.PORTFOLIO_ID;
+        const res = await fetch(`/portfolios/${portfolioId}/trades`);
+        const trades = await res.json();
+        showTradeHistoryModal(trades);
+      });
+    const btnNewTrade = document.getElementById('register-trade-btn');
+    if (btnNewTrade) {
+      btnNewTrade.onclick = () => {
+        loadAccounts();
+        document.getElementById('buyStockModal').style.display = "block";
+      };
+    }
   
     document.querySelectorAll('.portfolio-link').forEach(link => {
       link.addEventListener('click', function(e) {
@@ -91,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     legend.innerHTML = distribution.map((d,i) => `
       <li>
         <span class="legend-color" style="background:${['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'][i]}"></span>
-        ${d.label}: ${d.value ? d.value.toLocaleString() : 0} DKK
+        ${d.label}: ${d.value ? d.value.toLocaleString() : 0} USD
       </li>
     `).join('');
   
@@ -106,15 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Modal handling
     const modal = document.getElementById('buyStockModal');
-    const btnNewTrade = document.getElementById('btnNewTrade');
     const closeBtn = document.querySelector('.close');
     const buyStockForm = document.getElementById('buyStockForm');
-
-    // Åbn modal
-    btnNewTrade.onclick = () => {
-        loadAccounts(); // Indlæs konti først
-        modal.style.display = "block";
-    }
 
     // Luk modal
     closeBtn.onclick = () => modal.style.display = "none";
@@ -124,13 +127,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Indlæs konti til dropdown
     async function loadAccounts() {
-      try {
+        try {
         const res = await fetch('/accounts/api', {
-          credentials: 'include'
-        });
-        if (!res.ok) throw new Error('Kunne ikke hente konti');
-        const accounts = await res.json();
-        const select = document.getElementById('accountId');
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Kunne ikke hente konti');
+            const accounts = await res.json();
+            const select = document.getElementById('accountId');
         if (accounts.length === 0) {
           select.innerHTML = '<option>Ingen konti tilgængelige</option>';
           select.disabled = true;
@@ -138,13 +141,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
           select.disabled = false;
           document.querySelectorAll('.buy-btn').forEach(btn => btn.disabled = false);
-          select.innerHTML = accounts.map(acc =>
-            `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
-          ).join('');
+            select.innerHTML = accounts.map(acc => 
+            `<option value="${acc.accountID}">${acc.name} (${acc.balance} USD)</option>`
+            ).join('');
         }
-      } catch (err) {
-        alert('Fejl ved indlæsning af konti: ' + err.message);
-      }
+        } catch (err) {
+            alert('Fejl ved indlæsning af konti: ' + err.message);
+        }
     }
 
     // Håndter køb af aktie
@@ -174,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const result = await res.json();
-            alert(`Aktie købt! Ny saldo: ${result.newBalance} DKK`);
+            alert(`Aktie købt! Ny saldo: ${result.newBalance} USD`);
             modal.style.display = "none";
             loadPortfolios(); // Genindlæs portefølje
         } catch (err) {
@@ -229,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           sellAccountSelect.disabled = false;
           document.querySelectorAll('.sell-btn').forEach(btn => btn.disabled = false);
           sellAccountSelect.innerHTML = accounts.map(acc =>
-            `<option value="${acc.accountID}">${acc.name} (${acc.balance} DKK)</option>`
+            `<option value="${acc.accountID}">${acc.name} (${acc.balance} USD)</option>`
           ).join('');
         }
       } catch (err) {
@@ -261,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           throw new Error(error.message || 'Kunne ikke sælge aktie');
         }
         const result = await res.json();
-        alert(`Aktie solgt! Ny saldo: ${result.newBalance} DKK`);
+        alert(`Aktie solgt! Ny saldo: ${result.newBalance} USD`);
         sellModal.style.display = 'none';
         // Genindlæs portefølje eller holdings hvis ønsket
         location.reload();
@@ -286,5 +289,104 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     console.log(holdings);
+
+    // Søg portefølje
+    document.getElementById('search-portfolio').addEventListener('keydown', async function(e) {
+      if (e.key === 'Enter') {
+        const query = this.value.trim().toLowerCase();
+        if (!query) return;
+        const res = await fetch('/portfolios/user');
+        const portfolios = await res.json();
+        const match = portfolios.find(p => p.name.toLowerCase() === query);
+        if (match) {
+          window.location.href = `/portfolios/${match.portfolioID}`;
+        } else {
+          alert('Ingen portefølje fundet med det navn!');
+        }
+      }
+    });
+
+    function showTradeHistoryModal(trades) {
+      const content = trades.map(t => `
+        <div>
+          <b>${t.type}</b> ${t.quantity} stk. ${t.symbol} á ${t.price} USD
+          <br>Konto: ${t.accountID} | Dato: ${new Date(t.date).toLocaleString()}
+        </div>
+      `).join('<hr>');
+      document.getElementById('tradeHistoryContent').innerHTML = content;
+      document.getElementById('tradeHistoryModal').style.display = 'block';
+    }
+
+    // Hent historiske værdier for porteføljen
+    async function loadPortfolioHistory() {
+      try {
+        const res = await fetch(`/growth/portfolios/${portfolioId}/history`);
+        if (!res.ok) throw new Error('Kunne ikke hente historik');
+        return await res.json(); // [{date: '2024-05-01', value: 12345}, ...]
+      } catch (err) {
+        return [];
+      }
+    }
+
+    // TEGN LINE-CHART
+    const history = await loadPortfolioHistory();
+    console.log('History:', history); // Debug: se om der er data!
+    if (history.length > 0 && document.getElementById('portfolioValueChart')) {
+      const ctx = document.getElementById('portfolioValueChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: history.map(h => h.date),
+          datasets: [{
+            label: 'Portefølje værdi',
+            data: history.map(h => h.value),
+            borderColor: '#4e79a7',
+            backgroundColor: 'rgba(78,121,167,0.1)',
+            tension: 0.4,
+            pointRadius: 0,
+            fill: true
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { color: '#C3C3C1' } },
+            y: { ticks: { color: '#C3C3C1' } }
+          }
+        }
+      });
+    }
+
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const symbol = this.dataset.symbol;
+        document.getElementById('stockSymbol').value = symbol;
+        // Find markedsprisen fra holdings-arrayet:
+        const aktie = holdings.find(h => h.symbol === symbol);
+        document.getElementById('price').value = aktie ? aktie.price : '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('fee').value = 0;
+        await loadAccounts();
+        modal.style.display = "block";
+      });
+    });
+
+    document.querySelectorAll('.sell-btn').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const symbol = this.dataset.symbol;
+        const stockID = this.dataset.stockid;
+        sellStockSymbolInput.value = symbol;
+        sellStockSymbolInput.dataset.stockid = stockID;
+        // Find markedsprisen fra holdings-arrayet:
+        const aktie = holdings.find(h => h.symbol === symbol);
+        sellPriceInput.value = aktie ? aktie.price : '';
+        sellQuantityInput.value = '';
+        sellFeeInput.value = 0;
+        await loadSellAccounts();
+        sellModal.style.display = 'block';
+      });
+    });
   });
   

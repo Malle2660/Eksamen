@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/portfolios/user', { credentials: 'include' });
       const portfolios = await res.json();
+      console.log('Portfolios fra backend:', portfolios);
 
       // Gem portefølje-id'er i sessionStorage
       const portfolioIds = portfolios.map(p => p.portfolioID);
@@ -40,9 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
           tableBody.innerHTML = `<tr><td colspan="11">Ingen porteføljer endnu</td></tr>`;
         }
         if (countEl) countEl.textContent = '0';
-        if (valueEl) valueEl.textContent = '0.00 DKK';
+        if (valueEl) valueEl.textContent = '0.00 USD';
         if (percentEl) percentEl.textContent = '0.00%';
-        if (dkkChangeEl) dkkChangeEl.textContent = '0.00 DKK';
+        if (dkkChangeEl) dkkChangeEl.textContent = '0.00 USD';
         return;
       }
 
@@ -62,15 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
               ${p.name || '-'}
             </a>
           </td>
-          <td>${(typeof p.value === 'number' ? p.value.toFixed(2) : '0.00')} DKK</td>
-          <td>${(typeof p.dailyChange === 'number' ? p.dailyChange.toFixed(2) : '0.00')} DKK</td>
-          <td>${(typeof p.realizedGain === 'number' ? p.realizedGain.toFixed(2) : '0.00')} DKK</td>
+          <td>${(typeof p.expectedValue === 'number' ? p.expectedValue.toFixed(2) : '0.00')} USD</td>
+          <td>${(typeof p.dailyChange === 'number' ? p.dailyChange.toFixed(2) : '0.00')} USD</td>
+          <td>${(typeof p.realizedGain === 'number' ? p.realizedGain.toFixed(2) : '0.00')} USD</td>
           <td>${(typeof p.unrealizedGain === 'number' ? p.unrealizedGain.toFixed(2) : '-')}</td>
           <td>${(typeof p.expectedValue === 'number' ? p.expectedValue.toFixed(2) : '-')}</td>
           <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-'}</td>
           <td>
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary tilfoj-aktie-btn" data-id="${p.portfolioID}">Tilføj aktie</button>
+              <button class="btn btn-primary kob-aktie-btn" data-id="${p.portfolioID}">Køb aktie</button>
               <button class="btn btn-secondary vis-aktier-btn" data-id="${p.portfolioID}">Vis aktier</button>
             </div>
           </td>
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Bind knapper EFTER tabellen er genereret!
-      document.querySelectorAll('.tilfoj-aktie-btn').forEach(btn => {
+      document.querySelectorAll('.kob-aktie-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const portfolioId = btn.getAttribute('data-id');
           showAddStockForm(portfolioId);
@@ -132,18 +133,19 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch(`/portfolios/${portfolioId}/holdings`);
       const holdings = await res.json();
+      console.log('Holdings for portfolio', portfolioId, holdings);
       if (!Array.isArray(holdings) || holdings.length === 0) {
         showNotification('Ingen aktier i denne portefølje.', 'info');
         return;
       }
       // Byg rækker med beregninger (samme som GrowthTech)
       const rows = holdings.map(s => `
-        <tr>
-          <td>${s.symbol}</td>
-          <td>${s.amount}</td>
-          <td>${s.price ? s.price.toFixed(2) : '-'} DKK</td>
-          <td>${s.value ? s.value.toFixed(2) : '-'} DKK</td>
-        </tr>
+          <tr>
+            <td>${s.symbol}</td>
+            <td>${s.amount}</td>
+          <td>${s.price ? s.price.toFixed(2) : '-'} USD</td>
+          <td>${s.value ? s.value.toFixed(2) : '-'} USD</td>
+          </tr>
       `);
       // Modal HTML
       let modal = document.getElementById('stocksModal');
@@ -193,9 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
       : 0;
 
     if (countEl) countEl.textContent = portfolios.length;
-    valueEl.textContent = `${total.toFixed(2)} DKK`;
+    valueEl.textContent = `${total.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`;
     percentEl.textContent = `${avgChange.toFixed(2)}%`;
-    dkkChangeEl.textContent = `${dkkChange.toFixed(2)} DKK`;
+    dkkChangeEl.textContent = `${dkkChange.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`;
   }
 
   function updatePieChart(portfolios) {
@@ -282,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const select = document.getElementById('accountSelect');
     select.innerHTML = accounts
       .filter(acc => !acc.closedAccount)
-      .map(acc => `<option value="${acc.accountID}">${acc.name} (${acc.balance.toFixed(2)} DKK)</option>`)
+      .map(acc => `<option value="${acc.accountID}">${acc.name} (${acc.balance.toFixed(2)} USD)</option>`)
       .join('');
     // Sæt default aktie og hent pris
     document.getElementById('stockSelect').dispatchEvent(new Event('change'));
@@ -362,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('addStockForm').style.display = 'none';
       document.getElementById('stockAmount').value = '';
       document.getElementById('stockPrice').value = '';
+      console.log('KØB FULDFØRT – loader porteføljer igen');
       loadPortfolios();
     } catch (err) {
       showNotification('Kunne ikke købe aktien: ' + err.message, 'error');
