@@ -1,17 +1,23 @@
+<!-- Dette er kontosiden (accounts) i PortfolioTracker-appen.
+    Den viser brugerens konti, balance, valutafordeling og giver mulighed for at oprette, indbetale, udbetale og lukke konti.
+    Kommentarer forklarer opbygning og funktion af hver sektion. -->
+
 <!DOCTYPE html>
 <html lang="da">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>PortfolioTracker – Accounts</title>
+
+  <!-- Google Fonts og CSS til styling -->
   <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap"/>
-  <!-- Absolut sti så Express statisk server rammer public/accounts.css -->
   <link rel="stylesheet" href="/accounts.css"/>
 </head>
 <body>
   <div class="app">
-    <!-- SIDEBAR -->
+
+    <!-- SIDEBAR med logo og navigation -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <img src="/accounts.png/accounts-logo.png" alt="Logo" class="logo-icon"/>
@@ -19,8 +25,11 @@
           <h1>PORTFOLIOTRACKER</h1>
           <p>ORGANIZING YOUR FINANCES</p>
         </div>
+        <!-- Knappen sender brugeren tilbage til dashboardet -->
         <button id="back-to-dashboard-btn" class="collapse-btn" aria-label="Skjul sidebar">❮</button>
       </div>
+
+      <!-- Navigation med aktive sider -->
       <nav class="sidebar-nav">
         <ul>
           <li><a href="/">Dashboard</a></li>
@@ -30,12 +39,13 @@
       </nav>
     </aside>
 
-    <!-- HOVEDINDHOLD -->
+    <!-- HOVEDINDHOLD vises her -->
     <main class="main-content">
       <header class="page-header">
         <h2>Mine Konti</h2>
       </header>
 
+      <!-- Viser overblikskort: antal, saldo og valuta-fordeling -->
       <section class="metrics">
         <div class="card">
           <div class="label">Antal Konti</div>
@@ -53,6 +63,7 @@
         </div>
       </section>
 
+      <!-- Tabel over alle brugerens konti -->
       <section class="tables">
         <div class="table-container" style="grid-column: span 2;">
           <div class="table-header">
@@ -71,9 +82,10 @@
         </div>
       </section>
 
+      <!-- Sektion til visning af transaktionshistorik -->
       <div id="transactions-list"></div>
 
-      <!-- Modal til opret konto -->
+      <!-- MODALS (pop-up bokse til handlinger) -->
       <div id="create-account-modal" class="modal" style="display:none;">
         <div class="modal-content">
           <h3>Opret ny konto</h3>
@@ -116,7 +128,7 @@
         </div>
       </div>
 
-      <!-- Modal til luk konto -->
+      <!-- Modal til lukning af konto -->
       <div id="close-account-modal" class="modal" style="display:none;">
         <div class="modal-content">
           <h3>Luk konto</h3>
@@ -131,7 +143,7 @@
     </main>
   </div>
 
-  <!-- Client-JS -->
+  <!-- JavaScript-filen der styrer konto-logik -->
   <script src="/js/account.js"></script>
 </body>
 </html>

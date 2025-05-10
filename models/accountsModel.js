@@ -1,8 +1,10 @@
-// models/accountsModel.js
+// Model til at håndtere konto-relaterede databaseoperationer
+// Indeholder metoder til at oprette, lukke, genåbne konti og håndtere ind- og udbetalinger
+// Logger også transaktioner og henter konto- og transaktionsdata til brugerens dashboard
 const { sql, poolPromise } = require('../db/database');
 
 class AccountsModel {
-  // Opretter en ny konto for en bruger
+  // Opretter en ny konto for en bruger med 0-saldo og registreringsdato
   async createAccount(userId, name, currency, bank) {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -18,7 +20,7 @@ class AccountsModel {
     return result.recordset[0];
   }
 
-  // Lukker en konto (sætter closedAccount = 1 og lukketidspunkt)
+  // Sætter en konto som lukket og angiver lukningstidspunkt
   async closeAccount(accountId) {
     const pool = await poolPromise;
     await pool.request()
@@ -31,7 +33,7 @@ class AccountsModel {
       `);
   }
 
-  // Genåbner en lukket konto
+  // Genåbner en tidligere lukket konto
   async reopenAccount(accountId) {
     const pool = await poolPromise;
     await pool.request()
@@ -43,7 +45,7 @@ class AccountsModel {
       `);
   }
 
-  // Indsætter et beløb på kontoen (hvis ikke lukket) og logger transaktionen
+  // Indsætter penge på en konto og opretter transaktionslog
   async deposit(accountId, amount) {
     const pool = await poolPromise;
     // Opdater saldo
@@ -68,7 +70,8 @@ class AccountsModel {
       `);
   }
 
-  // Hæver et beløb fra kontoen (hvis ikke lukket og der er dækning) og logger transaktionen
+  // Hæver penge fra en konto hvis den er åben og har nok dækning
+  // 
   async withdraw(accountId, amount) {
     const pool = await poolPromise;
     // Tjek dækning og lukket konto
@@ -88,7 +91,7 @@ class AccountsModel {
         SET balance = balance - @amount
         WHERE accountID = @accountId AND closedAccount = 0;
       `);
-    // Log transaktionen
+  
     await pool.request()
       .input('accountId', sql.Int, accountId)
       .input('amount', sql.Float, amount)
@@ -100,7 +103,7 @@ class AccountsModel {
       `);
   }
 
-  // Henter alle transaktioner for en given konto, sorteret nyest først
+  // Henter alle transaktioner for en bestemt konto, sorteret nyest først
   async getTransactions(accountId) {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -114,7 +117,7 @@ class AccountsModel {
     return result.recordset;
   }
 
-  // Henter alle konti tilhørende en given bruger, sorteret efter oprettelsesdato
+  // Henter alle konti for en bruger, sorteret efter oprettelsesdato
   async getAllForUser(userId) {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -135,7 +138,7 @@ class AccountsModel {
     return result.recordset;
   }
 
-  // Hent alle transaktioner for en konto, sorteret nyeste først
+  // Ekstra metode til at hente transaktioner for en specifik konto (gentagelse af ovenstående)
   async getTransactionsForAccount(accountId) {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -152,6 +155,7 @@ class AccountsModel {
     return result.recordset;
   }
 
+  // Henter alle aktive (åbne) konti for en bruger, sorteret alfabetisk
   async getAccountsByUserId(userId) {
     const pool = await poolPromise;
     const result = await pool.request()
@@ -164,7 +168,8 @@ class AccountsModel {
         `);
     return result.recordset;
   }
-
+  
+// Returnerer brugerens samlede saldo fra alle åbne konti
   async getTotalBalance(userId) {
     const pool = await poolPromise;
     const result = await pool.request()

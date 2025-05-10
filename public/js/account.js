@@ -1,12 +1,16 @@
-// public/js/account/account.js
+// Når hele DOM'en er indlæst, starter vi logikken
+// Funktionaliteten styrer alt fra visning af konti, modaler og formularer
+// til handlinger som opret, luk, hæv og indsæt på en konto
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Henter elementer til brug i dashboard og modaler
     const countEl      = document.getElementById('account-count');
     const totalBalEl   = document.getElementById('total-balance');
     const currencyEl   = document.getElementById('currency-dist');
     const tbody        = document.getElementById('accounts-table-body');
     const newBtn       = document.getElementById('new-account-btn');
   
-    // Modal-elementer
+    // Modale felter og formularer
     const createAccountModal = document.getElementById('create-account-modal');
     const createAccountForm = document.getElementById('create-account-form');
     const createAccountError = document.getElementById('create-account-error');
@@ -30,11 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeAccountForm = document.getElementById('close-account-form');
     const closeAccountError = document.getElementById('close-account-error');
     const cancelCloseAccount = document.getElementById('cancel-close-account');
+
+    // Aktuel konto-id ved interaktion
     let currentDepositAccountId = null;
     let currentWithdrawAccountId = null;
     let currentCloseAccountId = null;
   
-    // Hent konti og opdater UI
+    // Henter kontodata fra serveren og opdaterer UI
     async function loadAccounts() {
       try {
         const res  = await fetch('/accounts/api');
@@ -47,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
-    // Render antal, samlet balance og valutafordeling
+    // Beregner og viser samlet saldo, antal og valutafordeling
     function renderMetrics(accounts) {
       // Kun aktive konti (closedAccount === 0)
       const activeAccounts = accounts.filter(acc => acc.closedAccount === 0 || acc.closedAccount === false);
@@ -69,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currencyEl.textContent = parts.join(', ');
     }
   
-    // Fyld tabellen
+    // Renders kontotabel og tilføjer events til knapper
     function renderTable(accounts) {
       tbody.innerHTML = '';
       accounts.forEach(acc => {
@@ -95,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
       });
 
-      // Tilføj event listeners til indsæt knapper
+      // Tilføj events til hver af handlingerne (deposit, withdraw, luk osv.)
       document.querySelectorAll('.deposit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           // Find kontoens valuta
@@ -180,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Håndter opret konto-formular
+    // Formularhåndtering for opret, indbetal, udbetal, luk konto
     if (createAccountForm) {
       createAccountForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -284,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Luk modal på "Annuller"
+    // Tilføj lyttere til "annuller" knapper for at lukke modaler
     if (cancelWithdraw && withdrawModal) {
       cancelWithdraw.addEventListener('click', () => {
         withdrawModal.style.display = 'none';

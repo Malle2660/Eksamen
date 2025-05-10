@@ -6,10 +6,10 @@ const transactionsModel = require('../models/accountsModel'); // eller transacti
 
 const router = express.Router();
 
-// ————— VIS accounts-siden —————
+// Viser kontooversigten (render accounts.ejs)
 router.get('/', async (req, res) => {
   try {
-    const userId = 1; // Hardcoded for now
+    const userId = 1; // Midlertidigt hardcoded
     const accounts = await accountsModel.getAccountsByUserId(userId);
     const totalBalance = await accountsModel.getTotalBalance(userId);
     
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// === Opret konto ===
+// Opretter en ny konto
 router.post('/create', async (req, res) => {
   const userId = req.session.user.userID;
   const { name, currency, bank } = req.body;
@@ -39,7 +39,7 @@ router.post('/create', async (req, res) => {
     res.status(201).json({ message: 'Konto oprettet!', accountId: account.id });
 });
 
-// === Luk konto ===
+// Lukker en konto hvis brugeren ejer den
 router.post('/close', async (req, res) => {
   try {
     if (!req.session.user || !req.session.user.userID) {
@@ -62,7 +62,7 @@ router.post('/close', async (req, res) => {
   }
 });
 
-// === Genåbn konto ===
+// Genåbner en tidligere lukket konto
 router.post('/reopen', async (req, res) => {
   try {
     const { accountId } = req.body;
@@ -76,14 +76,14 @@ router.post('/reopen', async (req, res) => {
   }
 });
 
-// === Se konti for API (bruges af client-JS) ===
+// Returnerer konti som JSON til client-side fetch (JS)
 router.get('/api', async (req, res) => {
   const userId = req.session.user.userID;
   const accounts = await accountsModel.getAllForUser(userId);
     res.json(accounts);
 });
 
-// === Hent transaktioner ===
+// Henter transaktioner for en given konto
 router.get('/transactions/:accountId', async (req, res) => {
   try {
     const accountId = req.params.accountId;
@@ -94,7 +94,7 @@ router.get('/transactions/:accountId', async (req, res) => {
   }
 });
 
-// === Indsæt penge på konto ===
+// Indsætter beløb på konto hvis bruger ejer kontoen
 router.post('/deposit', async (req, res) => {
   try {
     if (!req.session.user || !req.session.user.userID) {
@@ -116,7 +116,7 @@ router.post('/deposit', async (req, res) => {
   }
 });
 
-// === Hæv penge fra konto ===
+// Hæver beløb fra konto (kræver kun konto-id og beløb)
 router.post('/withdraw', async (req, res) => {
   try {
     const { accountId, amount } = req.body;

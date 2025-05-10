@@ -1,49 +1,64 @@
+/* Denne CSS definerer styling for et dashboard-layout med sidebar-navigation,
+   hovedindhold, metrik-kort, tabeller og modale vinduer.
+   Kommentarer forklarer hver sektion, så teamet let kan navigere og tilpasse.
+*/  
+
 /* Importér Roboto Slab til overskrifter */
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
 
-/* ----- GLOBAL VARIABLES ----- */
+/* Globale farve- og stil-variabler */
 :root {
-  --bg-global:      #1E1E1E;
-  --bg-container:   #1B1B19;
-  --text-light:     #C3C3C1;
-  --text-dark:      #84837E;
-  --color-positive: #46634C;
-  --color-negative: #BD3A3A;
-  --sidebar-bg:     #513F95;
-  --button-bg:      #242424;
-  --button-text:    #ffff;
+  --bg-global:      #1E1E1E; /* baggrundsfarve for hele appen */
+  --bg-container:   #1B1B19; /* baggrundsfarve for bokse og kort */
+  --text-light:     #C3C3C1; /* standard tekstfarve */
+  --text-dark:      #84837E; /* sekundær/grå tekst */
+  --color-positive: #46634C; /* grøn til fx vækst */
+  --color-negative: #BD3A3A; /* rød til fx fald */
+  --sidebar-bg:     #513F95; /* farve på top af sidebar */
+  --button-bg:      #242424; /* standard knapfarve */
+  --button-text:    #fff;    /* knaptekst */
+
 }
 
-/* ----- RESET & BASE ----- */
+/* Reset og basis-opsætning */
+/* Nulstiller margin og padding for alle elementer og anvender border-box layout */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
+/* Basis styling for hele body-elementet */
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg-global);
   color: var(--text-light);
 }
+
+/* Fjerner listepunkter og understregning på links og lister */
 ul, a {
   list-style: none;
   text-decoration: none;
   color: inherit;
 }
 
-/* ----- OVERORDNET GRID-LAYOUT ----- */
+/* Webapplikationens layout (GRID) */
+/* Definerer 2-kolonne layout: sidebar (240px) og hovedindhold (resten) */
 .app {
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100vh;
 }
 
-/* ----- SIDEBAR ----- */
+/* SIDEBAR */
+/* Baggrundsfarve for sidebar */
 .sidebar {
   background: var(--bg-container);
   display: flex;
   flex-direction: column;
 }
+
+/* Topsektion i sidebar med logo og luk-knap */
 .sidebar-header {
   background: var(--sidebar-bg);
   height: 64px;
@@ -51,6 +66,8 @@ ul, a {
   align-items: center;
   padding: 0;
 }
+
+/* Logoikonet i venstre side af header */
 .logo-icon {
   background: var(--sidebar-bg);
   width: 75px;
@@ -61,6 +78,8 @@ ul, a {
   border-radius: 4px;
   object-fit: contain;
 }
+
+/* Tekstdelen af logoet */
 .logo-text {
   display: inline-block;
   text-align: center;
@@ -83,6 +102,8 @@ ul, a {
   white-space: nowrap;
   margin: 0;
 }
+
+/* til at folde sidebar sammen */
 .collapse-btn {
   margin-left: auto;
   margin-right: -16px;
@@ -98,7 +119,7 @@ ul, a {
   cursor: pointer;
 }
 
-/* ----- NAVIGATION ----- */
+/* NAVIGATION i sidebar */
 .sidebar-nav ul {
   margin-top: 16px;
   padding: 0;
@@ -134,6 +155,8 @@ ul, a {
   background: url('/accounts.png/accounts-portfolios.png') no-repeat center center;
   background-size: contain;
 }
+
+/* Styling af navigationspunkterne */
 .sidebar-nav li {
   display: flex;
   align-items: center;
@@ -156,7 +179,7 @@ ul, a {
   fill: var(--text-light);
 }
 
-/* ----- HOVEDINDHOLD ----- */
+/* HOVEDINDHOLD */
 .main-content {
   padding: 3rem 2rem 2rem;
   overflow-y: auto;
@@ -168,7 +191,7 @@ ul, a {
   color: var(--text-light);
 }
 
-/* ----- METRIKKORT ----- */
+/* METRIKKORT (dashboard-kort med info) */
 .metrics {
   display: flex;
   gap: 1rem;
@@ -200,7 +223,7 @@ ul, a {
 .change.negative { color: var(--color-negative); }
 .change svg { margin-right: 0.25rem; width: 12px; height: 12px; }
 
-/* Knap styling */
+/* KNAPPER TIL HANDLINGER (Indbetaling osv.) */
 .close-btn, .reopen-btn, .deposit-btn, .withdraw-btn {
   padding: 4px 8px;
   border: none;
@@ -254,7 +277,7 @@ ul, a {
   background-color: #218838;
 }
 
-/* ----- TABELLER ----- */
+/* TABELLER TIL OVERSIGT */
 .tables {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -265,7 +288,7 @@ ul, a {
   border-radius: 8px;
   padding: 1rem;
 }
-/* Sørg for at den store tabel fylder begge kolonner */
+
 .table-container[style] {
   grid-column: span 2;
 }
@@ -289,6 +312,8 @@ ul, a {
   font-size: 0.75rem;
   cursor: pointer;
 }
+
+/* Styling af selve tabellen */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -330,6 +355,7 @@ td {
   background-color: #343a40;
 }
 
+/* MODAL (popup) */
 .modal {
   position: fixed;
   z-index: 10000;
