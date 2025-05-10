@@ -3,6 +3,7 @@ const router  = express.Router();
 const Portfolio = require('../models/portfolio');
 const { getStockQuote } = require('../services/finnhub');
 const sql = require('mssql');
+const { poolPromise } = require('../db/database');
 
 // === VIEW: Dashboard (EJS) på GET /dashboard ===
 router.get('/', async (req, res, next) => {
@@ -13,8 +14,8 @@ router.get('/', async (req, res, next) => {
     // Saml alle aktier på tværs af porteføljer
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     // Hent aktuel pris for hver aktie (fra cache/api)
@@ -68,19 +69,10 @@ router.get('/metrics', async (req, res, next) => {
     let totalRealized = 0; // Hvis du har realiseret gevinst
 
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      for (const stock of stocks) {
-        let price = 0;
-        try {
-          const quote = await getStockQuote(stock.symbol);
-          price = quote.price || 0;
-        } catch (e) { price = 0; }
-        let rate = 1;
-        if (stock.currency && stock.currency !== 'DKK') {
-          // ...hent valutakurs...
-        }
-        totalValue += (stock.amount || 0) * price * rate;
-        // totalUnrealized += ... (hvis du vil vise gevinst)
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      for (const h of holdings) {
+        totalValue += h.value || 0;
+      //   totalUnrealized += ... (hvis du vil vise gevinst)
       }
     }
 
@@ -102,8 +94,8 @@ router.get('/top/value', async (req, res, next) => {
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     for (const h of allHoldings) {
@@ -129,8 +121,8 @@ router.get('/top/profit', async (req, res, next) => {
 
     let allHoldings = [];
     for (const portfolio of portfolios) {
-      const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(stocks.map(s => ({ ...s, portfolioName: portfolio.name })));
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
     }
 
     for (const h of allHoldings) {
@@ -154,53 +146,68 @@ router.get('/history', async (req, res, next) => {
     const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
 
-    // Find alle stocks for brugerens porteføljer
-    let allStocks = [];
+    // Saml alle trades på tværs af porteføljer
+    let allTrades = [];
     for (const portfolio of portfolios) {
-      // Brug Stock.getAllForPortfolio for at få stockID!
-      const stocks = await require('../models/stock').getAllForPortfolio(portfolio.portfolioID);
-      allStocks = allStocks.concat(stocks.map(s => ({ ...s, portfolioID: portfolio.portfolioID })));
+      const transactionsModel = require('../models/transactionsModel');
+      const trades = await transactionsModel.getAllForPortfolio(portfolio.portfolioID);
+      allTrades = allTrades.concat(trades);
     }
 
-    // Hent prisdata for de sidste 30 dage for alle stocks
-    const pool = await require('../db/database').poolPromise;
-    const days = 30;
-    const dateFrom = new Date();
-    dateFrom.setDate(dateFrom.getDate() - days);
+    // Slå symbols op
+    const stockIDs = [...new Set(allTrades.map(t => t.stockID).filter(Boolean))];
+    let idToSymbol = {};
+    if (stockIDs.length > 0) {
+      const { poolPromise } = require('../db/database');
+      const pool = await poolPromise;
+      const result = await pool.request()
+        .query(`SELECT id, symbol FROM Stocks WHERE id IN (${stockIDs.join(',')})`);
+      for (const row of result.recordset) {
+        idToSymbol[row.id] = row.symbol;
+      }
+      for (const trade of allTrades) {
+        trade.symbol = idToSymbol[trade.stockID];
+      }
+    }
+    const symbols = [...new Set(allTrades.map(t => t.symbol).filter(Boolean))];
 
-    // Hent alle pricehistory-rows for disse stocks og dato-interval
-    const stockIds = allStocks.map(s => s.stockID).filter(Boolean);
-    if (stockIds.length === 0) return res.json([]);
-
-    const result = await pool.request()
-      .input('dateFrom', sql.DateTime, dateFrom)
-      .query(`
-        SELECT stockID, price, date
-        FROM PriceHistory
-        WHERE stockID IN (${stockIds.join(',')})
-          AND date >= @dateFrom
-        ORDER BY date ASC
-      `);
-
-    // Saml daglig værdi
-    const dailyValue = {};
-    for (const row of result.recordset) {
-      // Find antal aktier for denne stockID
-      const stock = allStocks.find(s => s.stockID === row.stockID);
-      if (!stock) continue;
-      const dateKey = row.date.toISOString().slice(0, 10);
-      if (!dailyValue[dateKey]) dailyValue[dateKey] = 0;
-      dailyValue[dateKey] += (stock.amount || 0) * row.price;
+    // Hent historiske kurser for de sidste 10 dage
+    const { getHistoricalPrices } = require('../services/finnhub');
+    const historicalPrices = {};
+    for (const symbol of symbols) {
+      historicalPrices[symbol] = await getHistoricalPrices(symbol, 10);
     }
 
-    // Formatér til array til graf
-    const graphData = Object.entries(dailyValue).map(([date, value]) => ({
-      date,
-      value
-    }));
+    // Beregn porteføljeværdi for hver dag
+    const startDate = new Date('2025-01-01');
+    const today = new Date();
+    const history = [];
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().slice(0, 10);
 
-    console.log('History data:', graphData);
-    res.json(graphData);
+      // Beregn beholdning for hver aktie på denne dag
+      const holdings = {};
+      for (const symbol of symbols) {
+        const tradesForSymbol = allTrades.filter(t => t.symbol === symbol && t.date <= dateStr);
+        const amount = tradesForSymbol.reduce((sum, t) => sum + (t.type === 'Buy' ? t.quantity : -t.quantity), 0);
+        holdings[symbol] = amount;
+      }
+
+      // Beregn samlet værdi for denne dag
+      let totalValue = 0;
+      for (const symbol of symbols) {
+        const amount = holdings[symbol];
+        const price = historicalPrices[symbol][dateStr] || 0;
+        totalValue += amount * price;
+      }
+
+      history.push({
+        date: dateStr,
+        value: totalValue
+      });
+    }
+
+    res.json(history);
   } catch (err) {
     next(err);
   }

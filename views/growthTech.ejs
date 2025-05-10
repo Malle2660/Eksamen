@@ -38,18 +38,18 @@
     <main class="main-content">
       <!-- Header med titel + søgefelt og knapper -->
       <header class="page-header">
-        <h2>Growth Tech Portfolio</h2>
+        <h2>Min  værdipapir Portfolio</h2>
         <div class="header-controls">
           <input
             type="search"
+            id="search-portfolio"
             class="search-input"
             placeholder="Søg portefølje…"
             aria-label="Søg portefølje"
+            style="margin-right: 12px;"
           >
-          <div class="page-actions">
-            <button class="action-btn" id="btnHistory">Handels Historik</button>
-            <button class="action-btn" id="btnNewTrade">Registrer Handel</button>
-          </div>
+          <button id="trade-history-btn" class="action-btn">Handels Historik</button>
+          <button id="register-trade-btn" class="action-btn">Registrer Handel</button>
         </div>
       </header>
 
@@ -60,7 +60,9 @@
             <h3>Samlet Værdi af portefølje</h3>
             <span>Year to date</span>
           </div>
-          <div class="chart-placeholder"><!-- Line-Chart her via JS --></div>
+          <div class="chart-placeholder">
+            <canvas id="portfolioValueChart" width="800" height="300"></canvas>
+          </div>
         </div>
 
         <div class="stats-section">
@@ -72,7 +74,7 @@
             </ul>
           </div>
           <div class="card value-card">
-            <div class="label">Total værdi i DKK</div>
+            <div class="label">Total værdi i USD</div>
             <div class="value" id="totalValue">Indlæser…</div>
           </div>
         </div>
@@ -96,7 +98,19 @@
               </tr>
             </thead>
             <tbody id="holdingsTable">
-              <!-- JS fylder <tr> her -->
+              <% if (!holdings || holdings.length === 0) { %>
+                <tr><td colspan="5">Ingen aktier i denne portefølje endnu.</td></tr>
+              <% } else { %>
+                <% holdings.forEach(function(stock) { %>
+                  <tr>
+                    <td><%= stock.symbol %></td>
+                    <td><%= stock.amount %></td>
+                    <td>-</td>
+                    <td><%= stock.price.toFixed(2) %> USD</td>
+                    <td><%= stock.value.toFixed(2) %> USD</td>
+                  </tr>
+                <% }) %>
+              <% } %>
             </tbody>
           </table>
         </div>
@@ -120,7 +134,7 @@
         </div>
         <div class="form-group">
           <label for="price">Pris per aktie:</label>
-          <input type="number" id="price" name="price" step="0.01" required>
+          <input type="number" id="price" name="price" step="0.01" required readonly>
         </div>
         <div class="form-group">
           <label for="fee">Gebyr:</label>
@@ -153,7 +167,7 @@
         </div>
         <div class="form-group">
           <label for="sellPrice">Pris per aktie:</label>
-          <input type="number" id="sellPrice" name="sellPrice" step="0.01" required>
+          <input type="number" id="sellPrice" name="sellPrice" step="0.01" required readonly>
         </div>
         <div class="form-group">
           <label for="sellFee">Gebyr:</label>
@@ -176,5 +190,10 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/growthTech.js"></script>
+
+  <div id="tradeHistoryModal" style="display:none;">
+    <div id="tradeHistoryContent"></div>
+    <button onclick="document.getElementById('tradeHistoryModal').style.display='none'">Luk</button>
+  </div>
 </body>
 </html>

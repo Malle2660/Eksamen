@@ -1,185 +1,466 @@
-console.log("test bror");
-const API_BASE = '/api/dashboard';
+// public/js/account/account.js
+document.addEventListener('DOMContentLoaded', () => {
+  const countEl      = document.getElementById('account-count');
+  const totalBalEl   = document.getElementById('total-balance');
+  const currencyEl   = document.getElementById('currency-dist');
+  const tbody        = document.getElementById('accounts-table-body');
+  const newBtn       = document.getElementById('new-account-btn');
 
-function handleError(msg) {
-  console.error(msg);
-  alert(msg);
-}
+  // Modal-elementer
+  const createAccountModal = document.getElementById('create-account-modal');
+  const createAccountForm = document.getElementById('create-account-form');
+  const createAccountError = document.getElementById('create-account-error');
+  const cancelCreateAccount = document.getElementById('cancel-create-account');
+  const newAccountName = document.getElementById('new-account-name');
+  const newAccountCurrency = document.getElementById('new-account-currency');
+  const newAccountBank = document.getElementById('new-account-bank');
+  const depositModal = document.getElementById('deposit-modal');
+  const depositForm = document.getElementById('deposit-form');
+  const depositAmount = document.getElementById('deposit-amount');
+  const depositCurrency = document.getElementById('deposit-currency');
+  const depositError = document.getElementById('deposit-error');
+  const cancelDeposit = document.getElementById('cancel-deposit');
+  const withdrawModal = document.getElementById('withdraw-modal');
+  const withdrawForm = document.getElementById('withdraw-form');
+  const withdrawAmount = document.getElementById('withdraw-amount');
+  const withdrawCurrency = document.getElementById('withdraw-currency');
+  const withdrawError = document.getElementById('withdraw-error');
+  const cancelWithdraw = document.getElementById('cancel-withdraw');
+  const closeAccountModal = document.getElementById('close-account-modal');
+  const closeAccountForm = document.getElementById('close-account-form');
+  const closeAccountError = document.getElementById('close-account-error');
+  const cancelCloseAccount = document.getElementById('cancel-close-account');
+  let currentDepositAccountId = null;
+  let currentWithdrawAccountId = null;
+  let currentCloseAccountId = null;
 
-async function fetchJSON(path) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include'
+  // Hent konti og opdater UI
+  async function loadAccounts() {
+    try {
+      const res  = await fetch('/accounts/api');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderMetrics(data);
+      renderTable(data);
+    } catch (err) {
+      console.error('Kunne ikke indlæse konti:', err);
+    }
+  }
+
+  // Render antal, samlet balance og valutafordeling
+  function renderMetrics(accounts) {
+    // Kun aktive konti (closedAccount === 0)
+    const activeAccounts = accounts.filter(acc => acc.closedAccount === 0 || acc.closedAccount === false);
+
+    let total        = 0;
+    const byCurrency = {};
+
+    activeAccounts.forEach(acc => {
+      total += acc.balance;
+      byCurrency[acc.currency] = (byCurrency[acc.currency] || 0) + acc.balance;
+    });
+
+    countEl.textContent    = activeAccounts.length;
+    const totalUSD = accounts.reduce((sum, acc) => sum + (acc.balanceUSD || 0), 0);
+    totalBalEl.textContent = `${totalUSD.toFixed(2)} USD`;
+
+    const grandTotal = Object.values(byCurrency).reduce((a,b) => a + b, 0);
+    const parts      = Object.entries(byCurrency)
+      .map(([cur,bal]) => `${cur} ${((bal/grandTotal)*100).toFixed(0)}%`);
+    currencyEl.textContent = parts.join(', ');
+  }
+
+  // Fyld tabellen
+  function renderTable(accounts) {
+    tbody.innerHTML = '';
+    accounts.forEach(acc => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${acc.accountID}</td>
+        <td>${acc.name}</td>
+        <td>${acc.bank}</td>
+        <td>${acc.currency}</td>
+        <td class="value">${acc.balance.toFixed(2)} ${acc.currency}</td>
+        <td class="value">${acc.balanceUSD.toFixed(2)} USD</td>
+        <td>${new Date(acc.registrationsDate).toLocaleDateString('da-DK')}</td>
+        <td>${acc.closedAccount ? 'Lukket' : 'Aktiv'}</td>
+        <td>
+          ${acc.closedAccount 
+            ? `<button class="reopen-btn" data-id="${acc.accountID}">Genåbn</button>`
+            : `<button class="deposit-btn" data-id="${acc.accountID}">Indbetaling</button>
+               <button class="withdraw-btn" data-id="${acc.accountID}">Udbetaling</button>
+               <button class="history-btn" data-id="${acc.accountID}">Historik</button>
+               <button class="close-btn" data-id="${acc.accountID}">Luk</button>`
+          }
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Tilføj event listeners til indsæt knapper
+    document.querySelectorAll('.deposit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Find kontoens valuta
+        const tr = btn.closest('tr');
+        const currency = tr.querySelector('td:nth-child(4)').textContent;
+        currentDepositAccountId = btn.dataset.id;
+        depositAmount.value = '';
+        depositCurrency.value = currency;
+        depositError.textContent = '';
+        depositModal.style.display = 'flex';
+        depositAmount.focus();
+      });
+    });
+
+    // Tilføj event listeners til luk/åbn knapper
+    document.querySelectorAll('.close-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentCloseAccountId = btn.dataset.id;
+        if (closeAccountError) closeAccountError.textContent = '';
+        if (closeAccountModal) closeAccountModal.style.display = 'flex';
+      });
+    });
+
+    document.querySelectorAll('.reopen-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (confirm('Er du sikker på, at du vil genåbne denne konto?')) {
+          try {
+            const res = await fetch('/accounts/reopen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accountId: btn.dataset.id })
+            });
+            if (!res.ok) throw new Error('Fejl ved genåbning af konto');
+            alert('Konto genåbnet!');
+            loadAccounts();
+          } catch (err) {
+            alert('Fejl: ' + err.message);
+            console.error(err);
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll('.withdraw-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tr = btn.closest('tr');
+        const currency = tr.querySelector('td:nth-child(4)').textContent;
+        currentWithdrawAccountId = btn.dataset.id;
+        if (withdrawAmount) withdrawAmount.value = '';
+        if (withdrawCurrency) withdrawCurrency.value = currency;
+        if (withdrawError) withdrawError.textContent = '';
+        if (withdrawModal) {
+          withdrawModal.style.display = 'flex';
+          withdrawAmount && withdrawAmount.focus();
+        }
+      });
+    });
+
+    document.querySelectorAll('.history-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showTransactions(btn.dataset.id);
+      });
+    });
+  }
+
+  // Åbn modal når der trykkes på "Opret konto"
+  if (newBtn && createAccountModal && createAccountForm && newAccountName && newAccountCurrency && newAccountBank) {
+    newBtn.addEventListener('click', () => {
+      createAccountError.textContent = '';
+      newAccountName.value = '';
+      newAccountCurrency.value = '';
+      newAccountBank.value = '';
+      createAccountModal.style.display = 'flex';
+      newAccountName.focus();
+    });
+  }
+
+  // Luk modal
+  if (cancelCreateAccount && createAccountModal) {
+    cancelCreateAccount.addEventListener('click', () => {
+      createAccountModal.style.display = 'none';
+    });
+  }
+
+  // Håndter opret konto-formular
+  if (createAccountForm) {
+    createAccountForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      createAccountError.textContent = '';
+      const name = newAccountName.value.trim();
+      const currency = newAccountCurrency.value.trim();
+      const bank = newAccountBank.value.trim();
+      if (!name || !currency || !bank) {
+        createAccountError.textContent = 'Alle felter skal udfyldes!';
+        return;
+      }
+      try {
+        const res = await fetch('/accounts/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, currency, bank })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || res.statusText);
+        }
+        createAccountModal.style.display = 'none';
+        loadAccounts();
+      } catch (err) {
+        createAccountError.textContent = 'Fejl: ' + err.message;
+      }
+    });
+  }
+
+  // Håndter indbetalings-formularen
+  if (depositForm) {
+    depositForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      depositError.textContent = '';
+      const amount = depositAmount.value.trim();
+      if (!amount || isNaN(amount) || amount <= 0) {
+        depositError.textContent = 'Indtast venligst et gyldigt beløb større end 0';
+        return;
+      }
+      try {
+        const res = await fetch('/accounts/deposit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            accountId: currentDepositAccountId,
+            amount: parseFloat(amount)
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'Fejl ved indsættelse af beløb');
+      }
+        depositModal.style.display = 'none';
+        loadAccounts();
+        // Opdater evt. historik hvis den vises
+        if (currentHistoryAccountId === currentDepositAccountId) {
+          showTransactions(currentDepositAccountId);
+        }
+      } catch (err) {
+        depositError.textContent = 'Fejl: ' + err.message;
+      }
+    });
+  }
+
+  // Luk modal på "Annuller"
+  if (cancelDeposit && depositModal) {
+    cancelDeposit.addEventListener('click', () => {
+      depositModal.style.display = 'none';
+    });
+  }
+
+  // Håndter udbetalings-formularen
+  if (withdrawForm) {
+    withdrawForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      withdrawError.textContent = '';
+      const amount = withdrawAmount.value.trim();
+      if (!amount || isNaN(amount) || amount <= 0) {
+        withdrawError.textContent = 'Indtast venligst et gyldigt beløb større end 0';
+        return;
+      }
+      try {
+        const res = await fetch('/accounts/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            accountId: currentWithdrawAccountId,
+            amount: parseFloat(amount)
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Fejl ved udbetaling');
+        withdrawModal.style.display = 'none';
+        loadAccounts();
+        if (currentHistoryAccountId === currentWithdrawAccountId) {
+          showTransactions(currentWithdrawAccountId);
+        }
+  } catch (err) {
+        withdrawError.textContent = 'Fejl: ' + err.message;
+      }
+    });
+  }
+
+  // Luk modal på "Annuller"
+  if (cancelWithdraw && withdrawModal) {
+    cancelWithdraw.addEventListener('click', () => {
+      withdrawModal.style.display = 'none';
+    });
+  }
+
+  // Håndter luk konto-formularen
+  if (closeAccountForm) {
+    closeAccountForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      closeAccountError.textContent = '';
+      try {
+        const res = await fetch('/accounts/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accountId: currentCloseAccountId })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'Fejl ved lukning af konto');
+        }
+        closeAccountModal.style.display = 'none';
+        loadAccounts();
+        if (currentHistoryAccountId === currentCloseAccountId) {
+          showTransactions(currentCloseAccountId);
+        }
+      } catch (err) {
+        closeAccountError.textContent = 'Fejl: ' + err.message;
+      }
+    });
+  }
+  if (cancelCloseAccount && closeAccountModal) {
+    cancelCloseAccount.addEventListener('click', () => {
+      closeAccountModal.style.display = 'none';
+    });
+  }
+
+  // Initial indlæsning
+  loadAccounts();
+
+  // Eksempel: knap eller link til at vise transaktioner
+  document.querySelectorAll('.show-transactions-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      showTransactions(btn.dataset.id);
+    });
   });
 
-  let body = {};
-  try {
-    body = await res.json();
-  } catch (_) {
-    throw new Error(`Ugyldigt JSON fra ${path}`);
+  // Tilføj dette i din DOMContentLoaded callback i public/js/account.js
+  const backBtn = document.getElementById('back-to-dashboard-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.location.href = '/dashboard';
+    });
   }
+});
 
-  if (!res.ok) {
-    throw new Error(body.message || `Fejl på ${path}`);
-  }
-
-  return body;
-}
-
-function updateMetrics({ totalValue, realized, unrealized }) {
-  const totalValueEl = document.getElementById('totalValue');
-  const realizedProfitEl = document.getElementById('realizedProfit');
-  const unrealizedProfitEl = document.getElementById('unrealizedProfit');
-
-  if (totalValueEl)
-    totalValueEl.textContent = `${totalValue.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
-  if (realizedProfitEl)
-    realizedProfitEl.textContent = `${realized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
-  if (unrealizedProfitEl)
-    unrealizedProfitEl.textContent = `${unrealized.toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK`;
-}
-
-function populateTable(tbodyId, data, key, limit = 5) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  const showData = data.slice(0, limit);
-  tbody.innerHTML = showData.map(item => `
-    <tr>
-      <td>${item.name || item.symbol || 'Ukendt'}</td>
-      <td>${(item[key] || 0).toLocaleString('da-DK', { minimumFractionDigits: 2 })} DKK</td>
-    </tr>
-  `).join('');
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  // Hent porteføljer fra backend
-  let portfolios = [];
+async function showTransactions(accountId) {
   try {
-    const res = await fetch('/portfolios/user');
-    portfolios = await res.json();
+    const res = await fetch(`/accounts/transactions/${accountId}`);
+    if (!res.ok) throw new Error('Kunne ikke hente transaktioner');
+    const transactions = await res.json();
+
+    const list = document.getElementById('transactions-list');
+    list.innerHTML = '<h3>Transaktionshistorik</h3>';
+    if (transactions.length === 0) {
+      list.innerHTML += '<p>Ingen transaktioner fundet.</p>';
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = `
+      <tr>
+        <th>Dato</th>
+        <th>Type</th>
+        <th>Beløb</th>
+      </tr>
+    `;
+    transactions.forEach(tx => {
+      table.innerHTML += `
+        <tr>
+          <td>${new Date(tx.date).toLocaleString('da-DK')}</td>
+          <td>${tx.transactionType}</td>
+          <td>${tx.amount}</td>
+        </tr>
+      `;
+    });
+    list.appendChild(table);
   } catch (err) {
-    document.getElementById('totalValue').textContent = 'Fejl!';
+    alert('Fejl: ' + err.message);
+  }
+}
+
+// Funktion til at opdatere den samlede saldo
+async function updateTotalBalance() {
+  try {
+      const response = await fetch('/accounts');
+      const data = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data, 'text/html');
+      const newTotalBalance = doc.querySelector('.total-balance .balance-amount').textContent;
+      document.querySelector('.total-balance .balance-amount').textContent = newTotalBalance;
+  } catch (error) {
+      console.error('Fejl ved opdatering af samlet saldo:', error);
+  }
+}
+
+// Opdater samlet saldo når en konto ændres
+document.addEventListener('DOMContentLoaded', () => {
+  const accountForms = document.querySelectorAll('form[data-account-form]');
+  accountForms.forEach(form => {
+      form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          // Eksisterende form handling...
+          await updateTotalBalance();
+      });
+  });
+});
+
+const firstTradeDate = allTrades.length ? allTrades[0].date : null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const ctx = document.getElementById('totalValueChart').getContext('2d');
+  const res = await fetch('/dashboard/history');
+  let history = await res.json();
+
+  // Filtrer history så den kun indeholder data fra 1. januar 2025 og frem
+  const startDate = new Date('2025-01-01');
+  history = history.filter(h => new Date(h.date) >= startDate);
+
+  if (!history.length) {
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Ingen data tilgængelig", 50, 100);
     return;
   }
 
-  // Beregn total værdi, ændringer osv. ud fra API-data
-  const totalValue = portfolios.reduce((sum, p) => sum + (p.expectedValue || 0), 0);
-  const avgChange = portfolios.length
-    ? portfolios.reduce((sum, p) => sum + (p.dailyChange || 0), 0) / portfolios.length
-    : 0;
-
-  // Opdater DOM
-  document.getElementById('totalValue').textContent = totalValue.toLocaleString('da-DK') + ' DKK';
-  document.getElementById('overviewChangePercent').textContent = avgChange.toFixed(2) + '%';
-
-  // ...opdater evt. flere felter og pie chart...
-
-  const tableBody = document.getElementById('portfolioTableBody');
-  tableBody.innerHTML = '';
-  for (const portfolio of portfolios) {
-    const stocks = await Portfolio.getStocksForPortfolio(portfolio.portfolioID);
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>
-        <a href="/portfolios/${portfolio.portfolioID}" class="portfolio-link" data-id="${portfolio.portfolioID}">
-          ${portfolio.name || '-'}
-        </a>
-      </td>
-      <td>${portfolio.bankAccount || '-'}</td>
-      <td class="${(portfolio.dailyChange || 0) >= 0 ? 'positive' : 'negative'}">
-        ${(portfolio.dailyChange || 0).toFixed(2)}%
-      </td>
-      <td>${portfolio.lastTrade ? new Date(portfolio.lastTrade).toLocaleString('da-DK') : '-'}</td>
-      <td>${(portfolio.expectedValue || 0).toLocaleString('da-DK')} DKK</td>
-    `;
-    tableBody.appendChild(row);
-  }
-
-  const stocks = await require('../models/stock').getAllForPortfolio(p.portfolioID);
-  allStocks = allStocks.concat(stocks.map(s => ({ ...s, portfolioID: p.portfolioID })));
-
-  console.log('allStocks:', allStocks);
-  const stockIds = allStocks.map(s => s.stockID).filter(Boolean);
-  console.log('stockIds:', stockIds);
-
-  // Efter du har hentet porteføljer fra backend:
-  const labels = portfolios.map(p => p.name);
-  const data = portfolios.map(p => p.expectedValue || 0);
-
-  const ctx = document.getElementById('portfolioPie').getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: [
-          '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7'
-        ]
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' }
-      }
-    }
-  });
-
-  updateChart(portfolios);
-  await loadValueHistory();
-});
-
-function updateChart(newPortfolios) {
-  chart.data.labels = newPortfolios.map(p => p.name);
-  chart.data.datasets[0].data = newPortfolios.map(p => p.expectedValue || 0);
-  chart.update();
-}
-
-async function loadValueHistory() {
-  try {
-    const data = await fetch('/dashboard/history');
-    // data = [{ date: '2024-05-01', value: 12345 }, ...]
-    console.log('Chart data:', data);
-    renderValueChart(data);
-  } catch (err) {
-    console.error('Kunne ikke hente grafdata:', err);
-  }
-}
-
-function renderValueChart(history) {
-  const ctx = document.getElementById('totalValueChart').getContext('2d');
-  const labels = history.map(point => point.date);
-  const values = history.map(point => point.value);
+  const labels = history.map(h => h.date);
+  const data = history.map(h => h.value);
 
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
-        label: 'Samlet værdi',
-        data: values,
+        label: 'Samlet værdi (USD)',
+        data,
         borderColor: '#4e79a7',
         backgroundColor: 'rgba(78,121,167,0.1)',
         tension: 0.4,
-        pointRadius: 0,
+        pointRadius: 3,
+        pointBackgroundColor: '#fff',
         fill: true
       }]
     },
     options: {
       plugins: {
-        legend: { display: false }
+        legend: { display: true, labels: { color: '#fff' } }
       },
       scales: {
+        x: { 
+          ticks: { color: '#C3C3C1' }
+        },
         y: {
-          beginAtZero: true,
           ticks: {
-            callback: value => value.toLocaleString('da-DK') + ' DKK'
-          }
+            color: '#C3C3C1',
+            callback: function(value) {
+              if (Math.abs(value) >= 1000) {
+                return (value / 1000).toLocaleString('da-DK', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+              }
+              return value.toLocaleString('da-DK');
+            }
+          },
+          beginAtZero: true
         }
       }
   }
 });
-}
-
-document.getElementById('back-to-login-btn').addEventListener('click', function() {
-  window.location.href = '/';
 });

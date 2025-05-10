@@ -199,7 +199,7 @@ ul, a {
   margin-bottom: 0.5rem;
 }
 .card .value {
-  font-size: 1.25rem;
+  font-size: 1.25rem; 
   font-weight: 700;
   display: flex;
   justify-content: space-between;
@@ -618,4 +618,9 @@ td {
 .slet-portfolio-btn:hover {
   background: linear-gradient(90deg, #b71c1c 0%, #e15759 100%);
   transform: translateY(-2px) scale(1.03);
+}
+
+.table-container td > div {
+  display: flex;
+  gap: 8px;
 }

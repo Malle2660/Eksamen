@@ -67,7 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   
       countEl.textContent    = activeAccounts.length;
-      totalBalEl.textContent = `${total.toFixed(2)} DKK`;
+      const totalUSD = accounts.reduce((sum, acc) => sum + (acc.balanceUSD || 0), 0);
+      totalBalEl.textContent = `${totalUSD.toFixed(2)} USD`;
   
       const grandTotal = Object.values(byCurrency).reduce((a,b) => a + b, 0);
       const parts      = Object.entries(byCurrency)
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${acc.bank}</td>
           <td>${acc.currency}</td>
           <td class="value">${acc.balance.toFixed(2)} ${acc.currency}</td>
+          <td class="value">${acc.balanceUSD.toFixed(2)} USD</td>
           <td>${new Date(acc.registrationsDate).toLocaleDateString('da-DK')}</td>
           <td>${acc.closedAccount ? 'Lukket' : 'Aktiv'}</td>
           <td>

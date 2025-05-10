@@ -3,6 +3,7 @@ const express           = require('express');
 const path              = require('path');
 const accountsModel     = require('../models/accountsModel');
 const transactionsModel = require('../models/accountsModel'); // eller transactionsModel hvis det er en anden fil
+const { getExchangeRate } = require('../services/ExchangeRate');
 
 const router = express.Router();
 
@@ -80,7 +81,23 @@ router.post('/reopen', async (req, res) => {
 router.get('/api', async (req, res) => {
   const userId = req.session.user.userID;
   const accounts = await accountsModel.getAllForUser(userId);
-    res.json(accounts);
+
+  // Hent valutakurser med base USD
+  const ratesData = await getExchangeRate('USD');
+  const rates = ratesData.conversion_rates; // fx { USD: 1, DKK: 6.8, EUR: ... }
+
+  // Konverter alle saldoer til USD
+  const accountsWithUSD = accounts.map(acc => {
+    const rate = rates[acc.currency] || 1;
+    // Hvis kontoen er i USD, rate = 1, ellers divider for at få USD
+    const balanceUSD = acc.balance / rate;
+    return {
+      ...acc,
+      balanceUSD
+    };
+  });
+
+  res.json(accountsWithUSD);
 });
 
 // Henter transaktioner for en given konto

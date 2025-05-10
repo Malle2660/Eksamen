@@ -29,30 +29,31 @@ const accountsRoutes      = require('./routes/accounts');
 const transactionsRoutes  = require('./routes/transactionsRoutes');
 const portfolioRoutes     = require('./routes/portfolioRoutes');
 const exchangeRoutes      = require('./routes/exchangeRateRoutes');
-
 const dashboardRoutes     = require('./routes/dashboardRoutes');
 const growthRoutes        = require('./routes/growthRoutes');
-const finnhubRoutes        = require('./routes/finnhubRoutes');
+const finnhubRoutes       = require('./routes/finnhubRoutes');
 
 // --- JSON‐API ENDPOINTS (før view‐ruterne) ---
 app.use('/api/exchange-rate', requireAuth, exchangeRoutes);
 app.use('/api/growth',        requireAuth, growthRoutes);
-app.use('/api/finnhub',        requireAuth, finnhubRoutes);
+app.use('/api/finnhub',       requireAuth, finnhubRoutes);
 
 // --- CRUD‐ENDPOINTS ---
 app.use('/auth',         authRoutes);
 app.use('/accounts',     requireAuth, accountsRoutes);
 app.use('/transactions', requireAuth, transactionsRoutes);
-app.use('/portfolios',   requireAuth, portfolioRoutes);
 
 // === LANDING PAGE ===
 app.get('/', (req, res) => {
   res.render('index', { error: req.query.error });
 });
 
+// === PORTFOLIO & RELATEREDE ROUTES (kræver login) ===
+app.use('/portfolios', requireAuth, portfolioRoutes);
+
 // === SERVER‐RENDERED DASHBOARD ===
 app.use('/dashboard', requireAuth, dashboardRoutes);
-app.use('/', require('./routes/growthRoutes'));
+app.use('/growth', requireAuth, growthRoutes);
 
 // === 404 HANDLER (fallback) ===
 app.use((req, res) => {

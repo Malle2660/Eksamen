@@ -1,5 +1,6 @@
 const { sql, poolPromise } = require('../db/database');
 const fetch = require('node-fetch');
+const axios = require('axios');
 
 async function fetchFromFinnhub(symbol) {
   const apiKey = process.env.FINNHUB_API_KEY;
@@ -59,4 +60,38 @@ async function batchQuotes(symbols) {
   return { 'Stock Quotes': arr.map(s => ({ '1. symbol': s, '2. price': results[s].price })) };
 }
 
-module.exports = { getStockQuote, batchQuotes };
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
+
+/**
+ * Henter historiske kurser for en aktie for de sidste X dage
+ * @param {string} symbol - Aktiesymbol (fx 'AAPL')
+ * @param {number} days - Antal dage at hente (max 30)
+ * @returns {Promise<Object>} - Objekt med datoer som nøgler og kurser som værdier
+ */
+async function getHistoricalPrices(symbol, days = 10) {
+  try {
+    const endDate = Math.floor(Date.now() / 1000);
+    const startDate = endDate - (days * 24 * 60 * 60);
+    const url = `${FINNHUB_BASE_URL}/stock/candle?symbol=${symbol}&resolution=D&from=${startDate}&to=${endDate}&token=${FINNHUB_API_KEY}`;
+    const response = await axios.get(url);
+    const { t, c } = response.data; // t = timestamps, c = closing prices
+
+    // Konverter til objekt med datoer som nøgler
+    const prices = {};
+    for (let i = 0; i < t.length; i++) {
+      const date = new Date(t[i] * 1000).toISOString().slice(0, 10);
+      prices[date] = c[i];
+    }
+    return prices;
+  } catch (err) {
+    console.error(`Fejl ved hentning af historiske kurser for ${symbol}:`, err);
+    return {};
+  }
+}
+
+module.exports = {
+  getStockQuote,
+  getHistoricalPrices,
+  batchQuotes
+};
