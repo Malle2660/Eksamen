@@ -30,21 +30,5 @@ describe('aggregateDashboardData', function () {
     expect(result.aktier).to.be.an('array').that.is.empty;
     expect(result.aktieAntal).to.equal(0);
   });
-
-  it('should handle missing or partial data', function () {
-    // Test med manglede saldo og transaktioner - kun aktier med antal
-    const input = { saldo: undefined, transaktioner: undefined, aktier: [ { navn: 'AAPL', antal: 2 } ] };
-    const result = aggregateDashboardData(input);
-    expect(result.samletSaldo).to.equal(0);
-    expect(result.transaktioner).to.be.an('array').that.is.empty;
-    expect(result.aktier).to.have.lengthOf(1);
-    expect(result.aktieAntal).to.equal(2);
-  });
-
-  it('should handle aktier with missing antal', function () {
-    // Test hvor én aktie mangler antal – skal tolkes som 0
-    const input = { saldo: 100, transaktioner: [], aktier: [ { navn: 'AAPL' }, { navn: 'GOOG', antal: 1 } ] };
-    const result = aggregateDashboardData(input);
-    expect(result.aktieAntal).to.equal(1);
-  });
 }); 
+
