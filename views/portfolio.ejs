@@ -4,11 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PortfolioTracker – Porteføljeoversigt</title>
+  <!-- Google Fonts til typografi -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet" />
+  <!-- Egen CSS til styling af porteføljeoversigt -->
   <link rel="stylesheet" href="/portfolio-oversigt.css" />
 </head>
 <body>
   <div class="app">
+    <!-- Sidebar med navigation -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <img src="/accounts.png/accounts-logo.png" alt="Logo" class="logo-icon"/>
@@ -16,6 +19,7 @@
           <h1>PORTFOLIOTRACKER</h1>
           <p>ORGANIZING YOUR FINANCES</p>
         </div>
+        <!-- Knap til at skjule sidebar (funktionalitet i JS) -->
         <button id="back-to-dashboard-btn" class="collapse-btn" aria-label="Skjul sidebar">❮</button>
       </div>
       <nav class="sidebar-nav">
@@ -27,11 +31,13 @@
       </nav>
     </aside>
 
+    <!-- Hovedindhold: Oversigt over porteføljer -->
     <main class="main-content">
       <header class="page-header">
         <h2>Porteføljeoversigt</h2>
       </header>
 
+      <!-- Statistikker: antal porteføljer, total værdi, daglig ændring -->
       <section class="metrics-row">
         <div class="card">
           <div class="label">Antal porteføljer</div>
@@ -50,19 +56,23 @@
         </div>
       </section>
 
+      <!-- Diagram og tabel med portefølje-data -->
       <section class="charts-tables">
         <div class="chart-container">
           <div class="chart-header">
             <h4>Fordeling af værdi i porteføljer</h4>
           </div>
+          <!-- Pie Chart via Chart.js -->
           <canvas id="portfolioPieChart" width="320" height="320"></canvas>
           <ul id="portfolioPieLegend" class="pie-legend"></ul>
         </div>
+
         <div class="table-container">
           <div class="table-header">
             <h4>Alle porteføljer</h4>
-            <input type="text" id="newPortfolioName" placeholder="Navn på portefølje" style="margin-right:8px;">
-            <input type="number" id="newPortfolioAccount" placeholder="Konto-ID" style="width:90px;margin-right:8px;">
+            <!-- Input til oprettelse af ny portefølje -->
+            <input type="text" id="newPortfolioName" placeholder="Navn på portefølje" />
+            <input type="number" id="newPortfolioAccount" placeholder="Konto-ID" style="width:90px;" />
             <button id="createPortfolioBtn" class="add-btn">Opret ny</button>
           </div>
           <table>
@@ -80,57 +90,72 @@
               </tr>
             </thead>
             <tbody id="portfolioTableBody">
-              <!-- Fyldes af JS -->
+              <!-- Rækker indsættes dynamisk af portfoliooversigt.js -->
             </tbody>
           </table>
         </div>
       </section>
 
+      <!-- Historikdiagram -->
       <div class="chart-placeholder">
         <canvas id="portfolioHistoryChart" width="800" height="300"></canvas>
       </div>
     </main>
   </div>
 
+  <!-- Notifikationer (vises via JS) -->
   <div id="notification" class="notification" style="display:none"></div>
 
-  <!-- Modal til Tilføj aktie -->
+  <!-- Modal til at købe aktie -->
   <div id="addStockForm" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Køb aktie</h3>
       <form id="buyStockForm">
+        <!-- Vælg aktie fra foruddefineret liste -->
         <label for="stockSelect">Vælg aktie:</label>
         <select id="stockSelect">
           <option value="AAPL">Apple (AAPL)</option>
-          <option value="TSLA">Tesla (TSLA)</option>
           <option value="MSFT">Microsoft (MSFT)</option>
           <option value="GOOGL">Alphabet (GOOGL)</option>
           <option value="AMZN">Amazon (AMZN)</option>
-          <option value="NVDA">Nvidia (NVDA)</option>
-          <option value="META">Meta Platforms (META)</option>
-          <option value="BRK.B">Berkshire Hathaway (BRK.B)</option>
+          <option value="TSLA">Tesla (TSLA)</option>
+          <option value="NVDA">NVIDIA (NVDA)</option>
+          <option value="FB">Meta Platforms (FB)</option>
+          <option value="NFLX">Netflix (NFLX)</option>
+          <option value="BABA">Alibaba (BABA)</option>
           <option value="JPM">JPMorgan Chase (JPM)</option>
           <option value="V">Visa (V)</option>
-          <option value="UNH">UnitedHealth (UNH)</option>
-          <option value="XOM">Exxon Mobil (XOM)</option>
+          <option value="JNJ">Johnson & Johnson (JNJ)</option>
+          <option value="WMT">Walmart (WMT)</option>
+          <option value="PG">Procter & Gamble (PG)</option>
+          <option value="DIS">Disney (DIS)</option>
         </select>
+
+        <!-- Dropdown med brugerens konti (fyldes af JS) -->
         <label for="accountSelect">Vælg konto:</label>
-        <select id="accountSelect" required>
-          <!-- Fyldes med brugerens konti via JS -->
-        </select>
-        <input type="number" id="stockAmount" placeholder="Antal" min="1" required>
-        <input type="text" id="unitPrice" placeholder="Pris pr. aktie" readonly>
-        <input type="text" id="stockPrice" placeholder="Købspris" readonly required>
+        <select id="accountSelect" required></select>
+
+        <!-- Antal aktier og prisfelter -->
+        <input type="number" id="stockAmount" placeholder="Antal" min="1" required />
+        <input type="text" id="unitPrice" placeholder="Pris pr. aktie" readonly />
+        <input type="text" id="stockPrice" placeholder="Købspris" readonly required />
+
+        <!-- Knapper til at bekræfte eller annullere -->
         <button type="submit" class="add-btn">Køb aktie</button>
         <button type="button" id="cancelStockBtn" class="cancel-btn">Annuller</button>
       </form>
     </div>
   </div>
 
+  <!-- Indsætter bruger-id fra server, bruges i JS til API-kald -->
   <script>
-    window.USER_ID = <%= JSON.stringify(user.id) %>;
+    window.USER_ID = "<%= user.userID %>";
   </script>
+  <!-- Shared utilities for notifications, modals, charts, fetch -->
+  <script src="/js/common.js"></script>
+  <!-- Egen JS til porteføljeoversigt (henter data + håndterer interaktion) -->
   <script src="/js/portfoliooversigt.js"></script>
+  <!-- Chart.js til diagrammer -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</body> 
+</body>
 </html>

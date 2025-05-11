@@ -1,4 +1,4 @@
-require('dotenv').config(); // VIGTIGT: dette skal stå helt i toppen!
+require('dotenv').config(); // VIGTIGT: dette skal stå helt i toppen, da den skal læse fra .env fil
 
 const config = {
   server: process.env.DB_SERVER,

@@ -14,7 +14,7 @@
 </head>
 <body>
   <div class="app">
-    <!-- Sidebar -->
+    <!-- Sidebar: Navigation til Dashboard, Accounts og Portfolios, altid synlig i venstre side -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <img src="/dashboard.png/logo.png" alt="Logo" class="logo-icon" />
@@ -40,6 +40,7 @@
         <h2>Dashboard</h2>
       </header>
 
+      <!-- METRICS-KORT: Viser total værdi, realiseret og urealiseret gevinst (opdateres dynamisk af client-dashboard.js via /dashboard/metrics) -->
       <section class="metrics">
         <div class="card">
           <div class="label">Total værdi</div>
@@ -55,6 +56,7 @@
         </div>
       </section>
 
+      <!-- GRAF: Linjegraf over porteføljens samlede værdi, tegnes i <canvas id="totalValueChart"> af Chart.js -->
       <section class="chart-section">
         <div class="chart-header">
           <h3>Samlet værdi</h3>
@@ -105,7 +107,8 @@
     </main>
   </div>
 
+  <!-- SCRIPTS: Først loader vi Chart.js-biblioteket, derefter client-dashboard.js som henter data og opdaterer graf og vigtige ærdier  -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/js/dashboard.js"></script>
+  <script src="/js/client-dashboard.js"></script>
 </body>
 </html>

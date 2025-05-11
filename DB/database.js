@@ -1,5 +1,6 @@
 const sql = require('mssql');
-require('dotenv').config();  // <-- meget vigtigt, læser fra .env
+require('dotenv').config();  
+// den er meget vigtigt, da den skal læse fra .env fil
 
 const config = {
   user: process.env.DB_USER,
@@ -15,10 +16,10 @@ const config = {
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
-    console.log('✅ Forbundet til databasen!');
+    console.log(' Forbundet til databasen!');
     return pool;
   })
-  .catch(err => console.log('❌ Database fejl:', err));
+  .catch(err => console.log(' Database fejl:', err));
 
 module.exports = {
   sql,

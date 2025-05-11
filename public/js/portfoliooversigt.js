@@ -1,392 +1,393 @@
-console.log("Portfoliooversigt.js loaded");
+// portfoliooversigt.js  
+// Giver et overblik over alle brugerens porteføljer: henter data, renderer tabeller, diagrammer og binder knapper
+
+console.log("Portfoliooversigt.js loaded");  // Bekræft at scriptet er indlæst i konsollen
+
+/**
+ * VIS NOTIFIKATION: viser en midlertidig besked øverst i UI
+ * message: teksten der vises
+ * type: 'success' eller 'error' (ændrer styling)
+ * timeout: tid i ms inden notifikation skjules automatisk
+ */
 function showNotification(message, type = 'success', timeout = 3000) {
-  const notif = document.getElementById('notification');
-  notif.textContent = message;
-  notif.className = `notification ${type}`;
-  notif.style.display = 'block';
-  setTimeout(() => {
+  const notif = document.getElementById('notification');  // find notifikations-container
+  if (!notif) return;                                      // stop hvis ingen container
+  notif.textContent = message;                             // sæt besked
+  notif.className = `notification ${type}`;                // tilføj CSS-klasse for farve
+  notif.style.display = 'block';                           // vis elementet
+  setTimeout(() => {                                       // skjul efter timeout
     notif.style.display = 'none';
   }, timeout);
 }
 
+// Når DOM'en er fuldt indlæst, kører vi resten
 document.addEventListener('DOMContentLoaded', () => {
-  const tableBody = document.getElementById('portfolioTableBody');
-  const btnCreate = document.getElementById('createPortfolioBtn');
-  const nameInput = document.getElementById('newPortfolioName');
-  const accountInput = document.getElementById('newPortfolioAccount');
-  const countEl = document.getElementById('overviewCount');
-  const valueEl = document.getElementById('totalValue');
-  const percentEl = document.getElementById('overviewChangePercent');
-  const dkkChangeEl = document.getElementById('overviewChangeValue');
-  const pieChartEl = document.getElementById('portfolioPieChart');
-  const pieLegendEl = document.getElementById('portfolioPieLegend');
-  const userId = window.USER_ID;
+  // CACHE DOM-ELEMENTER for bedre ydeevne og enklere kode
+  const tableBody     = document.getElementById('portfolioTableBody'); //viser porteføljer i tabellen
+  const btnCreate     = document.getElementById('createPortfolioBtn'); // opret portefølje
+  const nameInput     = document.getElementById('newPortfolioName'); // navn input
+  const accountInput  = document.getElementById('newPortfolioAccount'); // konto input
+  const countEl       = document.getElementById('overviewCount'); // antal porteføljer
+  const valueEl       = document.getElementById('totalValue'); // samlet værdi
+  const percentEl     = document.getElementById('overviewChangePercent'); // daglig change
+  const dkkChangeEl   = document.getElementById('overviewChangeValue'); // DKK-change
+  const pieChartEl    = document.getElementById('portfolioPieChart'); // pie-chart
+  const pieLegendEl   = document.getElementById('portfolioPieLegend'); // pie-legend
+  const userId        = window.USER_ID;                    // globalt sat tidligere
 
-  let pieChart;
-  let currentPortfolioId = null;
-  let currentPrice = 0;
+  let currentPortfolioId = null;                            // gemmer id ved køb
+  let pieChart           = null;                           // referencer til chart hvis vi vil destroy
 
+  /**
+   * HENT OG VIS PORTFØLJER:
+   *  - Henter alle porteføljer
+   *  - Renderer tabellen
+   *  - Binder events på knapper
+   *  - Opdaterer metrics og pie-chart
+   */
   async function loadPortfolios() {
     try {
-      const res = await fetch('/portfolios/user', { credentials: 'include' });
-      const portfolios = await res.json();
-      console.log('Portfolios fra backend:', portfolios);
+      // 1) Hent porteføljer fra backend med cookies
+      const res = await fetch('/portfolios/user', { credentials: 'include' });  
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // Gem portefølje-id'er i sessionStorage
+      // 2) Konverter respons til JSON-array
+      const portfolios = await res.json();
+
+      // 3) Gem alle portfolioID'er i sessionStorage til genbrug
       const portfolioIds = portfolios.map(p => p.portfolioID);
       sessionStorage.setItem('portfolioIds', JSON.stringify(portfolioIds));
 
-      if (!Array.isArray(portfolios) || portfolios.length === 0) {
-        if (tableBody) {
-          tableBody.innerHTML = `<tr><td colspan="11">Ingen porteføljer endnu</td></tr>`;
-        }
-        if (countEl) countEl.textContent = '0';
-        if (valueEl) valueEl.textContent = '0.00 USD';
-        if (percentEl) percentEl.textContent = '0.00%';
-        if (dkkChangeEl) dkkChangeEl.textContent = '0.00 USD';
+      // 4) Hvis ingen porteføljer, vis "Ingen" og nulstil metrics
+      if (!Array.isArray(portfolios) || portfolios.length === 0) { //
+        tableBody.innerHTML     = `<tr><td colspan="9">Ingen porteføljer endnu</td></tr>`;
+        countEl.textContent     = '0';
+        valueEl.textContent     = '0.00 USD';
+        percentEl.textContent   = '0.00%';
+        dkkChangeEl.textContent = '0.00 USD';
         return;
       }
 
-      tableBody.innerHTML = '';
+      // 5) Ryd tabel inden opbygning
+      tableBody.innerHTML = ''; 
 
+      // 6) Loop hver portefølje og bygg <tr> inkl. knapper
       for (const p of portfolios) {
-        // Hent ekstra data for porteføljen
+        // 6a) Hent ekstra tal parallelt: total purchase & unrealized
         const [totalPurchase, totalUnrealized] = await Promise.all([
-          fetch(`/portfolios/${p.portfolioID}/total-purchase`).then(r => r.json()).then(d => d.totalPurchase),
-          fetch(`/portfolios/${p.portfolioID}/total-unrealized`).then(r => r.json()).then(d => d.totalUnrealized)
+          fetch(`/portfolios/${p.portfolioID}/total-purchase`, { credentials: 'include' })   // hent total purchase
+            .then(r => r.json()).then(d => d.totalPurchase),
+          fetch(`/portfolios/${p.portfolioID}/total-unrealized`, { credentials: 'include' })
+            .then(r => r.json()).then(d => d.totalUnrealized)
         ]);
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
+        // 6b) Opret en <tr> med celler for navn, værdi, change osv.
+        const tr = document.createElement('tr'); // opret række til 
+        tr.innerHTML = `
           <td>
-            <a href="/portfolios/${p.portfolioID}" class="portfolio-link" data-id="${p.portfolioID}" style="color:#a48cff;font-weight:600;cursor:pointer;">
+            <a href="/portfolios/${p.portfolioID}"
+               class="portfolio-link"
+               data-id="${p.portfolioID}"
+               style="color:#a48cff;font-weight:600;cursor:pointer;">
               ${p.name || '-'}
             </a>
           </td>
-          <td>${(typeof p.expectedValue === 'number' ? p.expectedValue.toFixed(2) : '0.00')} USD</td>
-          <td>${(typeof p.dailyChange === 'number' ? p.dailyChange.toFixed(2) : '0.00')} USD</td>
-          <td>${(typeof p.realizedGain === 'number' ? p.realizedGain.toFixed(2) : '0.00')} USD</td>
-          <td>${(typeof p.unrealizedGain === 'number' ? p.unrealizedGain.toFixed(2) : '-')}</td>
-          <td>${(typeof p.expectedValue === 'number' ? p.expectedValue.toFixed(2) : '-')}</td>
-          <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '-'}</td>
+          <td>${p.expectedValue.toFixed(2)} USD</td> 
+          <td>${p.dailyChange.toFixed(2)} USD</td>  
+          <td>${p.realizedGain.toFixed(2)} USD</td>
+          <td>${p.unrealizedGain.toFixed(2)} USD</td>
+          <td>${totalPurchase.toFixed(2)} USD</td>
+          <td>${totalUnrealized.toFixed(2)} USD</td>
+          <td>${new Date(p.registrationDate).toLocaleDateString()}</td>
           <td>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-primary kob-aktie-btn" data-id="${p.portfolioID}">Køb aktie</button>
-              <button class="btn btn-secondary vis-aktier-btn" data-id="${p.portfolioID}">Vis aktier</button>
-            </div>
+            <button class="btn btn-primary kob-aktie-btn" data-id="${p.portfolioID}">
+              Køb aktie
+            </button>
+            <button class="btn btn-secondary vis-aktier-btn" data-id="${p.portfolioID}">
+              Vis aktier
+            </button>
           </td>
           <td>
-            <button class="btn btn-danger slet-portfolio-btn" data-id="${p.portfolioID}">Slet</button>
+            <button class="cancel-btn slet-portfolio-btn" data-id="${p.portfolioID}">
+              Slet
+            </button>
           </td>
         `;
-        tableBody.appendChild(row);
+        tableBody.appendChild(tr); // tilføj række til tabel
       }
 
-      // Bind knapper EFTER tabellen er genereret!
+      // 7) Bind "Køb aktie"-knapper
       document.querySelectorAll('.kob-aktie-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const portfolioId = btn.getAttribute('data-id');
-          showAddStockForm(portfolioId);
-        });
-      });
-      document.querySelectorAll('.vis-aktier-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const portfolioId = btn.getAttribute('data-id');
-          await showStocksForPortfolio(portfolioId);
+          currentPortfolioId = btn.dataset.id; // gemmer det valgte portfolioID til senere køb
+          await loadAccounts('accountSelect');  // indlæser alle brugerens konti i dropdown
+          document.getElementById('stockAmount').value = ''; // nulstiller antal-inputfeltet
+          document.getElementById('unitPrice').value = '';   // nulstiller kurs-inputfeltet
+          document.getElementById('stockPrice').value = '';  // nulstiller totalpris-inputfeltet
+          const symbol = document.getElementById('stockSelect').value;         // henter det valgte aktiesymbol
+          try {
+            const res = await fetch(`/portfolios/api/stock-price/${symbol}`, { credentials: 'include' }); // henter aktiekurs fra API med session-cookie
+            if (res.ok) {                                                       // kontrollerer om HTTP-svaret er OK (200)
+              const { price } = await res.json();                              // parser JSON-responsen og trækker 'price' ud
+              document.getElementById('unitPrice').value = price.toFixed(2);    // viser kursen med to decimaler i unitPrice-feltet
+            }
+          } catch (err) {                                                      // fanger netværks- eller JSON-fejl
+            console.error('Fejl ved kurs-hentning:', err);                     // logger fejl til konsollen til fejlsøgning
+          }
+          document.getElementById('stockAmount').dispatchEvent(new Event('input')); // udløser genberegning af totalpris ved input-event
+          openModal('addStockForm');                                            // åbner modal-vinduet til køb
         });
       });
+
+      // Opdater kurs ved skift af aktie
+      const stockSelectEl = document.getElementById('stockSelect');
+      if (stockSelectEl) {
+        stockSelectEl.addEventListener('change', async () => {
+          const symbol = stockSelectEl.value;
+          try {
+            const res = await fetch(`/portfolios/api/stock-price/${symbol}`, { credentials: 'include' }); // skal være med til at hente kursen fra vores aktier og
+            if (res.ok) {
+              const { price } = await res.json();
+              document.getElementById('unitPrice').value = price.toFixed(2);
+              document.getElementById('stockAmount').dispatchEvent(new Event('input'));
+            }
+          } catch {}
+        });
+      }
+
+      // Opdater totalpris ved ændring af antal
+      const amountEl = document.getElementById('stockAmount');
+      if (amountEl) {
+        amountEl.addEventListener('input', () => {
+          const amount = parseFloat(amountEl.value); // hente antal aktier
+          const unit = parseFloat(document.getElementById('unitPrice').value); // hente prisen for aktien
+          if (!isNaN(amount) && !isNaN(unit)) {
+            document.getElementById('stockPrice').value = (amount * unit).toFixed(2);  //opdatere den samlet totalpris
+          } else {
+            document.getElementById('stockPrice').value = ''; //
+          }
+        });
+      }
+
+      // Bind køb-aktie formular
+      const buyForm = document.getElementById('buyStockForm'); // henter vores køb aktie formular 
+      if (buyForm) {
+        buyForm.addEventListener('submit', async e => {
+          e.preventDefault();
+          const symbol = document.getElementById('stockSelect').value;
+          const amount = parseInt(document.getElementById('stockAmount').value, 10); // skal hente hvor mange antal brugerne ønsker sig
+          const boughtAt = parseFloat(document.getElementById('unitPrice').value); // hente prisen for aktien
+          const accountId = parseInt(document.getElementById('accountSelect').value, 10); 
+          if (!symbol || !amount || isNaN(boughtAt) || !accountId) {
+            return showNotification('Udfyld alle felter', 'error'); //  skal slå fejl hvis der ikke er udfyldt
+          }
+          try {
+            const res = await fetch(`/portfolios/${currentPortfolioId}/add-stock`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ symbol, amount, boughtAt, accountId })
+            });
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.message || 'Fejl ved køb af aktie');
+            }
+            const { newBalance } = await res.json();
+            showNotification(`Aktie købt! Ny saldo: ${newBalance} USD`, 'success');
+            closeModal('addStockForm');
+            loadPortfolios();
+          } catch (err) {
+            showNotification(err.message, 'error');
+          }
+        });
+      }
+
+      // 8) Bind "Vis aktier"-knapper
+      document.querySelectorAll('.vis-aktier-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          visAktieOversigt(btn.dataset.id);      // vis holdings i modal
+        });
+      });
+
+      // 9) Bind "Slet"-knapper
       document.querySelectorAll('.slet-portfolio-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const portfolioId = btn.getAttribute('data-id');
-          if (confirm('Er du sikker på, at du vil slette denne portefølje?')) {
-            try {
-              const res = await fetch(`/portfolios/${portfolioId}`, { method: 'DELETE' });
-              const data = await res.json();
-              if (res.ok) {
-                showNotification('Portefølje slettet!', 'success');
-                loadPortfolios();
-              } else {
-                showNotification(data.message || 'Kunne ikke slette portefølje', 'error');
-              }
-            } catch (err) {
-              showNotification('Fejl ved sletning', 'error');
-            }
+          if (!confirm('Vil du slette denne portefølje?')) return; // Sletning  skal kun gennemføres hvis brugeren bekræfter
+          try {
+            const res = await fetch(`/portfolios/${btn.dataset.id}`, {   // slet portefølje fra backend
+              method: 'DELETE',
+              credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Sletning mislykkedes'); // fejl hvis sletning mislykkes
+            showNotification('Portefølje slettet', 'success');
+            loadPortfolios();                 // opdater tabel
+          } catch (err) {
+            showNotification(err.message, 'error'); // fejlbesked hvis sletning mislykkes
           }
         });
       });
 
+      // 10) Opdater top-level metrics
       updateMetrics(portfolios);
-      updatePieChart(portfolios);
 
-      sessionStorage.setItem('portfolios', JSON.stringify(portfolios));
+      // 11) Tegn pie-chart med custom legend
+      drawPieChart(
+        'portfolioPieChart',              // canvas id
+        'portfolioPieLegend',             // legend-list id
+        portfolios.map(p => p.name),      // labels
+        portfolios.map(p => p.expectedValue || 0) // data
+      );
+
+      // 12) Gem data i sessionStorage
+      sessionStorage.setItem('portfolios', JSON.stringify(portfolios));   // gem porteføljer i sessionStorage
+
     } catch (err) {
-      console.error('Kunne ikke hente porteføljer:', err);
-      showNotification('Der opstod en fejl ved indlæsning af porteføljer.', 'error');
-      if (countEl) countEl.textContent = 'Fejl';
-      if (valueEl) valueEl.textContent = 'Fejl';
-      if (percentEl) percentEl.textContent = 'Fejl';
-      if (dkkChangeEl) dkkChangeEl.textContent = 'Fejl';
+      console.error('Fejl ved loadPortfolios:', err);
+      showNotification('Kunne ikke hente porteføljer.', 'error');
     }
   }
 
-  async function showStocksForPortfolio(portfolioId) {
+  /**
+   *  forneden har vi vores knap  og strukturen i  til vores knap  VIS AKTIEOVERSIGT: 
+   *  - Henter holdings for én portefølje
+   *  - Renderer dem i et modal med tabel, hvis de aktier der er i porteføljen
+   */
+  async function visAktieOversigt(portfolioId) {
     try {
-      const res = await fetch(`/portfolios/${portfolioId}/holdings`);
+      // 1) Hent holdings fra backend
+      const res = await fetch(`/portfolios/${portfolioId}/holdings`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Holdings ikke fundet');
       const holdings = await res.json();
-      console.log('Holdings for portfolio', portfolioId, holdings);
+
+      // 2) Hvis ingen aktier, vis besked og stop
       if (!Array.isArray(holdings) || holdings.length === 0) {
-        showNotification('Ingen aktier i denne portefølje.', 'info');
+        showNotification('Ingen aktier i porteføljen', 'info'); 
         return;
       }
-      // Byg rækker med beregninger (samme som GrowthTech)
-      const rows = holdings.map(s => `
-          <tr>
-            <td>${s.symbol}</td>
-            <td>${s.amount}</td>
-          <td>${s.price ? s.price.toFixed(2) : '-'} USD</td>
-          <td>${s.value ? s.value.toFixed(2) : '-'} USD</td>
-          </tr>
-      `);
-      // Modal HTML
-      let modal = document.getElementById('stocksModal');
+
+      // 3) Byg en lille tabel med HTML-rækker for hver holding der viser symbol, antal, pris og værdi
+      const rows = holdings.map(h => `
+        <tr>
+          <td>${h.symbol}</td>
+          <td>${h.amount}</td>
+          <td>${h.price.toFixed(2)} USD</td>
+          <td>${h.value.toFixed(2)} USD</td>
+        </tr>
+      `).join('');
+
+      // 4) Find eller opret modal-container
+      let modal = document.getElementById('visAktieOversigt');
       if (!modal) {
         modal = document.createElement('div');
-        modal.id = 'stocksModal';
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100vw';
-        modal.style.height = '100vh';
-        modal.style.background = 'rgba(0,0,0,0.5)';
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.zIndex = '9999';
+        modal.id = 'visAktieOversigt';
+        Object.assign(modal.style, {
+          position: 'fixed', top: 0, left: 0,
+          width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999
+        });
         document.body.appendChild(modal);
       }
+
+      // 5) Indsæt modal-HTML med tabel og luk-knap
       modal.innerHTML = `
-        <div style="background:#fff;padding:2rem;border-radius:8px;min-width:600px;max-width:90vw;max-height:80vh;overflow:auto;box-shadow:0 2px 16px #0002;">
+        <div style="
+          background:#fff; padding:2rem; border-radius:8px;
+          min-width:600px; max-width:90vw; max-height:80vh;
+          overflow:auto; box-shadow:0 2px 16px #0002;
+        ">
           <h2>Aktier i portefølje</h2>
-          <table style="width:100%;border-collapse:collapse;">
+          <table style="width:100%; border-collapse:collapse;">
             <tr style="background:#f5f5f5">
-              <th>Symbol</th><th>Antal</th><th>Markedspris</th><th>Værdi</th>
+              <th>Symbol</th><th>Antal</th><th>Pris</th><th>Værdi</th>
             </tr>
-            ${rows.join('')}
+            ${rows}
           </table>
-          <button id="closeStocksModal" style="margin-top:1rem;float:right;">Luk</button>
+          <button id="lukVisAktieOversigt" style="margin-top:1rem; float:right;">
+            Luk
+          </button>
         </div>
       `;
+      // 6) Vis modal
       modal.style.display = 'flex';
-      document.getElementById('closeStocksModal').onclick = () => {
-        modal.style.display = 'none';
-      };
+
+      // 7) Bind luk-knappen
+      document.getElementById('lukVisAktieOversigt')
+        .addEventListener('click', () => modal.style.display = 'none');
+
     } catch (err) {
-      showNotification('Kunne ikke hente aktier for porteføljen.', 'error');
+      showNotification('Kunne ikke hente aktier.', 'error');
     }
   }
 
+  /**
+   * UPDATE METRICS:
+   * Opdaterer oversigtens tal: antal portfolios, samlet værdi, daglig procentsats og DKK-change.
+   */
   function updateMetrics(portfolios) {
-    const total = portfolios.reduce((sum, p) => sum + (p.expectedValue || 0), 0);
-    const avgChange = portfolios.length
-      ? portfolios.reduce((sum, p) => sum + (p.dailyChange || 0), 0) / portfolios.length
+    // Beregn total værdi
+    const total      = portfolios.reduce((sum,p) => sum + (p.expectedValue || 0), 0);
+    // Beregn gennemsnitlig daglig change
+    const avgChange  = portfolios.length
+      ? portfolios.reduce((sum,p) => sum + (p.dailyChange || 0), 0) / portfolios.length
       : 0;
-    const dkkChange = portfolios.length
-      ? portfolios.reduce((sum, p) => sum + (p.unrealizedGain || 0), 0)
-      : 0;
+    // Beregn total urealiseret change (DKK)
+    const dkkChange  = portfolios.reduce((sum,p) => sum + (p.unrealizedGain || 0), 0);
 
-    if (countEl) countEl.textContent = portfolios.length;
-    valueEl.textContent = `${total.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`;
-    percentEl.textContent = `${avgChange.toFixed(2)}%`;
-    dkkChangeEl.textContent = `${dkkChange.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`;
+    // Opdater DOM-elementer
+    countEl.textContent     = portfolios.length;
+    valueEl.textContent     = `${total.toFixed(2)} USD`;
+    percentEl.textContent   = `${avgChange.toFixed(2)}%`;
+    dkkChangeEl.textContent = `${dkkChange.toFixed(2)} USD`;
   }
 
-  function updatePieChart(portfolios) {
-    if (!pieChartEl) return;
-    const labels = portfolios.map(p => p.name);
-    const data = portfolios.map(p => p.expectedValue || 0);
-    const colors = [
-      '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
-      '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'
-    ];
+  // BIND CLICK TIL CREATE-PORTFØLJE KNAP
+  if (btnCreate) {
+    btnCreate.addEventListener('click', () => openModal('addPortfolioModal'));
+  }
 
-    if (pieChart) pieChart.destroy();
-
-    pieChart = new Chart(pieChartEl, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: colors,
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false }
-        },
-        cutout: '70%',
-        responsive: false
+  // BIND FORM SUBMIT TIL OPRET-PORTFØLJE
+  const createForm = document.getElementById('createPortfolioForm'); //når vi ønsker at op
+  if (createForm) {
+    createForm.addEventListener('submit', async e => { 
+      e.preventDefault();
+      const name      = nameInput.value.trim(); //henter navn fra inputfeltet
+      const accountId = parseInt(accountInput.value, 10);  //
+      if (!name || !accountId) {
+        return showNotification('Udfyld både navn og konto-id', 'error');
+      }
+      try {
+        const res = await fetch('/portfolios/create', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          credentials: 'include',
+          body: JSON.stringify({name, accountId})
+        });
+        if (!res.ok) throw new Error('Oprettelse fejlede');
+        showNotification('Portefølje oprettet', 'success');
+        closeModal('addPortfolioModal');
+        loadPortfolios();    // genindlæs oversigten
+      } catch (err) {
+        showNotification(err.message, 'error');
       }
     });
-
-    // Custom legend
-    if (pieLegendEl) {
-      pieLegendEl.innerHTML = labels.map((label, i) => `
-        <li>
-          <span style="display:inline-block;width:12px;height:12px;background:${colors[i % colors.length]};margin-right:8px;border-radius:2px;"></span>
-          ${label} (${((data[i] / data.reduce((a, b) => a + b, 0)) * 100 || 0).toFixed(0)}%)
-        </li>
-      `).join('');
-    }
   }
 
-  btnCreate.addEventListener('click', async () => {
-    const name = nameInput.value.trim();
-    const accountId = accountInput.value.trim();
-
-    if (!name || !accountId) {
-      showNotification('Du skal udfylde både navn og konto-ID.', 'error');
-      return;
-    }
-
-    try {
-      const res = await fetch('/portfolios/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, accountId })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showNotification(data.message || 'Noget gik galt', 'error');
-        return;
-      }
-
-      showNotification('✅ Portefølje oprettet', 'success');
-      nameInput.value = '';
-      accountInput.value = '';
-      loadPortfolios();
-    } catch (err) {
-      console.error('🚨 Fejl ved oprettelse:', err);
-      showNotification('Kunne ikke oprette porteføljen', 'error');
-    }
-  });
-
-  // Åbn modal
-  async function showAddStockForm(portfolioId) {
-    currentPortfolioId = portfolioId;
-    document.getElementById('addStockForm').style.display = 'flex';
-
-    // Hent konti og fyld dropdown
-    const res = await fetch('/accounts/api');
-    const accounts = await res.json();
-    const select = document.getElementById('accountSelect');
-    select.innerHTML = accounts
-      .filter(acc => !acc.closedAccount)
-      .map(acc => `<option value="${acc.accountID}">${acc.name} (${acc.balance.toFixed(2)} USD)</option>`)
-      .join('');
-    // Sæt default aktie og hent pris
-    document.getElementById('stockSelect').dispatchEvent(new Event('change'));
+  // BIND CANCEL-KNOP til at lukke opret-modal
+  const cancelBtn = document.getElementById('cancelPortfolioBtn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => closeModal('addPortfolioModal'));
   }
 
-  // Luk modal
-  document.getElementById('cancelStockBtn').addEventListener('click', () => {
-    document.getElementById('addStockForm').style.display = 'none';
-  });
-
-  // Når aktie vælges, hent markedspris
-  document.getElementById('stockSelect').addEventListener('change', async function() {
-    const symbol = this.value;
-    const unitPriceInput = document.getElementById('unitPrice');
-    unitPriceInput.value = 'Henter…';
-    try {
-      const res = await fetch(`/portfolios/api/stock-price/${symbol}`);
-      const data = await res.json();
-      if (data && typeof data.price === 'number' && data.price > 0) {
-        currentPrice = data.price;
-        updatePriceFields();
-      } else {
-        currentPrice = 0;
-        unitPriceInput.value = '-';
-        document.getElementById('stockPrice').value = '-';
-        showNotification('Kunne ikke hente aktiepris fra API.', 'error');
-      }
-    } catch (err) {
-      currentPrice = 0;
-      unitPriceInput.value = '-';
-      document.getElementById('stockPrice').value = '-';
-      showNotification('Fejl ved hentning af aktiepris.', 'error');
-    }
-  });
-
-  // Når antal ændres, opdater totalprisen
-  document.getElementById('stockAmount').addEventListener('input', updatePriceFields);
-
-  function updatePriceFields() {
-    const amount = parseInt(document.getElementById('stockAmount').value) || 0;
-    const unitPriceInput = document.getElementById('unitPrice');
-    if (currentPrice > 0) {
-      unitPriceInput.value = currentPrice.toFixed(2);
-      const total = currentPrice * amount;
-      document.getElementById('stockPrice').value = total > 0 ? total.toFixed(2) : '';
-    } else {
-      unitPriceInput.value = '-';
-      document.getElementById('stockPrice').value = '-';
-    }
-  }
-
-  // Håndter køb af aktie
-  document.getElementById('buyStockForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const symbol = document.getElementById('stockSelect').value;
-    const amount = document.getElementById('stockAmount').value;
-    const boughtAt = document.getElementById('stockPrice').value;
-    const accountId = document.getElementById('accountSelect').value;
-
-    if (!symbol || !amount || !boughtAt || boughtAt === '-' || !accountId) {
-      showNotification('Alle felter skal udfyldes og pris skal være tilgængelig.', 'error');
-      return;
-    }
-
-    try {
-      const res = await fetch(`/portfolios/${currentPortfolioId}/add-stock`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol, amount, boughtAt, accountId })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showNotification(data.message || 'Noget gik galt', 'error');
-        return;
-      }
-      showNotification('✅ Aktie købt!', 'success');
-      document.getElementById('addStockForm').style.display = 'none';
-      document.getElementById('stockAmount').value = '';
-      document.getElementById('stockPrice').value = '';
-      console.log('KØB FULDFØRT – loader porteføljer igen');
-      loadPortfolios();
-    } catch (err) {
-      showNotification('Kunne ikke købe aktien: ' + err.message, 'error');
-    }
-  });
-
-  sessionStorage.setItem('userId', userId);
-
+  // LOAD OG VIS PORTFØLJER FØRSTE GANG
   loadPortfolios();
 
-  const backBtn = document.getElementById('back-to-dashboard-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      window.location.href = '/dashboard';
-    });
-  }
-});
-
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('portfolio-link')) {
-    e.preventDefault();
-    const portfolioId = e.target.dataset.id;
-    window.location.href = `/portfolios/${portfolioId}`;
-  }
+  //  link til at se en portefølje
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('portfolio-link')) {
+      e.preventDefault();
+      window.location.href = `/portfolios/${e.target.dataset.id}`;
+    }
+  });
 });
