@@ -71,7 +71,6 @@ class AccountsModel {
   }
 
   // Hæver penge fra en konto hvis den er åben og har nok dækning
-  // 
   async withdraw(accountId, amount) {
     const pool = await poolPromise;
     // Tjek dækning og lukket konto
