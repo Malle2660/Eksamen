@@ -1,37 +1,32 @@
-// public/js/growthPortfolio.js
+// Håndterer visning af portfolio, modaler og charts for Growth Tech-portefølje
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const portfolioId = window.PORTFOLIO_ID;
-    if (!portfolioId) {
-      return alert('Portfolio ID mangler – kan ikke indlæse data.');
+document.addEventListener('DOMContentLoaded', async () => { // Venter til at DOM er loaded/klart
+    const portfolioId = window.PORTFOLIO_ID; // Henter portfolio-ID fra global variabel
+    if (!portfolioId) { // Tjekker om portfolio-ID er tilgængelig
+      return alert('Portfolio ID mangler – kan ikke indlæse data.'); // tjekker om portfolio-ID er tilgængelig
     }
   
-    // 1) Hent holdings fra din egen backend
+    // Variable til at gemme beholdningerne
     let holdings;
     try {
       const res = await fetch(`/portfolios/${portfolioId}/holdings`, {
         credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Holdings ikke fundet');
-      holdings = await res.json();
+      }); // Fetch holdings fra backend
+      if (!res.ok) throw new Error('Holdings ikke fundet') // Tjekker respons
+      holdings = await res.json(); // Læser JSON-respons fra backend
     } catch (err) {
-      return alert(`Fejl ved hentning af holdings: ${err.message}`);
+      return alert(`Fejl ved hentning af holdings: ${err.message}`); // Fejlbesked hvis beholdninger ikke kan hentes
     }
   
-    // 2) Du behøver IKKE hente quotes igen – price og value er allerede i holdings!
-  
-    // 3) Beregn totalværdi og evt. gennemsnitlig ændring (hvis du har changePct)
-    let totalValue = 0;
+    let totalValue = 0; // initialiserer totalværdi
     holdings.forEach(h => {
       totalValue += h.value || 0;
-    });
+    }); // Beregner totalværdi af beholdningerne
   
-    // 4) Opdater "kortene"
-    document.querySelector('.value-card .value').textContent =
+    document.querySelector('.value-card .value').textContent = // Opdater "kortene"
       totalValue.toLocaleString() + ' USD';
   
-    // 5) Fyld tabellen
-    const tbody = document.querySelector('table tbody');
+    const tbody = document.querySelector('table tbody'); // Henter tabel-body elementet
     tbody.innerHTML = holdings.map(r => `
       <tr>
         <td>${r.symbol}</td>
@@ -48,25 +43,24 @@ document.addEventListener('DOMContentLoaded', async () => {
           <button class="sell-btn" data-symbol="${r.symbol}" data-stockid="${r.id}">Sælg</button>
         </td>
       </tr>
-    `).join('');
+    `).join(''); // Generer tabaelrækken 
   
-    // 6) Bind knapper
-    document.getElementById('trade-history-btn')
-      .addEventListener('click', async function() {
+    document.getElementById('trade-history-btn') // Henter handels historik-knap 
+      .addEventListener('click', async function() { // Indlæser handlerne
         const portfolioId = window.PORTFOLIO_ID;
-        const res = await fetch(`/portfolios/${portfolioId}/trades`);
-        const trades = await res.json();
-        showTradeHistoryModal(trades);
+        const res = await fetch(`/portfolios/${portfolioId}/trades`); // Henter handlerne fra backend
+        const trades = await res.json(); // Indlæser og omdanner handlerne til brugbart format
+        showTradeHistoryModal(trades); // Viser handel modal 
       });
-    const btnNewTrade = document.getElementById('register-trade-btn');
+    const btnNewTrade = document.getElementById('register-trade-btn'); // Henter/registrerer en handle-knap
     if (btnNewTrade) {
       btnNewTrade.onclick = () => {
         loadAccounts();
         document.getElementById('buyStockModal').style.display = "block";
-      };
+      }; // Åben køb-modal
     }
   
-    document.querySelectorAll('.portfolio-link').forEach(link => {
+    document.querySelectorAll('.portfolio-link').forEach(link => { // Portfølje link
       link.addEventListener('click', function(e) {
         e.preventDefault();
         const portfolioId = this.dataset.id;
@@ -74,18 +68,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   
-    // 1. Beregn fordeling (brug symbol som label)
-    const sortedHoldings = [...holdings].sort((a, b) => (b.value || 0) - (a.value || 0));
-    const topHoldings = sortedHoldings.slice(0, 5);
-    const distribution = topHoldings.map(r => ({
+    const sortedHoldings = [...holdings].sort((a, b) => (b.value || 0) - (a.value || 0)); // Sorterer beholdningerne efter værdi
+    const topHoldings = sortedHoldings.slice(0, 5); // Slicer de 5 mest værdifulde beholdninger
+    const distribution = topHoldings.map(r => ({ // Beregner fordelingen af beholdningerne
       label: r.symbol,
       value: r.value
     }));
   
-    // 2. Tegn donut/pie chart (kun top 5)
-    const pieCtx = document.querySelector('.pie-chart-placeholder');
-    pieCtx.innerHTML = '<canvas id="pieChart"></canvas>';
-    new Chart(document.getElementById('pieChart'), {
+    const pieCtx = document.querySelector('.pie-chart-placeholder'); // Henter pie-chart-placeholder elementet
+    pieCtx.innerHTML = '<canvas id="pieChart"></canvas>'; // Indlæser canvas elementet
+    new Chart(document.getElementById('pieChart'), { // Opretter/tegner pie-chart
       type: 'pie',
       data: {
         labels: distribution.map(d => d.label),
@@ -96,14 +88,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   
-    // 3. Opdater legend (kun top 5)
-    const legend = document.querySelector('.pie-card .legend');
+    const legend = document.querySelector('.pie-card .legend'); // Henter legend elementet
     legend.innerHTML = distribution.map((d,i) => `
       <li>
         <span class="legend-color" style="background:${['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'][i]}"></span>
         ${d.label}: ${d.value ? d.value.toLocaleString() : 0} USD
       </li>
-    `).join('');
+    `).join(''); // Generer legenden
   
     document.addEventListener('DOMContentLoaded', function() {
       var backBtn = document.getElementById('back-to-portfolios-btn');
@@ -112,21 +103,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           window.location.href = '/portfolios';
         });
       }
-    });
+    }); // Opretter en tilbage-knap
 
-    // Modal handling
-    const modal = document.getElementById('buyStockModal');
-    const closeBtn = document.querySelector('.close');
+    
+    const modal = document.getElementById('buyStockModal'); // Henter køb-modal
+    const closeBtn = document.querySelector('.close'); // Henter luk-knap
     const buyStockForm = document.getElementById('buyStockForm');
 
     // Luk modal
-    closeBtn.onclick = () => modal.style.display = "none";
+    closeBtn.onclick = () => modal.style.display = "none"; // Lukker modal
     window.onclick = (e) => {
-        if (e.target == modal) modal.style.display = "none";
+        if (e.target == modal) modal.style.display = "none"; // Hvis man klikker udenfor modal, lukker den
     }
 
-    // Indlæs konti til dropdown
-    async function loadAccounts() {
+  
+    async function loadAccounts() { // Henter konti til dropdown
         try {
         const res = await fetch('/accounts/api', {
                 credentials: 'include'
@@ -185,26 +176,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --- SÆLG AKTIE MODAL ---
-    const sellModal = document.getElementById('sellStockModal');
-    const sellForm = document.getElementById('sellStockForm');
-    const sellCloseBtn = sellModal.querySelector('.close');
-    const sellStockSymbolInput = document.getElementById('sellStockSymbol');
-    const sellQuantityInput = document.getElementById('sellQuantity');
-    const sellPriceInput = document.getElementById('sellPrice');
-    const sellFeeInput = document.getElementById('sellFee');
-    const sellAccountSelect = document.getElementById('sellAccountId');
+    const sellModal = document.getElementById('sellStockModal'); // Henter sælg-modal
+    const sellForm = document.getElementById('sellStockForm'); // Henter sælg-formular 
+    const sellCloseBtn = sellModal.querySelector('.close'); // Henter luk-knap
+    const sellStockSymbolInput = document.getElementById('sellStockSymbol'); // Henter sælg-symbol input
+    const sellQuantityInput = document.getElementById('sellQuantity'); // Henter sælg-antal input
+    const sellPriceInput = document.getElementById('sellPrice'); // Henter sælg-pris input
+    const sellFeeInput = document.getElementById('sellFee'); // Henter sælg-gebyr input
+    const sellAccountSelect = document.getElementById('sellAccountId'); // Henter sælg-konto input
 
     // Åbn modal når der klikkes på en sælg-knap
-    document.querySelectorAll('.sell-btn').forEach(btn => {
-      btn.addEventListener('click', async function() {
-        const symbol = this.dataset.symbol;
-        const stockID = this.dataset.stockid;
-        sellStockSymbolInput.value = symbol;
-        sellStockSymbolInput.dataset.stockid = stockID;
-        // Find markedsprisen fra holdings-arrayet:
-        const aktie = holdings.find(h => h.symbol === symbol);
-        sellPriceInput.value = aktie ? aktie.price : '';
+    document.querySelectorAll('.sell-btn').forEach(btn => { // Åben sælg-modal
+      btn.addEventListener('click', async function() { 
+        const symbol = this.dataset.symbol; // Henter symbol fra knappen
+        const stockID = this.dataset.stockid; // Henter stockID fra knappen
+        sellStockSymbolInput.value = symbol; // Sætter symbol til input
+        sellStockSymbolInput.dataset.stockid = stockID; // Sætter stockID til input
+        const aktie = holdings.find(h => h.symbol === symbol); // Finder aktien i holdings-arrayet
+        sellPriceInput.value = aktie ? aktie.price : ''; // Sætter pris til input
         sellQuantityInput.value = '';
         sellFeeInput.value = 0;
         await loadSellAccounts();
@@ -389,4 +378,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   });
+  
+// Fælles funktion til at håndtere modal visning
+const showTradeModal = async (modal, symbol, stockId, price) => {
+  const symbolInput = modal.querySelector('[id$="StockSymbol"]');
+  const priceInput = modal.querySelector('[id$="Price"]');
+  const quantityInput = modal.querySelector('[id$="Quantity"]');
+  const feeInput = modal.querySelector('[id$="Fee"]');
+  
+  symbolInput.value = symbol;
+  if (stockId) symbolInput.dataset.stockid = stockId;
+  priceInput.value = price || '';
+  quantityInput.value = '';
+  feeInput.value = 0;
+  
+  await loadAccounts(modal.querySelector('[id$="AccountId"]'));
+  modal.style.display = 'block';
+};
+
+const setupModal = (modalId) => {
+  const modal = document.getElementById(modalId);
+  const closeBtn = modal.querySelector('.close');
+  
+  closeBtn.onclick = () => modal.style.display = 'none';
+  window.onclick = (e) => {
+    if (e.target == modal) modal.style.display = 'none';
+  };
+  
+  return modal;
+};
   

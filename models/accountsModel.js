@@ -1,30 +1,30 @@
 // Model til at håndtere konto-relaterede databaseoperationer
 // Indeholder metoder til at oprette, lukke, genåbne konti og håndtere ind- og udbetalinger
 // Logger også transaktioner og henter konto- og transaktionsdata til brugerens dashboard
-const { sql, poolPromise } = require('../db/database');
 
+const { sql, poolPromise } = require('../db/database'); // Importerer SQL-helper og forbindelse til database
+
+// Opretter en ny konto for en bruger med 0-saldo og registreringsdato
 class AccountsModel {
-  // Opretter en ny konto for en bruger med 0-saldo og registreringsdato
-  async createAccount(userId, name, currency, bank) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('userId', sql.Int, userId)
-      .input('name', sql.NVarChar, name)
-      .input('currency', sql.NVarChar, currency)
-      .input('bank', sql.NVarChar, bank)
+  async createAccount(userId, name, currency, bank) { // Her oprttes der der en ny konto for en bruger
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // Starter en ny query-opbygning
+      .input('userId', sql.Int, userId) // Her indsættes brugerens ID
+      .input('name', sql.NVarChar, name) // Her indsættes kontiets navn
+      .input('currency', sql.NVarChar, currency) // Her indsættes kontiets valuta
+      .input('bank', sql.NVarChar, bank) // Indsætter brugerens bank
       .query(`
         INSERT INTO Accounts (userID, name, currency, bank, balance, registrationsDate, closedAccount)
         VALUES (@userId, @name, @currency, @bank, 0, GETDATE(), 0);
         SELECT SCOPE_IDENTITY() AS id;
       `);
-    return result.recordset[0];
+    return result.recordset[0]; // Returnerer den nye kontos ID som et objekt
   }
 
-  // Sætter en konto som lukket og angiver lukningstidspunkt
-  async closeAccount(accountId) {
-    const pool = await poolPromise;
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
+  async closeAccount(accountId) { // Her lukkes en konto
+    const pool = await poolPromise; // Henter databasen
+    await pool.request() // Starter en ny query-opbygning
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID  
       .query(`
         UPDATE Accounts
         SET closedAccount = 1,
@@ -34,10 +34,10 @@ class AccountsModel {
   }
 
   // Genåbner en tidligere lukket konto
-  async reopenAccount(accountId) {
-    const pool = await poolPromise;
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
+  async reopenAccount(accountId) { // Her genåbnes en tidligere lukket konto
+    const pool = await poolPromise; // Henter databasen
+    await pool.request() // Starter en ny query-opbygning
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
       .query(`
         UPDATE Accounts
         SET closedAccount = 0
@@ -45,81 +45,73 @@ class AccountsModel {
       `);
   }
 
-  // Indsætter penge på en konto og opretter transaktionslog
-  async deposit(accountId, amount) {
-    const pool = await poolPromise;
-    // Opdater saldo
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
-      .input('amount', sql.Float, amount)
+  async deposit(accountId, amount) { // her indsættes penge på en konto
+    const pool = await poolPromise; // Henter databasen
+    await pool.request() // opdaterer balance
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
+      .input('amount', sql.Float, amount) // Her indsættes beløbet
       .query(`
         UPDATE Accounts
         SET balance = balance + @amount
         WHERE accountID = @accountId
           AND closedAccount = 0;
       `);
-    // Log transaktionen
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
-      .input('amount', sql.Float, amount)
-      .input('transactionType', sql.NVarChar, 'Indbetaling')
-      .input('date', sql.DateTime, new Date())
+    await pool.request() // logges transaktionen
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
+      .input('amount', sql.Float, amount) // Her indsættes beløbet
+      .input('transactionType', sql.NVarChar, 'Indbetaling') // Her indsættes transaktionstypen
+      .input('date', sql.DateTime, new Date()) // Her indsættes datoen
       .query(`
         INSERT INTO Transactions (accountID, amount, transactionType, date)
         VALUES (@accountId, @amount, @transactionType, @date)
       `);
   }
 
-  // Hæver penge fra en konto hvis den er åben og har nok dækning
-  async withdraw(accountId, amount) {
-    const pool = await poolPromise;
-    // Tjek dækning og lukket konto
-    const result = await pool.request()
+  async withdraw(accountId, amount) { // Her udbetales penge fra en konto
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // Henter kontiets information
       .input('accountId', sql.Int, accountId)
-      .query('SELECT balance, closedAccount FROM Accounts WHERE accountID = @accountId');
-    const account = result.recordset[0];
-    if (!account) throw new Error('Konto ikke fundet');
-    if (account.closedAccount) throw new Error('Kontoen er lukket');
-    if (account.balance < amount) throw new Error('Ikke nok penge på kontoen');
-    // Træk beløbet fra saldoen
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
-      .input('amount', sql.Float, amount)
+      .query('SELECT balance, closedAccount FROM Accounts WHERE accountID = @accountId'); // queryen der henter kontiets balance og om den er lukket
+    const account = result.recordset[0]; // tager første resultat
+    if (!account) throw new Error('Konto ikke fundet'); // Fejl hvis konto ikke findes
+    if (account.closedAccount) throw new Error('Kontoen er lukket'); // Fejl hvis kontoen er lukket
+    if (account.balance < amount) throw new Error('Ikke nok penge på kontoen'); // Fejl hvis der ikke er nok penge på kontoen
+    await pool.request() // opdaterer balance
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
+      .input('amount', sql.Float, amount) // Her indsættes beløbet
       .query(`
         UPDATE Accounts
         SET balance = balance - @amount
         WHERE accountID = @accountId AND closedAccount = 0;
       `);
   
-    await pool.request()
-      .input('accountId', sql.Int, accountId)
-      .input('amount', sql.Float, amount)
-      .input('transactionType', sql.NVarChar, 'Udbetaling')
-      .input('date', sql.DateTime, new Date())
+    await pool.request() // logges transaktionen
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
+      .input('amount', sql.Float, amount) // Her indsættes beløbet  
+      .input('transactionType', sql.NVarChar, 'Udbetaling') // Her indsættes transaktionstypen
+      .input('date', sql.DateTime, new Date()) // Her indsættes datoen
       .query(`
         INSERT INTO Transactions (accountID, amount, transactionType, date)
         VALUES (@accountId, @amount, @transactionType, @date)
       `);
   }
 
-  // Henter alle transaktioner for en bestemt konto, sorteret nyest først
-  async getTransactions(accountId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('accountId', sql.Int, accountId)
+  async getTransactions(accountId) { // Henter alle transaktioner for en bestemt konto, sorteret nyest først
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // Starter en ny query-opbygning
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
       .query(`
         SELECT *
         FROM Transactions
         WHERE accountID = @accountId
         ORDER BY date DESC;
       `);
-    return result.recordset;
+    return result.recordset; // Returnerer alle transaktionerne som et array og udskriver en liste af transaktioner.
   }
 
-  // Henter alle konti for en bruger, sorteret efter oprettelsesdato
-  async getAllForUser(userId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
+  async getAllForUser(userId) { // Henter alle transaktioner for en bruger
+    const pool = await poolPromise; // henter databasen
+    const result = await pool.request() // starter en ny query-opbygning
       .input('userId', sql.Int, userId)
       .query(`
         SELECT
@@ -134,14 +126,13 @@ class AccountsModel {
         WHERE userID = @userId
         ORDER BY registrationsDate DESC;
       `);
-    return result.recordset;
+    return result.recordset; // Returnerer alle konti for en bruger som et array og udskriver en liste af konti.
   }
 
-  // Ekstra metode til at hente transaktioner for en specifik konto (gentagelse af ovenstående)
-  async getTransactionsForAccount(accountId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('accountId', sql.Int, accountId)
+  async getTransactionsForAccount(accountId) { // hent en historie af transaktioner for en konto
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // starter en ny query-opbygning
+      .input('accountId', sql.Int, accountId) // Her indsættes kontiets ID
       .query(`
         SELECT 
           date,
@@ -151,35 +142,33 @@ class AccountsModel {
         WHERE accountID = @accountId
         ORDER BY date DESC
       `);
-    return result.recordset;
+    return result.recordset; // Returnerer en historik af transaktioner for en konto
   }
 
-  // Henter alle aktive (åbne) konti for en bruger, sorteret alfabetisk
-  async getAccountsByUserId(userId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-        .input('userId', sql.Int, userId)
+  async getAccountsByUserId(userId) { // Begregner samlet saldo for alle aktive kontier
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // starter en ny query-opbygning
+        .input('userId', sql.Int, userId) // Her indsættes brugerens ID
         .query(`
             SELECT * FROM accounts 
             WHERE userId = @userId 
             AND closedAccount = 0
             ORDER BY accountName
         `);
-    return result.recordset;
+    return result.recordset; // returnere en samlet oversigt over sum eller 0
   }
   
-// Returnerer brugerens samlede saldo fra alle åbne konti
-  async getTotalBalance(userId) {
-    const pool = await poolPromise;
-    const result = await pool.request()
-        .input('userId', sql.Int, userId)
+  async getTotalBalance(userId) { // Begregner samlet saldo for alle aktive kontier
+    const pool = await poolPromise; // Henter databasen
+    const result = await pool.request() // starter en ny query-opbygning
+        .input('userId', sql.Int, userId) // Her indsættes brugerens ID
         .query(`
             SELECT SUM(balance) as totalBalance 
             FROM accounts 
             WHERE userId = @userId 
             AND closedAccount = 0
         `);
-    return result.recordset[0].totalBalance || 0;
+    return result.recordset[0].totalBalance || 0; // returnere en samlet oversigt over sum eller 0
   }
 }
 

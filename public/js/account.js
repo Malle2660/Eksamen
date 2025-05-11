@@ -1,86 +1,75 @@
-// Når hele DOM'en er indlæst, starter vi logikken
-// Funktionaliteten styrer alt fra visning af konti, modaler og formularer
-// til handlinger som opret, luk, hæv og indsæt på en konto
+// Når hele DOM er indlæst, hentes alle elementer, modealer og event listeners
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Henter elementer til brug i dashboard og modaler
-    const countEl      = document.getElementById('account-count');
-    const totalBalEl   = document.getElementById('total-balance');
-    const currencyEl   = document.getElementById('currency-dist');
+document.addEventListener('DOMContentLoaded', () => { // Venter til at HTML er indlæst
+    const countEl      = document.getElementById('account-count'); // Elementer til antal konti
+    const totalBalEl   = document.getElementById('total-balance'); // Elementer til samlet balance
+    const currencyEl   = document.getElementById('currency-dist'); // Elementer til valutafordeling
     const tbody        = document.getElementById('accounts-table-body');
     const newBtn       = document.getElementById('new-account-btn');
   
     // Modale felter og formularer
-    const createAccountModal = document.getElementById('create-account-modal');
-    const createAccountForm = document.getElementById('create-account-form');
-    const createAccountError = document.getElementById('create-account-error');
-    const cancelCreateAccount = document.getElementById('cancel-create-account');
-    const newAccountName = document.getElementById('new-account-name');
-    const newAccountCurrency = document.getElementById('new-account-currency');
-    const newAccountBank = document.getElementById('new-account-bank');
-    const depositModal = document.getElementById('deposit-modal');
-    const depositForm = document.getElementById('deposit-form');
-    const depositAmount = document.getElementById('deposit-amount');
-    const depositCurrency = document.getElementById('deposit-currency');
-    const depositError = document.getElementById('deposit-error');
-    const cancelDeposit = document.getElementById('cancel-deposit');
-    const withdrawModal = document.getElementById('withdraw-modal');
-    const withdrawForm = document.getElementById('withdraw-form');
-    const withdrawAmount = document.getElementById('withdraw-amount');
-    const withdrawCurrency = document.getElementById('withdraw-currency');
-    const withdrawError = document.getElementById('withdraw-error');
-    const cancelWithdraw = document.getElementById('cancel-withdraw');
+    const createAccountModal = document.getElementById('create-account-modal'); // Modal til at oprette en ny konto
+    const createAccountForm = document.getElementById('create-account-form'); // Formular til at oprette en ny konto
+    const createAccountError = document.getElementById('create-account-error'); // Fejlmeddelelse til at oprette en ny konto
+    const cancelCreateAccount = document.getElementById('cancel-create-account'); // Knap til at annullere oprettelse af en ny konto
+    const newAccountName = document.getElementById('new-account-name'); // Inputfelt til at indsætte et navn til en ny konto
+    const newAccountCurrency = document.getElementById('new-account-currency'); // Inputfelt til at indsætte en valuta til en ny konto
+    const newAccountBank = document.getElementById('new-account-bank'); // Inputfelt til at indsætte en bank til en ny konto
+    const depositModal = document.getElementById('deposit-modal'); // Modal til at indsætte penge på en konto
+    const depositForm = document.getElementById('deposit-form'); // Formular til at indsætte penge på en konto
+    const depositAmount = document.getElementById('deposit-amount'); // Inputfelt til at indsætte et beløb til en konto
+    const depositCurrency = document.getElementById('deposit-currency'); // Inputfelt til at indsætte en valuta til en konto
+    const depositError = document.getElementById('deposit-error'); // Fejlmeddelelse til at indsætte penge på en konto
+    const cancelDeposit = document.getElementById('cancel-deposit'); // Knap til at annullere indsættelse af penge på en konto
+    const withdrawModal = document.getElementById('withdraw-modal'); // Modal til at udbetale penge fra en konto
+    const withdrawForm = document.getElementById('withdraw-form'); // Formular til at udbetale penge fra en konto
+    const withdrawAmount = document.getElementById('withdraw-amount'); // Inputfelt til at indsætte et beløb til en konto
+    const withdrawCurrency = document.getElementById('withdraw-currency'); // Inputfelt til at indsætte en valuta til en konto
+    const withdrawError = document.getElementById('withdraw-error'); // Fejlmeddelelse til at udbetale penge fra en konto
+    const cancelWithdraw = document.getElementById('cancel-withdraw'); // Anuller-knap til at udbetale penge fra en konto
     const closeAccountModal = document.getElementById('close-account-modal');
-    const closeAccountForm = document.getElementById('close-account-form');
-    const closeAccountError = document.getElementById('close-account-error');
-    const cancelCloseAccount = document.getElementById('cancel-close-account');
+    const closeAccountForm = document.getElementById('close-account-form'); // Formular til at lukke en konto
+    const closeAccountError = document.getElementById('close-account-error'); // Fejlmeddelelse til at lukke en konto
+    const cancelCloseAccount = document.getElementById('cancel-close-account'); // Anuller-knap til at lukke en konto
 
-    // Aktuel konto-id ved interaktion
-    let currentDepositAccountId = null;
-    let currentWithdrawAccountId = null;
-    let currentCloseAccountId = null;
+    let currentDepositAccountId = null; // ID for den konto der indsættes penge på
+    let currentWithdrawAccountId = null; // ID for den konto der udbetales penge fra
+    let currentCloseAccountId = null; // ID for den konto der lukkes
   
-    // Henter kontodata fra serveren og opdaterer UI
-    async function loadAccounts() {
+    async function loadAccounts() { // Henter og viser alle konti
       try {
-        const res  = await fetch('/accounts/api');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        renderMetrics(data);
-        renderTable(data);
+        const res  = await fetch('/accounts/api'); // API-kald til at hente alle konti fra serveren
+        if (!res.ok) throw new Error(`HTTP ${res.status}`); // Hvis der ikke er en ok status, kastes en fejl
+        const data = await res.json(); // JSON data fra serveren
+        renderMetrics(data); // Opdaterer metrics
+        renderTable(data); // Opdaterer kontotabel
       } catch (err) {
         console.error('Kunne ikke indlæse konti:', err);
       }
     }
   
-    // Beregner og viser samlet saldo, antal og valutafordeling
-    function renderMetrics(accounts) {
-      // Kun aktive konti (closedAccount === 0)
-      const activeAccounts = accounts.filter(acc => acc.closedAccount === 0 || acc.closedAccount === false);
-  
-      let total        = 0;
-      const byCurrency = {};
-  
-      activeAccounts.forEach(acc => {
-        total += acc.balance;
-        byCurrency[acc.currency] = (byCurrency[acc.currency] || 0) + acc.balance;
+    function renderMetrics(accounts) { // Beregner og viser samlet balance, antal konti og valutafordeling
+      const activeAccounts = accounts.filter(acc => acc.closedAccount === 0 || acc.closedAccount === false); // Filtrer konti der er aktive
+      let total        = 0; // Sum variable
+      const byCurrency = {}; // Object til at gemme valutafordelingen
+      activeAccounts.forEach(acc => { // Loop igennem alle aktive konti
+        total += acc.balance; // Tilføj balance til total
+        byCurrency[acc.currency] = (byCurrency[acc.currency] || 0) + acc.balance; // Tilføj balance til valutafordelingen
       });
-  
-      countEl.textContent    = activeAccounts.length;
+      countEl.textContent    = activeAccounts.length; // Sæt antal konti til antal aktive konti
       const totalUSD = accounts.reduce((sum, acc) => sum + (acc.balanceUSD || 0), 0);
       totalBalEl.textContent = `${totalUSD.toFixed(2)} USD`;
-  
       const grandTotal = Object.values(byCurrency).reduce((a,b) => a + b, 0);
       const parts      = Object.entries(byCurrency)
-        .map(([cur,bal]) => `${cur} ${((bal/grandTotal)*100).toFixed(0)}%`);
-      currencyEl.textContent = parts.join(', ');
+        .map(([cur,bal]) => `${cur} ${((bal/grandTotal)*100).toFixed(0)}%`); // procentdel af de forskellige valutaer
+      currencyEl.textContent = parts.join(', '); // viser valutafordelingen i procent
     }
   
-    // Renders kontotabel og tilføjer events til knapper
-    function renderTable(accounts) {
-      tbody.innerHTML = '';
-      accounts.forEach(acc => {
-        const tr = document.createElement('tr');
+    function renderTable(accounts) { // Generer kontotabelrækker og tilføjer events til knapper
+      tbody.innerHTML = ''; // fjerner alle eksisterende rækker
+      accounts.forEach(acc => { // Loop igennem alle konti
+        const tr = document.createElement('tr'); // Opret en ny række
+        // sætter en celle-HTML kode til at vise konti-data
         tr.innerHTML = `
           <td>${acc.accountID}</td>
           <td>${acc.name}</td>
@@ -100,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           </td>
         `;
-        tbody.appendChild(tr);
+        tbody.appendChild(tr); // Tilføj rækken til tabellen
       });
 
       // Tilføj events til hver af handlingerne (deposit, withdraw, luk osv.)
@@ -169,9 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Åbn modal når der trykkes på "Opret konto"
     if (newBtn && createAccountModal && createAccountForm && newAccountName && newAccountCurrency && newAccountBank) {
-      newBtn.addEventListener('click', () => {
+      newBtn.addEventListener('click', () => { // Åbner modalen til at oprette en ny konto
         createAccountError.textContent = '';
         newAccountName.value = '';
         newAccountCurrency.value = '';
@@ -181,24 +169,23 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Luk modal
+    // lukker opret konto modal
     if (cancelCreateAccount && createAccountModal) {
       cancelCreateAccount.addEventListener('click', () => {
         createAccountModal.style.display = 'none';
       });
     }
   
-    // Formularhåndtering for opret, indbetal, udbetal, luk konto
-    if (createAccountForm) {
-      createAccountForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        createAccountError.textContent = '';
-        const name = newAccountName.value.trim();
+    if (createAccountForm) { 
+      createAccountForm.addEventListener('submit', async (e) => { // Håndtere opret konto formular
+        e.preventDefault(); // forhindrer default handling/reload
+        createAccountError.textContent = ''; // Fjerner fejlmeddelelse
+        const name = newAccountName.value.trim(); // Henter navnet fra inputfeltet
         const currency = newAccountCurrency.value.trim();
         const bank = newAccountBank.value.trim();
         if (!name || !currency || !bank) {
           createAccountError.textContent = 'Alle felter skal udfyldes!';
-          return;
+          return; // Tjekker alle inputfelterne
         }
         try {
           const res = await fetch('/accounts/create', {
@@ -218,11 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   
-    // Håndter indbetalings-formularen
     if (depositForm) {
-      depositForm.addEventListener('submit', async (e) => {
+      depositForm.addEventListener('submit', async (e) => { // Håndtere deposit formular
         e.preventDefault();
-        depositError.textContent = '';
+        depositError.textContent = ''; // Fjerner fejlmeddelelse
         const amount = depositAmount.value.trim();
         if (!amount || isNaN(amount) || amount <= 0) {
           depositError.textContent = 'Indtast venligst et gyldigt beløb større end 0';

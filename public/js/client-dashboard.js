@@ -462,19 +462,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     const labels = history.map(h => h.date);
     const data = history.map(h => h.value);
     dashboardChart = new Chart(ctx, {
-      type: 'line',
+    type: 'line',
       data: { labels, datasets: [{
             label: 'Samlet værdi (USD)',
             data,
-            borderColor: '#4e79a7',
-            backgroundColor: 'rgba(78,121,167,0.1)',
-            tension: 0.4,
+        borderColor: '#4e79a7',
+        backgroundColor: 'rgba(78,121,167,0.1)',
+        tension: 0.4,
             pointRadius: 3,
             pointBackgroundColor: '#fff',
-            fill: true
-          }]
-      },
-      options: {
+        fill: true
+      }]
+    },
+    options: {
         plugins: { legend: { display: true, labels: { color: '#fff' } } },
         scales: { x: { ticks: { color: '#C3C3C1' } }, y: {
             ticks: { color: '#C3C3C1', callback(value) {
