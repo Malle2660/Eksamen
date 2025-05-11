@@ -1,55 +1,64 @@
-/* accounts.css - CSS-fil til dashboard og kontooversigt */
+/* Denne CSS definerer styling for et dashboard-layout med sidebar-navigation,
+   hovedindhold, metrik-kort, tabeller og modale vinduer.
+   Kommentarer forklarer hver sektion, så teamet let kan navigere og tilpasse.
+*/  
 
-/* Import af skrifttype til overskrifter */
+/* Importér Roboto Slab til overskrifter */
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
 
 /* Globale farve- og stil-variabler */
 :root {
-  --bg-global:      #1E1E1E; /* Baggrundsfarve for hele appen */
-  --bg-container:   #1B1B19; /* Baggrundsfarve for bokse og kort */
-  --text-light:     #C3C3C1; /* Standard tekstfarve */
-  --text-dark:      #84837E; /* Sekundær/grå tekst */
-  --color-positive: #46634C; /* Grøn til fx vækst */
-  --color-negative: #BD3A3A; /* Rød til fx fald */
-  --sidebar-bg:     #513F95; /* Farve på top af sidebar */
-  --button-bg:      #242424; /* Standard knapfarve */
-  --button-text:    #fff;    /* Knaptekst */
-  --shadow:         0 4px 6px rgba(0,0,0,0.1); /* Standard skygge */
+  --bg-global:      #1E1E1E; /* baggrundsfarve for hele appen */
+  --bg-container:   #1B1B19; /* baggrundsfarve for bokse og kort */
+  --text-light:     #C3C3C1; /* standard tekstfarve */
+  --text-dark:      #84837E; /* sekundær/grå tekst */
+  --color-positive: #46634C; /* grøn til fx vækst */
+  --color-negative: #BD3A3A; /* rød til fx fald */
+  --sidebar-bg:     #513F95; /* farve på top af sidebar */
+  --button-bg:      #242424; /* standard knapfarve */
+  --button-text:    #fff;    /* knaptekst */
+
 }
 
 /* Reset og basis-opsætning */
+/* Nulstiller margin og padding for alle elementer og anvender border-box layout */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Basis styling for hele body-elementet */
 body {
   font-family: 'Inter', sans-serif;
   background: var(--bg-global);
   color: var(--text-light);
 }
 
+/* Fjerner listepunkter og understregning på links og lister */
 ul, a {
   list-style: none;
   text-decoration: none;
   color: inherit;
 }
 
-/* App layout */
+/* Webapplikationens layout (GRID) */
+/* Definerer 2-kolonne layout: sidebar (240px) og hovedindhold (resten) */
 .app {
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100vh;
 }
 
-/* Sidebar */
+/* SIDEBAR */
+/* Baggrundsfarve for sidebar */
 .sidebar {
   background: var(--bg-container);
   display: flex;
   flex-direction: column;
 }
 
+/* Topsektion i sidebar med logo og luk-knap */
 .sidebar-header {
   background: var(--sidebar-bg);
   height: 64px;
@@ -58,23 +67,24 @@ ul, a {
   padding: 0;
 }
 
-/* Logo og branding */
+/* Logoikonet i venstre side af header */
 .logo-icon {
   background: var(--sidebar-bg);
   width: 75px;
   height: 64px;
-  margin: 0 -10px 0 0;
+  margin-left: 0;
+  margin-right: -10px;
   padding: 0;
   border-radius: 4px;
   object-fit: contain;
 }
 
+/* Tekstdelen af logoet */
 .logo-text {
   display: inline-block;
   text-align: center;
   margin-left: 8px;
 }
-
 .logo-text h1 {
   font-family: 'Roboto Slab', serif;
   font-weight: 700;
@@ -83,7 +93,6 @@ ul, a {
   color: #fff;
   margin: 0 0 2px 0;
 }
-
 .logo-text p {
   font-weight: 600;
   font-size: 0.5rem;
@@ -94,7 +103,7 @@ ul, a {
   margin: 0;
 }
 
-/* Sidebar fold-knap */
+/* til at folde sidebar sammen */
 .collapse-btn {
   margin-left: auto;
   margin-right: -16px;
@@ -110,12 +119,44 @@ ul, a {
   cursor: pointer;
 }
 
-/* Navigation */
+/* NAVIGATION i sidebar */
 .sidebar-nav ul {
   margin-top: 16px;
   padding: 0;
 }
+/* Erstat svg'er med PNG-ikoner via pseudo-elementer */
+.sidebar-nav li:nth-child(1) svg { display: none; }
+.sidebar-nav li:nth-child(1)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('/accounts.png/accounts-dashboard.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(2) svg { display: none; }
+.sidebar-nav li:nth-child(2)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('/accounts.png/accounts-accounts.png') no-repeat center center;
+  background-size: contain;
+}
+.sidebar-nav li:nth-child(3) svg { display: none; }
+.sidebar-nav li:nth-child(3)::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  background: url('/accounts.png/accounts-portfolios.png') no-repeat center center;
+  background-size: contain;
+}
 
+/* Styling af navigationspunkterne */
 .sidebar-nav li {
   display: flex;
   align-items: center;
@@ -125,43 +166,24 @@ ul, a {
   cursor: pointer;
   transition: color 0.2s, background 0.2s;
 }
-
 .sidebar-nav li:hover,
 .sidebar-nav li.active {
   background: rgba(255,255,255,0.05);
   color: #fff;
 }
-
-/* Navigation ikoner */
-.sidebar-nav li::before {
-  content: "";
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+.sidebar-nav svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  fill: var(--text-light);
 }
 
-.sidebar-nav li:nth-child(1)::before {
-  background-image: url('/accounts.png/accounts-dashboard.png');
-}
-
-.sidebar-nav li:nth-child(2)::before {
-  background-image: url('/accounts.png/accounts-accounts.png');
-}
-
-.sidebar-nav li:nth-child(3)::before {
-  background-image: url('/accounts.png/accounts-portfolios.png');
-}
-
-/* Hovedindhold */
+/* HOVEDINDHOLD */
 .main-content {
   padding: 3rem 2rem 2rem;
   overflow-y: auto;
 }
-
 .page-header h2 {
   margin: 1rem 0 1.5rem;
   font-size: 1.5rem;
@@ -169,53 +191,40 @@ ul, a {
   color: var(--text-light);
 }
 
-/* Metrikkort */
+/* METRIKKORT (dashboard-kort med info) */
 .metrics {
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
-
 .card {
   background: var(--bg-container);
   border-radius: 8px;
   padding: 1rem 1.5rem;
   flex: 1;
 }
-
 .card .label {
   font-size: 0.75rem;
   color: var(--text-dark);
   margin-bottom: 0.5rem;
 }
-
 .card .value {
   font-size: 1.25rem;
   font-weight: 700;
   display: flex;
   justify-content: space-between;
 }
-
-/* Ændringsindikatorer */
 .change {
   font-size: 0.875rem;
   display: inline-flex;
   align-items: center;
 }
+.change.positive { color: var(--color-positive); }
+.change.negative { color: var(--color-negative); }
+.change svg { margin-right: 0.25rem; width: 12px; height: 12px; }
 
-.change.positive {
-  color: var(--color-positive);
-}
-
-.change.negative {
-  color: var(--color-negative);
-}
-
-/* Handlingsknapper */
-.close-btn,
-.reopen-btn,
-.deposit-btn,
-.withdraw-btn {
+/* KNAPPER TIL HANDLINGER (Indbetaling osv.) */
+.close-btn, .reopen-btn, .deposit-btn, .withdraw-btn {
   padding: 4px 8px;
   border: none;
   border-radius: 4px;
@@ -240,12 +249,19 @@ ul, a {
 }
 
 .withdraw-btn:hover {
-  background-color: #e68a00;
+  background-color: #e65100;
 }
 
 .close-btn {
   background-color: #dc3545;
   color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin-right: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .close-btn:hover {
@@ -261,148 +277,125 @@ ul, a {
   background-color: #218838;
 }
 
-/* Tabeller */
+/* TABELLER TIL OVERSIGT */
 .tables {
   display: grid;
-  gap: 1.5rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
-
 .table-container {
   background: var(--bg-container);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
+.table-container[style] {
+  grid-column: span 2;
+}
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }
-
 .table-header h4 {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-light);
 }
+.table-header button {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
 
+/* Styling af selve tabellen */
 table {
   width: 100%;
   border-collapse: collapse;
 }
-
 th, td {
-  padding: 0.75rem;
+  padding: 0.5rem;
   text-align: left;
 }
-
 th {
-  font-weight: 600;
+  font-size: 0.75rem;
   color: var(--text-dark);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  text-transform: uppercase;
 }
-
+tr + tr {
+  border-top: 1px solid #2A2A2A;
+}
 td {
-  color: var(--text-light);
-}
-
-/* Værdi og procent styling */
-.value {
-  font-weight: 600;
-}
-
-.percent.positive {
-  color: var(--color-positive);
-}
-
-.percent.negative {
-  color: var(--color-negative);
-}
-
-/* Historik knap */
-.history-btn {
-  background: transparent;
-  border: 1px solid var(--text-dark);
-  color: var(--text-light);
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
   font-size: 0.875rem;
-  transition: all 0.2s;
+  color: var(--text-light);
 }
+.value {
+  font-weight: 700;
+}
+.percent.positive { color: var(--color-positive); }
+.percent.negative { color: var(--color-negative); }
 
+.history-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: background-color 0.2s;
+}
 .history-btn:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: var(--text-light);
+  background-color: #343a40;
 }
 
-/* Modal vindue */
+/* MODAL (popup) */
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
+  z-index: 10000;
+  left: 0; top: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
 }
-
 .modal-content {
-  background: var(--bg-container);
-  border-radius: 8px;
-  padding: 2rem;
-  width: 90%;
-  max-width: 500px;
+  background: #232323;
+  color: #fff;
+  padding: 2em;
+  border-radius: 12px;
+  min-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
-
 .modal-content h3 {
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 1em;
 }
-
-/* Modal knapper */
 .modal-btn {
-  padding: 0.5rem 1rem;
+  background: #6c4fc1;
+  color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  padding: 0.5em 1.5em;
+  font-size: 1.1em;
+  margin-right: 8px;
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: background-color 0.2s;
-  margin-right: 0.5rem;
-  background: var(--sidebar-bg);
-  color: white;
+  margin-top: 0.5em;
+  transition: background 0.2s;
 }
-
 .modal-btn:hover {
-  opacity: 0.9;
+  background: #4b2fa6;
 }
-
 .modal-btn.cancel {
-  background: var(--button-bg);
+  background: #fff;
+  color: #232323;
 }
-
 .modal-btn.cancel:hover {
-  background: #333;
-}
-
-/* Responsivt design */
-@media (max-width: 768px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
-  
-  .sidebar {
-    display: none;
-  }
-  
-  .metrics {
-    flex-direction: column;
-  }
-  
-  .table-container {
-    overflow-x: auto;
-  }
+  background: #eee;
 }

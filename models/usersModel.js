@@ -1,76 +1,69 @@
-//UsersModel som håndterer brugeroprettelse, login og adgangskodeopdatering    
-
-// Her importerer vi SQL-typer og en genbrugelig forbindelse til databasen  
 const { sql, poolPromise } = require('../db/database');
-
-// Her importerer vi bcrypt til hashing og sammenligning af adgangskoder    
 const bcrypt = require('bcryptjs');
 
-// Her oprettes en klasse til at håndtere brugerrelaterede databaseoperationer
 class UsersModel {
-    // Oprettelse af ny bruger med brugernavn, email og adgangskode
+    // Opret bruger
     async create(username, email, password) {
-        const pool = await poolPromise; // Henter en åben forbindelse til databasen og bruger den til at udføre en SQL-forespørgsel
+        const pool = await poolPromise;
         const result = await pool.request()
-            .input('username', sql.NVarChar, username) // Indsætter brugernavnet i SQL-forespørgslen    
-            .input('email', sql.NVarChar, email) // Indsætter emailen i SQL-forespørgslen
-            .input('password', sql.NVarChar, password) // Indsætter adgangskoden i SQL-forespørgslen - bcrypt bruges til at hashe adgangskoden
+            .input('username', sql.NVarChar, username)
+            .input('email', sql.NVarChar, email)
+            .input('password', sql.NVarChar, password)
             .query(`
                 INSERT INTO users (username, email, password)
-                VALUES (@username, @email, @password); // Indsætter ny bruger i databsen 
-                SELECT SCOPE_IDENTITY() AS id; // Returnerer ID på den oprettede bruger
+                VALUES (@username, @email, @password);
+                SELECT SCOPE_IDENTITY() AS id;
             `);
-        return result.recordset[0]; // Returnerer den oprettede brugers ID
+        return result.recordset[0];
     }
-    // Logger en bruger ind ved at sammenligne brugernavn og adgangskode
+    // Login bruger
     async login(username, password) {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('username', sql.NVarChar, username) // Indsætter brugernavnet i SQL-forespørgslen
-            .query('SELECT * FROM users WHERE username = @username'); // Henter brugerdata fra databasen
+            .input('username', sql.NVarChar, username)
+            .query('SELECT * FROM users WHERE username = @username');
         
-        const user = result.recordset[0]; // Gemmer brugerdata i user
+        const user = result.recordset[0];
         if (!user) {
-            throw new Error('Ugyldigt brugernavn eller adgangskode'); // Hvis bruger ikke findes, kastes en fejl
+            throw new Error('Ugyldigt brugernavn eller adgangskode');
         }
 
-        // Sammenligner den indtastet adgangskode med den has'ede version i databasen
+        // Sammenlign den krypterede adgangskode med den indtastede
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new Error('Ugyldigt brugernavn eller adgangskode'); // Hvis adgangskoden ikke er korrekt, kastes en fejl  
+            throw new Error('Ugyldigt brugernavn eller adgangskode');
         }
 
-        return user; // Hvis login er vellykket, returneres brugerdata  
+        return user; // Hvis alt er ok, returner brugerdata
     }
 
-    // Finder en bruger baseret på brugernavn
+    // Find bruger baseret på brugernavn
     async findByUsername(username) {
         const pool = await poolPromise;
         const result = await pool.request()
             .input('username', sql.NVarChar, username)
-            .query('SELECT * FROM users WHERE username = @username'); // Henter brugernavnet fra databasen
-        return result.recordset[0]; // Returnerer brugerdata eller null, hvis brugeren ikke findes
+            .query('SELECT * FROM users WHERE username = @username');
+        return result.recordset[0];
     }
 
-    // Opdaterer adgangskodenfor en bruger for en bruger (hash'er den nye adgangskode)
+    // Opdater adgangskode
     async updatePassword(userId, newPassword) {
-        const hashedPassword = await bcrypt.hash(newPassword, 10); // Hasher den nye adgangskode
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
         const pool = await poolPromise;
         await pool.request()
-            .input('userId', sql.Int, userId) //Brugerens ID
+            .input('userId', sql.Int, userId)
             .input('password', sql.NVarChar(255), hashedPassword)  // Sørg for at sætte korrekt længde
-            .query('UPDATE users SET password = @password WHERE userID = @userId'); // Opdaterer adgangskoden i databasen
+            .query('UPDATE users SET password = @password WHERE userID = @userId');
     }
 
-    // Find en bruger baseret på deres userId
+    // Find bruger baseret på userId
     async findById(userId) {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('userId', sql.Int, userId) // Brugerens ID   
-            .query('SELECT * FROM users WHERE userID = @userId'); // Henter brugerdata fra databasen
-        return result.recordset[0]; // Returnerer brugerdata eller null, hvis brugeren ikke findes
+            .input('userId', sql.Int, userId)
+            .query('SELECT * FROM users WHERE userID = @userId');
+        return result.recordset[0];
     }
 }
 
-// Exporterer en ny instans af UsersModel, så den kan bruges i routes og services
 module.exports = new UsersModel();
