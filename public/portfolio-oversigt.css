@@ -1,41 +1,8 @@
-<<<<<<< HEAD
 /* portfolio-oversigt.css - Optimized version */
 
-=======
-/* styles.css - Portfolio- oversigt styling
-   vi har brugt denne fil til at style vores portfolio-oversigt . */
-
-/* ----- IMPORTS ----- */
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
 /* Roboto Slab bruges til overskrifter for at skabe kontrast til brødtekst-fonten. */
 
-<<<<<<< HEAD
-/* Globale variabler */
-:root {
-  --bg-global:      #1E1E1E;
-  --bg-container:   #1B1B19;
-  --text-light:     #C3C3C1;
-  --text-dark:      #84837E;
-  --color-positive: #4caf50;
-  --color-negative: #e15759;
-  --sidebar-bg:     #513F95;
-  --button-bg:      #242424;
-  --button-text:    #fff;
-  --border-radius:  8px;
-  --transition:     0.2s;
-  --shadow:         0 4px 6px rgba(0,0,0,0.1);
-  --gradient-btn:   linear-gradient(90deg, #513F95 0%, #6a4fcf 100%);
-}
-
-/* Reset og basis */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: var(--bg-global); color: var(--text-light); }
-ul, a { list-style: none; text-decoration: none; color: inherit; }
-
-/* App layout */
-.app { display: grid; grid-template-columns: 240px 1fr; height: 100vh; }
-=======
 /* ----- CSS-VARIABLER ----- */
 :root {
   /* Baggrundsfarver */
@@ -47,15 +14,20 @@ ul, a { list-style: none; text-decoration: none; color: inherit; }
   --text-dark:      #84837E;  /* Underrubrik og labels */
 
   /* Statusfarver */
-  --positive:       #4caf50;  /* Grøn for stigning/gevinst */
-  --negative:       #e15759;  /* Rød for fald/tab */
+  --color-positive: #4caf50;  /* Grøn for stigning/gevinst */
+  --color-negative: #e15759;  /* Rød for fald/tab */
 
   /* Accentfarver */
-  --accent:         #513F95;  /* Primær highlight, fx knapper */
+  --sidebar-bg:     #513F95;  /* Primær highlight, fx knapper */
   --accent-light:   #6a4fcf;  /* Sekundær highlight, hover-tilstand */
 
   /* Øvrige */
   --button-bg:      #242424;  /* Baggrund for f.eks. collapse-knap */
+  --button-text:    #fff;
+  --border-radius:  8px;
+  --transition:     0.2s;
+  --shadow:         0 4px 6px rgba(0,0,0,0.1);
+  --gradient-btn:   linear-gradient(90deg, #513F95 0%, #6a4fcf 100%);
 }
 
 /* ----- GLOBAL RESET ----- */
@@ -65,6 +37,7 @@ ul, a { list-style: none; text-decoration: none; color: inherit; }
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   /* Global font og baggrund for hel side */
   font-family: 'Inter', sans-serif;
@@ -72,6 +45,7 @@ body {
   color: var(--text-light);
   line-height: 1.6;
 }
+
 ul, a {
   /* Ingen punktopstillinger på <ul> og ingen understregning på links */
   list-style: none;
@@ -86,55 +60,58 @@ ul, a {
   grid-template-columns: 240px 1fr;
   height: 100vh;  /* Fylder hele browserhøjden */
 }
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
 
 /* Sidebar */
 .sidebar { background: var(--bg-container); display: flex; flex-direction: column; }
-.sidebar-header { background: var(--sidebar-bg); height: 64px; display: flex; align-items: center; padding: 0; }
 
-<<<<<<< HEAD
-/* Logo */
-.logo-icon { width: 75px; height: 64px; margin: 0 -10px 0 0; border-radius: 4px; object-fit: contain; }
-.logo-text { display: inline-block; text-align: center; margin-left: 8px; }
-.logo-text h1 { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.1em; color: #fff; margin-bottom: 2px; }
-.logo-text p { font-weight: 600; font-size: 0.5rem; letter-spacing: 0.15em; color: var(--text-light); text-transform: uppercase; white-space: nowrap; }
-
-/* Sidebar knapper */
-=======
 /* Sidebar top-banner -------------------------------------------------- */
 .sidebar-header {
   /* Logo-område med baggrund og placeret indhold */
-  background: var(--accent);
+  background: var(--sidebar-bg);
   height: 64px;
   display: flex;
   align-items: center;
   padding: 0 16px;
 }
+
 .logo-icon {
   /* Firkantet logo med afrundede hjørner */
-  width: 48px;
-  height: 48px;
+  width: 75px;
+  height: 64px;
+  margin: 0 -10px 0 0;
   border-radius: 4px;
   object-fit: contain;
 }
+
+.logo-text {
+  display: inline-block;
+  text-align: center;
+  margin-left: 8px;
+}
+
 .logo-text h1 {
   /* Overskrift font + farve */
   font-family: 'Roboto Slab', serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
   color: #fff;
-  font-size: 0.9rem;
+  margin-bottom: 2px;
 }
+
 .logo-text p {
   /* Undertekst i uppercase med mindre font */
-  font-size: 0.6rem;
+  font-weight: 600;
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
   color: var(--text-light);
   text-transform: uppercase;
-  margin-top: 2px;
+  white-space: nowrap;
 }
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
+
 .collapse-btn {
   /* Knap til at skjule/mindske sidebar */
   margin-left: auto;
-<<<<<<< HEAD
   margin-right: -16px;
   width: 32px;
   height: 32px;
@@ -150,30 +127,16 @@ ul, a {
   line-height: 1;
 }
 
-/* Navigation */
-.sidebar-nav ul { margin-top: 16px; padding: 0; }
-=======
-  background: var(--button-bg);
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1.25rem;
-  padding: 0.25rem;
-}
-
 /* ----- NAVIGATION ----- */
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
+.sidebar-nav ul { margin-top: 16px; padding: 0; }
+
 .sidebar-nav li {
   /* Hver navigation-item som flex-container */
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
   cursor: pointer;
-<<<<<<< HEAD
   transition: color var(--transition), background var(--transition);
-=======
-  transition: background 0.2s, color 0.2s;
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
 }
 
 .sidebar-nav li.active,
@@ -182,33 +145,24 @@ ul, a {
   background: rgba(255,255,255,0.05);
   color: #fff;
 }
-<<<<<<< HEAD
 
-/* Navigation ikoner */
-.sidebar-nav li::before {
-  content: "";
-=======
 .sidebar-nav li::before {
   /* Pseudo-element til at vise ikoner før tekst */
   content: '';
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
   display: inline-block;
   width: 24px;
   height: 24px;
   margin-right: 8px;
   background-size: contain;
   background-repeat: no-repeat;
-<<<<<<< HEAD
   background-position: center;
-=======
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
 }
+
 /* Bestem ikon-baggrunde for hver li (1,2,3) */
 .sidebar-nav li:nth-child(1)::before { background-image: url('/portfoliooversigt.png/dashboard.png'); }
 .sidebar-nav li:nth-child(2)::before { background-image: url('/portfoliooversigt.png/accounts.png'); }
 .sidebar-nav li:nth-child(3)::before { background-image: url('/portfoliooversigt.png/portfolios.png'); }
 
-<<<<<<< HEAD
 /* Sæt kun billedet på de enkelte elementer */
 .sidebar-nav li:nth-child(1)::before {
   background-image: url('/accounts.png/accounts-dashboard.png');
@@ -342,148 +296,4 @@ input[type="text"]:focus, input[type="number"]:focus, input[type="search"]:focus
   .main-content { padding: 1rem; }
   .table-container, .chart-section { overflow-x: auto; }
   .metrics { flex-direction: column; }
-} 
-=======
-/* ----- HOVEDINDHOLD ----- */
-.main-content {
-  padding: 2rem;
-  overflow-y: auto;  /* Scrollbar hvis indholdet er højt */
 }
-.page-header h2 {
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-/* ----- METRIK-KORT ----- */
-.metrics-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-.card {
-  /* Konteiner for hver statistik */
-  background: var(--bg-container);
-  border-radius: 8px;
-  padding: 1rem;
-  flex: 1;
-}
-.card .label {
-  font-size: 0.75rem;
-  color: var(--text-dark);
-  margin-bottom: 0.5rem;
-}
-.card .value {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-/* ----- TABEL & FORM ----- */
-.table-container {
-  background: var(--bg-container);
-  border-radius: 8px;
-  padding: 1rem;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--bg-container);
-}
-th, td {
-  padding: 0.75rem;
-  text-align: left;
-}
-th {
-  color: var(--text-dark);
-  border-bottom: 2px solid #2A2A2A;
-  font-weight: 600;
-}
-tr:nth-child(even) { background: #232323; }
-tr:nth-child(odd)  { background: var(--bg-container); }
-
-/* Formularfelter: input + select */
-input[type="text"], input[type="number"], select {
-  background: #232323;
-  color: #fff;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 0.5rem;
-  margin-right: 0.5rem;
-}
-
-/* Knapper: almindelige + add-btn */
-button, .add-btn {
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.2s;
-}
-button:hover, .add-btn:hover {
-  /* Løftet effekt ved hover */
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-/* ----- DIAGRAMMER ----- */
-.chart-container {
-  background: var(--bg-container);
-  border-radius: 8px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.pie-legend {
-  margin-top: 1rem;
-  list-style: none;
-  width: 100%;
-}
-.pie-legend li {
-  font-size: 0.9rem;
-  color: var(--text-light);
-  margin-bottom: 0.5rem;
-}
-
-/* ----- MODAL (Tilføj aktie) ----- */
-.modal {
-  /* Skjult som default; vises via .show-klasse i JS */
-  display: none;
-  position: fixed;
-  inset: 0; /* top:0; right:0; bottom:0; left:0; */
-  background: rgba(0,0,0,0.7);
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.modal-content {
-  background: var(--bg-container);
-  padding: 2rem;
-  border-radius: 8px;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: auto;
-}
-.cancel-btn {
-  /* Rød knap til at lukke modal */
-  background: var(--negative);
-}
-
-/* ----- RESPONSIVE REGEL ----- */
-@media (max-width: 900px) {
-  .app {
-    grid-template-columns: 1fr; /* Skjul sidebar på små skærme */
-  }
-  .sidebar {
-    display: none;
-  }
-  .main-content {
-    padding: 1rem;
-  }
-  .table-container, .chart-container {
-    padding: 0.5rem;
-  }
-}
->>>>>>> 8d61b7ef2a5a6671839660df345823bd6592a7d8
