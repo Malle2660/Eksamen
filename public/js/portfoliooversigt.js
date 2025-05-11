@@ -364,9 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
           credentials: 'include',
           body: JSON.stringify({name, accountId})
         });
-        if (!res.ok) throw new Error('Oprettelse fejlede'); // fejl hvis oprettelse fejler  
-        showNotification('Portefølje oprettet', 'success'); // viser besked om at porteføljen er oprettet
-        closeModal('addPortfolioModal'); // lukker modal
+        if (!res.ok) throw new Error('Oprettelse fejlede');
+        showNotification('Portefølje oprettet', 'success');
+        closeModal('addPortfolioModal');
         loadPortfolios();    // genindlæs oversigten
       } catch (err) {
         showNotification(err.message, 'error');

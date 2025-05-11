@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 2) HENT HOLDINGS: købte aktier i porteføljen
-  let holdings;
-  try {
+    let holdings;
+    try {
     // Send GET til /growth/portfolios/:id/holdings med cookies
     const res = await fetch(`/growth/portfolios/${portfolioId}/holdings`, { credentials: 'include' });
     if (!res.ok) throw new Error('Holdings ikke fundet');
     holdings = await res.json();  // parse JSON til array af { id, symbol, amount, price, value }
-  } catch (err) {
+    } catch (err) {
     // Ved fejl vis message og stop
     return showNotification(`Fejl ved hentning af holdings: ${err.message}`, 'error');
   }
@@ -26,18 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 4) BYG TABELRÆKKER: oversigt med symbol, antal osv.
   const tbody = document.querySelector('table tbody');
-  tbody.innerHTML = holdings.map(r => `
-    <tr>
-      <td>${r.symbol}</td>
-      <td>${r.amount} stk.</td>
+    tbody.innerHTML = holdings.map(r => `
+      <tr>
+        <td>${r.symbol}</td>
+        <td>${r.amount} stk.</td>
       <td><span class="percent">-</span></td>
-      <td>${r.price ? r.price.toFixed(2) : '-'} USD</td>
-      <td class="value">${r.value ? r.value.toFixed(2) : '-'} USD</td>
-      <td>
-        <button class="buy-btn" data-symbol="${r.symbol}">Køb</button>
-        <button class="sell-btn" data-symbol="${r.symbol}" data-stockid="${r.id}">Sælg</button>
-      </td>
-    </tr>
+        <td>${r.price ? r.price.toFixed(2) : '-'} USD</td>
+        <td class="value">${r.value ? r.value.toFixed(2) : '-'} USD</td>
+        <td>
+          <button class="buy-btn" data-symbol="${r.symbol}">Køb</button>
+          <button class="sell-btn" data-symbol="${r.symbol}" data-stockid="${r.id}">Sælg</button>
+        </td>
+      </tr>
   `).join('');
 
   // 5) EVENT-DELEGATION for køb/salg-knapper i tabellen
@@ -95,19 +95,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // 7) PIE-CHART TIL TOP 5 POSITIONER
-  // Sortér holdings efter værdi og tag de 5 største
-  const sorted = [...holdings].sort((a,b)=> (b.value||0)-(a.value||0));
-  const top5   = sorted.slice(0,5);
+  // Aggregér holdings på symbol-niveau for at undgå dubletter
+  const aggregatedMap = {};
+  holdings.forEach(h => {
+    if (aggregatedMap[h.symbol]) {
+      aggregatedMap[h.symbol].amount += h.amount || 0;
+      aggregatedMap[h.symbol].value  += h.value  || 0;
+    } else {
+      aggregatedMap[h.symbol] = { ...h };
+    }
+  });
+  const aggregated = Object.values(aggregatedMap);
+
+  // Sortér aggregérholdings efter værdi og tag de 5 største
+  const sorted = aggregated.sort((a, b) => (b.value || 0) - (a.value || 0));
+  const top5   = sorted.slice(0, 5);
   const labels = top5.map(r => r.symbol);
   const data   = top5.map(r => r.value);
 
   // Skift placeholder ud med nyt <canvas> og tegn chart
   document.querySelector('.pie-chart-placeholder').innerHTML = '<canvas id="pieChart"></canvas>';
-  drawPieChart('pieChart', null, labels, data);
-
-  // Skub pie-chart-canvas op for at undgå overlap med legend-tekst
-  const pieCanvas = document.getElementById('pieChart');
-  if (pieCanvas) pieCanvas.style.marginTop = '-20px';
+  drawPieChart('pieChart', 'growthPieLegend', labels, data);
 
   // Egen legend under diagrammet
   const legendEl = document.querySelector('.pie-card .legend');
@@ -115,19 +123,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     <li>
       <span class="legend-color" style="background:${['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f'][i]}"></span>
       ${lab}: ${data[i].toLocaleString()} USD
-    </li>
+      </li>
   `).join('');
 
   // 8) "Tilbage til porteføljer"-knap
   document.getElementById('back-to-portfolios-btn')?.addEventListener('click', () => {
-    window.location.href = '/portfolios';
-  });
+          window.location.href = '/portfolios';
+        });
 
   // 9) HÅNDTERING AF BUY-FORMULARENS SUBMIT
   document.getElementById('buyStockForm').addEventListener('submit', async e => { //  skal håndtere køb af aktier på vores mine aktier side
-    e.preventDefault();                                          
-    const formData = {
-      portfolioId,
+        e.preventDefault();
+        const formData = {
+            portfolioId,
       accountId:   document.getElementById('accountId').value, // henter kontoID fra dropdown
       symbol:      document.getElementById('stockSymbol').value, // man kan købe flere aktier fra samme symbol eksemplevis
       quantity:    parseInt(document.getElementById('quantity').value), // henter antal fra inputfelt (man kan købe de aktier man har råd til)
@@ -136,60 +144,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     try {
       // POST til server for at gennemføre køb
-      const res = await fetch('/growth/stocks/buy', {
-        method: 'POST',
+            const res = await fetch('/growth/stocks/buy', {
+                method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(formData),
-        credentials: 'include'
-      });
+                body: JSON.stringify(formData),
+                credentials: 'include'
+            });
       if (!res.ok) throw new Error((await res.json()).message || 'Kunne ikke købe aktie');
-      const result = await res.json();                    
+            const result = await res.json();
       showNotification(`Aktie købt! Ny saldo: ${result.newBalance} USD`, 'success');
       closeModal('buyStockModal');                              // luk modal
       location.reload();                                        // genindlæs for at se ændringer
-    } catch (err) {
+        } catch (err) {
       showNotification(err.message, 'error');
     }
   });
 
   // 10) HÅNDTERING AF SELL-FORMULARENS SUBMIT 
   document.getElementById('sellStockForm').addEventListener('submit', async e => {
-    e.preventDefault();
+      e.preventDefault();
     // Læs felter ud fra formular
-    const formData = {
-      portfolioId,
+      const formData = {
+        portfolioId,
       accountId:   document.getElementById('sellAccountId').value,
       stockID:     Number(document.getElementById('sellStockSymbol').dataset.stockid),
       symbol:      document.getElementById('sellStockSymbol').value,
       quantity:    parseInt(document.getElementById('sellQuantity').value, 10),
       pricePerUnit:parseFloat(document.getElementById('sellPrice').value.replace(',', '.')),
       fee:         parseFloat(document.getElementById('sellFee').value)
-    };
-    try {
+      };
+      try {
       // Send POST for at gennemføre salg
-      const res = await fetch('/growth/stocks/sell', {
-        method: 'POST',
+        const res = await fetch('/growth/stocks/sell', {
+          method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(formData),
-        credentials: 'include'
-      });
+          body: JSON.stringify(formData),
+          credentials: 'include'
+        });
       if (!res.ok) throw new Error((await res.json()).message || 'Kunne ikke sælge aktie');
-      const result = await res.json();
+        const result = await res.json();
       // Vis success-notifikation, luk modal og genindlæs data
       showNotification(`Aktie solgt! Ny saldo: ${result.newBalance} USD`, 'success');
       closeModal('sellStockModal');
-      location.reload();
-    } catch (err) {
+        location.reload();
+      } catch (err) {
       // Ved fejl vis besked til bruger
       showNotification(err.message, 'error');
     }
   });
 
   // 11) HISTORIK & LINE-CHART: hent og vis udvikling over tid
-  async function loadPortfolioHistory() {
-    try {
+    async function loadPortfolioHistory() {
+      try {
       const res = await fetch(`/growth/portfolios/${portfolioId}/history`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Kunne ikke hente historik');
+        if (!res.ok) throw new Error('Kunne ikke hente historik');
       return await res.json();                                 // array af {date,value}
     } catch {
       return [];                                                // ved fejl, returner tom liste
@@ -203,17 +211,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Tegn line-chart
     drawLineChart('portfolioValueChart', dates, vals, {
       datasetProps: {
-        label: 'Portefølje værdi',
-        borderColor: '#4e79a7',
-        backgroundColor: 'rgba(78,121,167,0.1)',
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true
+            label: 'Portefølje værdi',
+            borderColor: '#4e79a7',
+            backgroundColor: 'rgba(78,121,167,0.1)',
+            tension: 0.4,
+            pointRadius: 0,
+            fill: true
       },
       chartProps: {
         plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#C3C3C1' } },
+          scales: {
+            x: { ticks: { color: '#C3C3C1' } },
           y: {
             beginAtZero: true,
             ticks: {
@@ -226,10 +234,10 @@ document.addEventListener('DOMContentLoaded', async () => {
               }
             }
           }
+          }
         }
-      }
-    });
-  }
+      });
+    }
 
   // 12) GLOBAL DELEGATION FOR PORTFØLJE-LINKS
   document.querySelectorAll('.portfolio-link').forEach(link => {
@@ -238,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = `/portfolios/${this.dataset.id}`;   // skift side
     });
   });
-
+  
   // 13) SØG PORTFØLJE PÅ ENTER I SØGEBAR 
   // Vi havde lidt problemer med at få den til at virke virke i praksis:
   document.getElementById('search-portfolio').addEventListener('keydown', async function(e) { 
@@ -256,3 +264,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+  

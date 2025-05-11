@@ -84,7 +84,7 @@ class Portfolio {
          WHERE t.portfolioID=@portfolioId
          GROUP BY t.stockID, s.symbol
          HAVING SUM(CASE WHEN t.type='Buy' THEN t.quantity ELSE -t.quantity END)>0`
-      ); 
+      );
 
    
     const holdings = []; // vi opretter et array af objekter med id, symbol, amount, price, value

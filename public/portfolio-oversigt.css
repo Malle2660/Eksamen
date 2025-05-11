@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-/* portfolio-oversigt.css - Optimized version */
-
-=======
 /* styles.css - Portfolio- oversigt styling
    vi har brugt denne fil til at style vores portfolio-oversigt . */
 
 /* ----- IMPORTS ----- */
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
 /* Roboto Slab bruges til overskrifter for at skabe kontrast til brødtekst-fonten. */
 
@@ -21,20 +16,15 @@
   --text-dark:      #84837E;  /* Underrubrik og labels */
 
   /* Statusfarver */
-  --color-positive: #4caf50;  /* Grøn for stigning/gevinst */
-  --color-negative: #e15759;  /* Rød for fald/tab */
+  --positive:       #4caf50;  /* Grøn for stigning/gevinst */
+  --negative:       #e15759;  /* Rød for fald/tab */
 
   /* Accentfarver */
-  --sidebar-bg:     #513F95;  /* Primær highlight, fx knapper */
+  --accent:         #513F95;  /* Primær highlight, fx knapper */
   --accent-light:   #6a4fcf;  /* Sekundær highlight, hover-tilstand */
 
   /* Øvrige */
   --button-bg:      #242424;  /* Baggrund for f.eks. collapse-knap */
-  --button-text:    #fff;
-  --border-radius:  8px;
-  --transition:     0.2s;
-  --shadow:         0 4px 6px rgba(0,0,0,0.1);
-  --gradient-btn:   linear-gradient(90deg, #513F95 0%, #6a4fcf 100%);
 }
 
 /* ----- GLOBAL RESET ----- */
@@ -44,7 +34,6 @@
   padding: 0;
   box-sizing: border-box;
 }
-
 body {
   /* Global font og baggrund for hel side */
   font-family: 'Inter', sans-serif;
@@ -52,7 +41,6 @@ body {
   color: var(--text-light);
   line-height: 1.6;
 }
-
 ul, a {
   /* Ingen punktopstillinger på <ul> og ingen understregning på links */
   list-style: none;
@@ -68,86 +56,42 @@ ul, a {
   height: 100vh;  /* Fylder hele browserhøjden */
 }
 
-<<<<<<< HEAD
-/* Sidebar */
-.sidebar { background: var(--bg-container); display: flex; flex-direction: column; }
-=======
 /* ----- SIDEBAR ----- */
 .sidebar {
   background: var(--bg-container);
   display: flex;
   flex-direction: column;
 }
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 
 /* Sidebar top-banner -------------------------------------------------- */
 .sidebar-header {
   /* Logo-område med baggrund og placeret indhold */
-  background: var(--sidebar-bg);
+  background: var(--accent);
   height: 64px;
   display: flex;
   align-items: center;
   padding: 0 16px;
 }
-
 .logo-icon {
   /* Firkantet logo med afrundede hjørner */
-  width: 75px;
-  height: 64px;
-  margin: 0 -10px 0 0;
+  width: 48px;
+  height: 48px;
   border-radius: 4px;
   object-fit: contain;
 }
-
-.logo-text {
-  display: inline-block;
-  text-align: center;
-  margin-left: 8px;
-}
-
 .logo-text h1 {
   /* Overskrift font + farve */
   font-family: 'Roboto Slab', serif;
-  font-weight: 700;
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
   color: #fff;
-  margin-bottom: 2px;
+  font-size: 0.9rem;
 }
-
 .logo-text p {
   /* Undertekst i uppercase med mindre font */
-  font-weight: 600;
-  font-size: 0.5rem;
-  letter-spacing: 0.15em;
+  font-size: 0.6rem;
   color: var(--text-light);
   text-transform: uppercase;
-  white-space: nowrap;
+  margin-top: 2px;
 }
-<<<<<<< HEAD
-
-.collapse-btn {
-  /* Knap til at skjule/mindske sidebar */
-  margin-left: auto;
-  margin-right: -16px;
-  width: 32px;
-  height: 32px;
-  background: var(--button-bg);
-  border: none;
-  border-radius: 50%;
-  color: var(--button-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* ----- NAVIGATION ----- */
-.sidebar-nav ul { margin-top: 16px; padding: 0; }
-
-=======
 .collapse-btn {
   /* Knap til at skjule/mindske sidebar */
   margin-left: auto;
@@ -160,18 +104,13 @@ ul, a {
 }
 
 /* ----- NAVIGATION ----- */
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 .sidebar-nav li {
   /* Hver navigation-item som flex-container */
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
   cursor: pointer;
-<<<<<<< HEAD
-  transition: color var(--transition), background var(--transition);
-=======
   transition: background 0.2s, color 0.2s;
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 }
 .sidebar-nav li.active,
 .sidebar-nav li:hover {
@@ -179,10 +118,6 @@ ul, a {
   background: rgba(255,255,255,0.05);
   color: #fff;
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 .sidebar-nav li::before {
   /* Pseudo-element til at vise ikoner før tekst */
   content: '';
@@ -192,153 +127,12 @@ ul, a {
   margin-right: 8px;
   background-size: contain;
   background-repeat: no-repeat;
-<<<<<<< HEAD
-  background-position: center;
-=======
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)
 }
-
 /* Bestem ikon-baggrunde for hver li (1,2,3) */
 .sidebar-nav li:nth-child(1)::before { background-image: url('/portfoliooversigt.png/dashboard.png'); }
 .sidebar-nav li:nth-child(2)::before { background-image: url('/portfoliooversigt.png/accounts.png'); }
 .sidebar-nav li:nth-child(3)::before { background-image: url('/portfoliooversigt.png/portfolios.png'); }
 
-<<<<<<< HEAD
-/* Sæt kun billedet på de enkelte elementer */
-.sidebar-nav li:nth-child(1)::before {
-  background-image: url('/accounts.png/accounts-dashboard.png');
-}
-.sidebar-nav li:nth-child(2)::before {
-  background-image: url('/accounts.png/accounts-accounts.png');
-}
-.sidebar-nav li:nth-child(3)::before {
-  background-image: url('/accounts.png/accounts-portfolios.png');
-}
-
-/* Hovedindhold */
-.main-content { padding: 3rem 2rem 2rem; overflow-y: auto; }
-.page-header h2 { margin: 1rem 0 1.5rem; font-size: 1.5rem; font-weight: 600; color: var(--text-light); }
-
-/* Metrikkort */
-.metrics { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end; }
-.card { background: var(--bg-container); border-radius: var(--border-radius); padding: 1rem 1.5rem; flex: 1; }
-.card .label { font-size: 0.75rem; color: var(--text-dark); margin-bottom: 0.5rem; }
-.card .value { font-size: 1.25rem; font-weight: 700; display: flex; justify-content: space-between; }
-
-/* Knapper */
-.add-btn, .tilfoj-aktie-btn, .vis-aktier-btn, .opret-ny-btn, #opretNyBtn {
-  background: var(--gradient-btn);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 1rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition);
-  box-shadow: 0 2px 8px rgba(81,63,149,0.08);
-  margin: 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.add-btn:hover, .tilfoj-aktie-btn:hover, .vis-aktier-btn:hover, .opret-ny-btn:hover, #opretNyBtn:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 4px 16px rgba(81,63,149,0.18);
-}
-
-/* Graf sektion */
-.chart-section { background: var(--bg-container); border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem; }
-.chart-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
-.chart-header h3 { font-size: 1rem; font-weight: 600; color: var(--text-light); }
-.chart-header span { font-size: 0.625rem; color: var(--text-dark); }
-.chart-placeholder { height: 300px; background: #2B2733; border-radius: 4px; }
-
-/* Tabeller */
-.table-container { background: var(--bg-container); border-radius: var(--border-radius); padding: 1.5rem; }
-.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.table-header h4 { font-size: 1rem; font-weight: 600; color: var(--text-light); }
-
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 0.75rem; text-align: left; }
-th { font-weight: 600; color: var(--text-dark); border-bottom: 1px solid rgba(255,255,255,0.1); }
-td { color: var(--text-light); }
-
-/* Værdier og procenter */
-.value { font-weight: 600; }
-.percent.positive { color: var(--color-positive); }
-.percent.negative { color: var(--color-negative); }
-
-/* Formularer */
-input[type="text"], input[type="number"], input[type="search"] {
-  background: var(--bg-global);
-  border: 1px solid var(--text-dark);
-  border-radius: 4px;
-  padding: 0.5rem;
-  color: var(--text-light);
-  font-size: 0.875rem;
-  width: 100%;
-}
-
-input[type="text"]:focus, input[type="number"]:focus, input[type="search"]:focus {
-  outline: none;
-  border-color: var(--sidebar-bg);
-}
-
-/* Modal */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--bg-container);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  width: 90%;
-  max-width: 500px;
-}
-
-.modal-content h2, .modal-content h3 {
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-  color: var(--text-light);
-}
-
-/* Slet portfolio knap */
-.slet-portfolio-btn {
-  background: var(--color-negative);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background var(--transition);
-}
-
-.slet-portfolio-btn:hover {
-  background: #c82333;
-}
-
-/* Responsivt design */
-@media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .main-content { padding: 1rem; }
-  .table-container, .chart-section { overflow-x: auto; }
-  .metrics { flex-direction: column; }
-}
-=======
 /* ----- HOVEDINDHOLD ----- */
 .main-content {
   padding: 2rem;
@@ -481,4 +275,3 @@ button:hover, .add-btn:hover {
     padding: 0.5rem;
   }
 }
->>>>>>> parent of fb52526 (Merge branch 'main' of https://github.com/Malle2660/Eksamen)

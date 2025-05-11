@@ -16,10 +16,10 @@ const config = {
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
-    console.log(' Forbundet til databasen!');
+    console.log('✅ Forbundet til databasen!');
     return pool;
   })
-  .catch(err => console.log(' Database fejl:', err));
+  .catch(err => console.log('❌ Database fejl:', err));
 
 module.exports = {
   sql,
