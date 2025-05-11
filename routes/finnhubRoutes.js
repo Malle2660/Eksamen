@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getStockQuote } = require('../services/finnhub');
+const { getStockQuote } = require('../services/Finnhub');
 
 // Test endpoint til at tjekke API funktionalitet
 router.get('/test', async (req, res) => {
@@ -71,7 +71,7 @@ router.get('/history', async (req, res, next) => {
     const symbols = [...new Set(allTrades.map(t => t.symbol).filter(Boolean))];
 
     // Hent historiske kurser for de sidste 10 dage
-    const { getHistoricalPrices } = require('../services/finnhub');
+    const { getHistoricalPrices } = require('../services/Finnhub');
     const historicalPrices = {};
     for (const symbol of symbols) {
       historicalPrices[symbol] = await getHistoricalPrices(symbol, 10);

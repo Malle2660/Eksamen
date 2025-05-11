@@ -106,36 +106,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/js/client-dashboard.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async function() {
-      const ctx = document.getElementById('totalValueChart').getContext('2d');
-      // Hent historik-data fra din API
-      const res = await fetch('/dashboard/history');
-      const history = await res.json();
-      // Debug: Se hvad du får fra backend
-      console.log('History:', history);
-
-      // Hvis history er tom, vis en tom graf
-      const labels = history.map(h => h.date);
-      const data = history.map(h => h.value);
-
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Samlet værdi',
-            data,
-            borderColor: '#4e79a7',
-            backgroundColor: 'rgba(78,121,167,0.1)',
-            tension: 0.4,
-            pointRadius: 0,
-            fill: true
-          }]
-        }
-      });
-    });
-  </script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>

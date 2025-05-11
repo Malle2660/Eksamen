@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const Portfolio = require('../models/portfolio');
-const { getStockQuote } = require('../services/finnhub');
+const { getStockQuote } = require('../services/Finnhub');
 const sql = require('mssql');
 const { poolPromise } = require('../db/database');
 
@@ -72,8 +72,10 @@ router.get('/metrics', async (req, res, next) => {
       const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
       for (const h of holdings) {
         totalValue += h.value || 0;
-      //   totalUnrealized += ... (hvis du vil vise gevinst)
       }
+      // Beregn urealiseret gevinst for porteføljen
+      const unreal = await Portfolio.getTotalUnrealizedFromHoldings(portfolio.portfolioID);
+      totalUnrealized += unreal;
     }
 
     res.json({
@@ -172,10 +174,21 @@ router.get('/history', async (req, res, next) => {
     const symbols = [...new Set(allTrades.map(t => t.symbol).filter(Boolean))];
 
     // Hent historiske kurser for de sidste 10 dage
-    const { getHistoricalPrices } = require('../services/finnhub');
+    const { getHistoricalPrices } = require('../services/Finnhub');
     const historicalPrices = {};
     for (const symbol of symbols) {
       historicalPrices[symbol] = await getHistoricalPrices(symbol, 10);
+    }
+
+    // Hent nuværende priser til fallback
+    const currentPrices = {};
+    for (const symbol of symbols) {
+      try {
+        const quote = await getStockQuote(symbol);
+        currentPrices[symbol] = quote.price || 0;
+      } catch (e) {
+        currentPrices[symbol] = 0;
+      }
     }
 
     // Beregn porteføljeværdi for hver dag
@@ -197,7 +210,10 @@ router.get('/history', async (req, res, next) => {
       let totalValue = 0;
       for (const symbol of symbols) {
         const amount = holdings[symbol];
-        const price = historicalPrices[symbol][dateStr] || 0;
+        // Brug historisk pris hvis tilgængelig, ellers fallback til nuværende pris
+        const histPrices = historicalPrices[symbol];
+        const raw = histPrices ? histPrices[dateStr] : undefined;
+        const price = raw != null ? raw : currentPrices[symbol];
         totalValue += amount * price;
       }
 

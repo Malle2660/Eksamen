@@ -2,9 +2,9 @@
 const express        = require('express');
 const router         = express.Router();
 const Portfolio      = require('../models/portfolio');
-const { batchQuotes }   = require('../services/finnhub');
+const { batchQuotes }   = require('../services/Finnhub');
 const { latestRates }   = require('../services/ExchangeRate');
-const { getStockQuote } = require('../services/finnhub');
+const { getStockQuote } = require('../services/Finnhub');
 const TransactionsModel = require('../models/transactionsModel');
 const { sql, poolPromise } = require('../db/database');
 const dayjs = require('dayjs'); // Installer evt. med: npm install dayjs
@@ -75,7 +75,7 @@ router.get('/portfolios/:portfolioId/history', async (req, res) => {
     const symbols = [...new Set(trades.map(t => t.symbol).filter(Boolean))];
 
     // 3. Hent historiske kurser for de sidste 10 dage
-    const { getHistoricalPrices } = require('../services/finnhub');
+    const { getHistoricalPrices } = require('../services/Finnhub');
     const historicalPrices = {};
     for (const symbol of symbols) {
       historicalPrices[symbol] = await getHistoricalPrices(symbol, 10);
