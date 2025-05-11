@@ -1,30 +1,31 @@
-/* RESET & BASE - Nulstiller standardmargener og padding */
+/* style.css - CSS-fil for at style siden */  
+
+/* RESET & BASE - Nulstiller browserstandarden og sætter fælles styling */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    /* Sørger for at padding og border inkluderes i elementets totale bredde og højde */
+    box-sizing: border-box;  /* Sørger for at padding og border tælles elementets totale bredde og højde */
 }
 
 body {
-    background-color: #1E1E1E; /* Sætter mørk baggrundsfarve */
-    font-family: 'Inter', sans-serif; /* Definerer skrifttypen */
-    font-weight: 600; /* Semi-bold skrift */
+    background-color: #1E1E1E; /* Sætter en mørk baggrundsfarve */
+    font-family: 'Inter', sans-serif; /* Definerer skrifttypen på siden */
+    font-weight: 600; /* Gør teksten semi-bold */
     color: #C3C3C1; /* Lys grå tekstfarve */
-    min-height: 100vh;
-    background: linear-gradient(135deg, #513F95 0%, #6a4fcf 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-height: 100vh; /* Sørger for at siden fylder hele skærmen */
+    background: linear-gradient(135deg, #513F95 0%, #6a4fcf 100%); /* Sætter en gradient baggrund */
+    display: flex; /* Bruger flexbox layout */
+    align-items: center; /* Center teksten horisontalt */
+    justify-content: center; /* Center teksten vertikalt */ 
 }
 
-/* CONTAINER - Hovedomslag til hele siden */
+/* CONTAINER - Hovedindpakning til hele siden form og indhold  */
 .container {
-    background-color: #1B1B19; /* Mørkebrunlig baggrund */
+    background-color: #1B1B19; /* Mørk baggrund */
     max-width: 1200px; /* Maksimal bredde på containeren */
     margin: 0 auto; /* Centrer containeren horisontalt */
     padding: 2rem; /* Indvendig afstand på 2 rem */
-    background: #18181A;
+    background: #18181A; /* Mørkegrå baggrund */
     border-radius: 18px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     padding: 3rem 2.5rem 2.5rem 2.5rem;

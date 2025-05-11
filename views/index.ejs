@@ -1,3 +1,5 @@
+<!-- index.ejs, som er hjemmesiden for at logge ind og oprette bruger  --> 
+
 <!DOCTYPE html> 
 <!-- Definerer dokumenttypen som HTML5 -->
 
@@ -6,10 +8,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- Angiver tegnsættet til UTF-8, så danske bogstaver som æ, ø, å virker korrekt -->
+    <!-- Angiver tegnsættet til UTF-8, så danske bogstaver som æ, ø, å vises korrekt -->
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Gør siden responsiv, så den skalerer korrekt på mobiltelefoner og tablets -->
+    <!-- Gør siden responsiv, så den tilpasser sig til forskellige skærmstørrelser -->
 
     <title>Finans App</title>
     <!-- Titlen på hjemmesiden som vises i browserens fane -->
@@ -20,16 +22,23 @@
 
 <body>
   <div class="split-auth">
+    <!-- Deler siden i to kolonner -->
     <div class="auth-left">
+      <!-- Venstre kolonne med branding -->
       <div class="branding">
+        <!-- Branding -->
         <img src="/dashboard.png/logo.png" alt="PortfolioTracker Logo" class="brand-logo" />
+        <!-- Logoet til hjemmesiden -->
         <h1>PORTFOLIOTRACKER</h1>
         <p>ORGANISING YOUR FINANCES</p>
       </div>
     </div>
+    <!-- Højre kolonne med login og opret bruger -->
     <div class="auth-right">
       <div class="auth-content auth-forms-row">
+        <!-- Container for login og opret bruger -->
         <div class="auth-form" id="registerForm">
+          <!-- Opret bruger form -->
           <h2>Opret Bruger</h2>
           <form id="register">
             <input type="text" id="reg-username" placeholder="Brugernavn" required>
@@ -39,6 +48,7 @@
           </form>
         </div>
         <div class="auth-form" id="loginForm">
+          <!-- Loginformular -->
           <h2>Log Ind</h2>
           <form id="login">
             <input type="text" id="login-username" placeholder="Brugernavn" required>
@@ -46,10 +56,12 @@
             <button type="submit">Log Ind</button>
           </form>
           <a href="#" class="forgot-link">Har du glemt din adgangskode?</a>
+          <!-- har ingen funktion, fører ikke nogen steder hen -->
         </div>
       </div>
     </div>
   </div>
   <script src="/js/client.js"></script>
+  <!-- Linker til en ekstern JS-fil "client.js", som kan håndtere brugerinteraktioner --> 
 </body>
 </html>
