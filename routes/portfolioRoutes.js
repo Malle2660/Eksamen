@@ -43,23 +43,23 @@ router.get('/', async (req, res) => {
 router.get('/user', async (req, res) => {
   // Samme som ovenfor, men returnerer JSON
   const userId = req.session.user.userID;
-  const portfolios = await Portfolio.getAllForUser(userId);
+    const portfolios = await Portfolio.getAllForUser(userId);
   const data = []; // vi laver et t0kt array for at kunne gemme vores data
   for (const p of portfolios) {
     const expectedValue = Math.round((await Portfolio.getExpectedValueFromHoldings(p.portfolioID)) * 100) / 100; //vi beregner forventet værdi for hver portefølje
     const unrealizedGain = Math.round((await Portfolio.getTotalUnrealizedFromHoldings(p.portfolioID)) * 100) / 100; //vi beregner urealiseret gevinst/tab for hver portefølje
-    data.push({ ...p, expectedValue, unrealizedGain, dailyChange: 0 }); //vi pusher vores data til vores tidligere oprettede tomme array
+    data.push({ ...p, expectedValue, unrealizedGain, dailyChange: 0, realizedGain: 0 }); //vi pusher vores data til vores tidligere oprettede tomme array
   }
   res.json(data); //vi returnerer vores data som JSON
 });
 
 // OPRET NY PORTFØLJE
 router.post('/create', async (req, res) => {
-  const { name, accountId } = req.body;
+    const { name, accountId } = req.body;
   // Tjek at både navn og konto-id er udfyldt
-  if (!name || !accountId) {
+    if (!name || !accountId) {
     return res.status(400).json({ message: 'Navn og konto-ID mangler' });
-  }
+    }
   const userId = req.session.user.userID;
   try {
     // Opret portefølje i databasen
@@ -75,11 +75,11 @@ router.post('/create', async (req, res) => {
 router.post('/:portfolioId/add-stock', async (req, res) => {
   // Hent portefølje-id fra URL
   const portfolioId = parseInt(req.params.portfolioId, 10);
-  const { symbol, amount, boughtAt, accountId } = req.body;
+    const { symbol, amount, boughtAt, accountId } = req.body;
   // Tjek at alle felter er til stede
-  if (!symbol || !amount || !boughtAt || !accountId) {
+    if (!symbol || !amount || !boughtAt || !accountId) {
     return res.status(400).json({ message: 'Udfyld alle felter' });
-  }
+    }
 
   try {
     // Forbind til database for Stocks-tabellen
@@ -95,10 +95,14 @@ router.post('/:portfolioId/add-stock', async (req, res) => {
       // Brug eksisterende stock-id
       stockId = result.recordset[0].id;
     } else {
-      // Opret ny stock og hent nyt id
-      result = await request.query(
-        'INSERT INTO Stocks(symbol) OUTPUT INSERTED.id VALUES(@symbol)'
-      );
+      // Opret ny stock og hent nyt id, incl. amount and bought_at for non-nullable columns
+      result = await request
+        .input('portfolioId', sql.Int, portfolioId)
+        .input('amount', sql.Float, parseFloat(amount))
+        .input('boughtAt', sql.Float, parseFloat(boughtAt))
+        .query(
+          'INSERT INTO Stocks(symbol, portfolio_id, amount, bought_at) OUTPUT INSERTED.id VALUES(@symbol, @portfolioId, @amount, @boughtAt)'
+        );
       stockId = result.recordset[0].id;
     }
 
@@ -148,14 +152,14 @@ router.get('/:portfolioId/expected-value', async (req, res) => {
   const value = await Portfolio.getExpectedValueFromHoldings(
     parseInt(req.params.portfolioId, 10)
   );
-  res.json({ expectedValue: Math.round(value * 100) / 100 });
+    res.json({ expectedValue: Math.round(value * 100) / 100 });
 });
 // Hent urealiseret gevinst/tab
 router.get('/:portfolioId/total-unrealized', async (req, res) => {
   const total = await Portfolio.getTotalUnrealizedFromHoldings(
     parseInt(req.params.portfolioId, 10)
   );
-  res.json({ totalUnrealized: Math.round(total * 100) / 100 });
+    res.json({ totalUnrealized: Math.round(total * 100) / 100 });
 });
 
 // SLET PORTFØLJE
@@ -174,7 +178,7 @@ router.get('/portfolios', async (req, res) => {
 // Hent aktiekurs for symbol
 router.get('/api/stock-price/:symbol', async (req, res) => {
   const quote = await getStockQuote(req.params.symbol);
-  res.json({ price: quote.price });
+    res.json({ price: quote.price });
 });
 // Hent holdings som JSON
 router.get('/:portfolioId/holdings', async (req, res) => {

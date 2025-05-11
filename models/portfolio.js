@@ -132,6 +132,16 @@ class Portfolio {
     const { totalPurchase = 0 } = recordset[0] || {}; // vi beregner vores total purchase for porteføljen
     return totalPurchase; // og retunere vores total purchase her
   }
+
+  // Hent alle trades for en portefølje (used by growthRoutes and portfolioRoutes)
+  static async getTradesForPortfolio(portfolioId) {
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .query('SELECT * FROM Trades WHERE portfolioID = @portfolioId ORDER BY date ASC');
+    return result.recordset;
+  }
 }
 
 module.exports = Portfolio;

@@ -13,7 +13,7 @@
   <!-- Dit eget stylesheet (skal ligge i public/) -->
   <link rel="stylesheet" href="/stylegrowth.css">
 </head>
-<body>
+<body data-portfolio-id="<%= portfolioId %>">
   <div class="app">
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -69,7 +69,7 @@
           <div class="card pie-card">
             <div class="label">Fordeling af værdi</div>
             <div class="pie-chart-placeholder"><!-- Donut-Chart via JS --></div>
-            <ul class="legend">
+            <ul id="growthPieLegend" class="legend">
               <!-- JS udfylder legend-items dynamisk -->
             </ul>
           </div>
@@ -184,11 +184,9 @@
     </div>
   </div>
 
-  <!-- Inject portfolioId til klienten og scripts -->
-  <script>
-    window.PORTFOLIO_ID = <%- JSON.stringify(portfolioId) %>;
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Shared utilities for notifications, modals, charts, fetch -->
+  <script src="/js/common.js"></script>
   <script src="/js/growthTech.js"></script>
 
   <div id="tradeHistoryModal" style="display:none;">

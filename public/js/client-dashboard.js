@@ -1,4 +1,3 @@
-
 // 1) Funktion til at hente og opdatere KPI'er på dashboardet
 async function updateMetrics() {
   try {
@@ -25,7 +24,6 @@ async function updateMetrics() {
 // days-param bestemmer antallet af dage tilbage (standard 10)
 async function fetchHistory(days = 10) {
   try {
-<<<<<<< HEAD
     // Byg URL med query-parameter for antal dage
     const res = await fetch(`/dashboard/history?days=${days}`);
     if (!res.ok) throw new Error(res.statusText);
@@ -75,13 +73,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.dashboardChart = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets: [{
-      label: 'Samlet værdi (USD)',
-      data,
-      borderColor: '#4e79a7',
-      backgroundColor: 'rgba(78,121,167,0.1)',
-      tension: 0.4,
-      pointRadius: 3,
-      fill: true
+        label: 'Samlet værdi (USD)',
+        data,
+        borderColor: '#4e79a7',
+        backgroundColor: 'rgba(78,121,167,0.1)',
+        tension: 0.4,
+        pointRadius: 3,
+        fill: true
     }]},
     options: {
       plugins: { legend: { labels: { color: '#fff' } } },
@@ -98,38 +96,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : value.toLocaleString('da-DK');
             }
           }
-=======
-    const history = await fetchHistory();
-    const labels = history.map(h => h.date);
-    const data = history.map(h => h.value);
-    dashboardChart = new Chart(ctx, {
-    type: 'line',
-      data: { labels, datasets: [{
-            label: 'Samlet værdi (USD)',
-            data,
-        borderColor: '#4e79a7',
-        backgroundColor: 'rgba(78,121,167,0.1)',
-        tension: 0.4,
-            pointRadius: 3,
-            pointBackgroundColor: '#fff',
-        fill: true
-      }]
-    },
-    options: {
-        plugins: { legend: { display: true, labels: { color: '#fff' } } },
-        scales: { x: { ticks: { color: '#C3C3C1' } }, y: {
-            ticks: { color: '#C3C3C1', callback(value) {
-                if (Math.abs(value) >= 1000) {
-                  return (value / 1000).toLocaleString('da-DK',{minimumFractionDigits:1, maximumFractionDigits:1}) + 'k';
-                }
-                return value.toLocaleString('da-DK');
-              }
-            }, beginAtZero: true }
-
         }
       }
-    }
-  });
+  }
+});
 
   // 4e) Start auto-opdatering af grafen hvert 60. sekund
   setInterval(updateChartData, 60_000);
