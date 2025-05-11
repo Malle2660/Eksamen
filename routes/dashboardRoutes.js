@@ -1,83 +1,88 @@
-const express = require('express');
-const router  = express.Router();
-const Portfolio = require('../models/portfolio');
-const { getStockQuote } = require('../services/Finnhub');
-const sql = require('mssql');
-const { poolPromise } = require('../db/database');
+// ------------------------------------------------------------
+const express = require('express'); // Henter Express til at oprette ruter og middleware
+const router = express.Router(); // Opretter en router-instans til dashboard-endpoints
+const Portfolio = require('../models/portfolio'); // Model til at hente porteføljer og beholdninger fra databasen
+const { getStockQuote } = require('../services/Finnhub'); // Service til at hente aktuelle aktiekurser fra Finnhub
+const transactionsModel = require('../models/transactionsModel'); // Model til at hente handels-transaktioner
+const sql = require('mssql'); // SQL-bibliotek til at sende rå forespørgsler til databasen
+const { poolPromise } = require('../db/database'); // Forbindelsespulje til databasen med promises
 
-// === VIEW: Dashboard (EJS) på GET /dashboard ===
-router.get('/', async (req, res, next) => {
+// === VISNING: Dashboard-side ===
+// GET /dashboard
+router.get('/', async (req, res, next) => { // Håndterer GET-forespørgsel til /dashboard
   try {
-    const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
+    const userId = req.session.user.userID; // Hent den loggede brugers ID fra session-objektet
+    const portfolios = await Portfolio.getAllForUser(userId); // Hent alle porteføljer for denne bruger
 
-    // Saml alle aktier på tværs af porteføljer
+    // 3. Indsaml alle beholdninger fra hver portefølje
     let allHoldings = [];
-    for (const portfolio of portfolios) {
-      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
+    for (const portfolio of portfolios) { // Loop gennem hver portefølje
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID); // Hent beholdninger for portefølje
+      allHoldings = allHoldings.concat(
+        holdings.map(h => ({ ...h, portfolioName: portfolio.name })) // Tilføj porteføljens navn til hver beholdning
+      );
     }
 
-    // Hent aktuel pris for hver aktie (fra cache/api)
-    for (const h of allHoldings) {
+    // 4. Hent live-priser og beregn værdi og gevinst for hver beholdning
+    for (const h of allHoldings) { // Gennemgå hver enkelt beholdning
       try {
-        const quote = await getStockQuote(h.symbol);
-        h.price = quote.price || 0;
-        console.log(`${h.symbol} quote:`, quote);
+        const quote = await getStockQuote(h.symbol); // Hent aktuel kurs for symbolet
+        h.price = quote.price || 0; // Brug 0 hvis kurs ikke er tilgængelig
       } catch (e) {
-        h.price = 0;
+        h.price = 0; // Ved API-fejl sættes kurs til 0
       }
-      h.value = (h.amount || 0) * h.price;
-      h.profit = ((h.price - (h.bought_at || 0)) * (h.amount || 0));
+      h.value = (h.amount || 0) * h.price; // Beregn positionsværdi i USD
+      h.profit = (h.price - (h.bought_at || 0)) * (h.amount || 0); // Beregn urealiseret gevinst
     }
 
-    // Top 5 lister
-    const topValue  = allHoldings.slice().sort((a,b) => b.value  - a.value).slice(0,5);
-    const topProfit = allHoldings.slice().sort((a,b) => b.profit - a.profit).slice(0,5);
+    // 5. Find top 5 beholdninger efter værdi og profit
+    const topValue = allHoldings
+      .slice()
+      .sort((a, b) => b.value - a.value) // Sortér faldende efter samlet værdi
+      .slice(0, 5); // Vælg de 5 største positioner
+    const topProfit = allHoldings
+      .slice()
+      .sort((a, b) => b.profit - a.profit) // Sortér faldende efter gevinst
+      .slice(0, 5); // Vælg de 5 mest profitable positioner
 
-    // Oversigtstal
-    const totalExpected   = allHoldings.reduce((sum,h) => sum + h.value, 0);
-    const totalUnrealized = allHoldings.reduce((sum,h) => sum + h.profit, 0);
+    // 6. Beregn samlede porteføljemetrics
+    const totalExpected = allHoldings.reduce((sum, h) => sum + h.value, 0); // Samlet værdi af alle positioner
+    const totalUnrealized = allHoldings.reduce((sum, h) => sum + h.profit, 0); // Samlet urealiseret gevinst
 
-    console.log('topValue:', topValue);
-    console.log('topProfit:', topProfit);
-    console.log('Alle aktier:', allHoldings);
-
-    res.render('dashboard', {
-      user: req.session.user,
-      overview: {
-        totalPurchase: 0, // Kan beregnes hvis ønsket
-        totalExpected,
-        totalUnrealized
-      },
-      topValue,
-      topProfit
+    // 7. Gengiv dashboard-siden med beregnede data
+    res.render('dashboard', { // Render EJS-skabelonen med data
+      user: req.session.user, // Brugerinfo til header og layout
+      overview: { totalExpected, totalUnrealized }, // Metrics til oversigten i UI
+      topValue, // Data til top-værdi-tabel
+      topProfit // Data til top-profit-tabel
     });
   } catch (err) {
-    next(err);
+    next(err); // Videregiv fejl til Express-fejlhandleren
   }
 });
 
-// === API: Metrics på GET /dashboard/metrics ===
+
+// Returnerer JSON { totalValue, realized, unrealized }
 router.get('/metrics', async (req, res, next) => {
   try {
-    const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
+    const userId = req.session.user.userID; // Hent bruger-ID fra session
+    const portfolios = await Portfolio.getAllForUser(userId); // Hent alle porteføljer for brugeren
 
     let totalValue = 0;
     let totalUnrealized = 0;
-    let totalRealized = 0; // Hvis du har realiseret gevinst
+    let totalRealized = 0; // Pladsholder for realiseret gevinst
 
-    for (const portfolio of portfolios) {
-      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+    // Beregn samlet værdi og urealiseret gevinst
+    for (const p of portfolios) {
+      const holdings = await Portfolio.getHoldingsForPortfolio(p.portfolioID); // Hent beholdninger
       for (const h of holdings) {
-        totalValue += h.value || 0;
+        totalValue += h.value || 0; // Læg hver positions værdi til totalen
       }
-      // Beregn urealiseret gevinst for porteføljen
-      const unreal = await Portfolio.getTotalUnrealizedFromHoldings(portfolio.portfolioID);
-      totalUnrealized += unreal;
+      const unreal = await Portfolio.getTotalUnrealizedFromHoldings(p.portfolioID); // Hent urealiseret gevinst for portefølje
+      totalUnrealized += unreal; // Læg til den samlede urealiserede gevinst
     }
 
+    // Send statistik som JSON til klienten
     res.json({
       totalValue,
       realized: totalRealized,
@@ -88,139 +93,98 @@ router.get('/metrics', async (req, res, next) => {
   }
 });
 
-// === API: Top 5 efter værdi på GET /dashboard/top/value ===
-router.get('/top/value', async (req, res, next) => {
-  try {
-    const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
-
-    let allHoldings = [];
-    for (const portfolio of portfolios) {
-      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
-    }
-
-    for (const h of allHoldings) {
-      try {
-        const quote = await getStockQuote(h.symbol);
-        h.price = quote.price || 0;
-      } catch (e) { h.price = 0; }
-      h.value = (h.amount || 0) * h.price;
-    }
-
-    const topValue = allHoldings.sort((a,b) => b.value - a.value).slice(0,5);
-    res.json(topValue);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// === API: Top 5 efter profit på GET /dashboard/top/profit ===
-router.get('/top/profit', async (req, res, next) => {
-  try {
-    const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
-
-    let allHoldings = [];
-    for (const portfolio of portfolios) {
-      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
-      allHoldings = allHoldings.concat(holdings.map(h => ({ ...h, portfolioName: portfolio.name })));
-    }
-
-    for (const h of allHoldings) {
-      try {
-        const quote = await getStockQuote(h.symbol);
-        h.price = quote.price || 0;
-      } catch (e) { h.price = 0; }
-      h.profit = ((h.price - (h.bought_at || 0)) * (h.amount || 0));
-    }
-
-    const topProfit = allHoldings.sort((a,b) => b.profit - a.profit).slice(0,5);
-    res.json(topProfit);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// === API: Historisk samlet værdi til grafen ===
+// === API: Historiske porteføljeværdier til Chart.js ===
+// GET /dashboard/history?days=N (standard N=10)
+// Returnerer JSON-array [{ date, value }] for de sidste N dage
 router.get('/history', async (req, res, next) => {
   try {
-    const userId = req.session.user.userID;
-    const portfolios = await Portfolio.getAllForUser(userId);
+    const userId = req.session.user.userID; // Hent bruger-ID fra session
+    const portfolios = await Portfolio.getAllForUser(userId); // Hent alle porteføljer
 
-    // Saml alle trades på tværs af porteføljer
+    // Indsaml alle handels-transaktioner
     let allTrades = [];
     for (const portfolio of portfolios) {
-      const transactionsModel = require('../models/transactionsModel');
-      const trades = await transactionsModel.getAllForPortfolio(portfolio.portfolioID);
-      allTrades = allTrades.concat(trades);
+      const trades = await transactionsModel.getAllForPortfolio(portfolio.portfolioID); // Hent transaktioner for portefølje
+      allTrades = allTrades.concat(trades); // Saml transaktioner i én liste
     }
 
-    // Slå symbols op
-    const stockIDs = [...new Set(allTrades.map(t => t.stockID).filter(Boolean))];
-    let idToSymbol = {};
-    if (stockIDs.length > 0) {
-      const { poolPromise } = require('../db/database');
-      const pool = await poolPromise;
+    // Standardiser datoformat til 'ÅÅÅÅ-MM-DD'
+    allTrades = allTrades.map(t => ({
+      ...t,
+      date: t.date instanceof Date
+        ? t.date.toISOString().slice(0, 10)
+        : t.date.toString().slice(0, 10)
+    }));
+
+    // Find unikke stockIDs fra transaktionerne (fjern tomme og duplikerede)
+    const stockIDs = [];
+    for (const trade of allTrades) {
+      if (trade.stockID && !stockIDs.includes(trade.stockID)) {
+        stockIDs.push(trade.stockID);
+      }
+    }
+    const idToSymbol = {}; // Map fra stockID til symbol
+    if (stockIDs.length) {
+      const pool = await poolPromise; // Hent databaseforbindelse
       const result = await pool.request()
-        .query(`SELECT id, symbol FROM Stocks WHERE id IN (${stockIDs.join(',')})`);
+        .query(`SELECT id, symbol FROM Stocks WHERE id IN (${stockIDs.join(',')})`); // Hent symboler fra DB
       for (const row of result.recordset) {
-        idToSymbol[row.id] = row.symbol;
-      }
-      for (const trade of allTrades) {
-        trade.symbol = idToSymbol[trade.stockID];
+        idToSymbol[row.id] = row.symbol; // Gem mapping
       }
     }
-    const symbols = [...new Set(allTrades.map(t => t.symbol).filter(Boolean))];
+    allTrades.forEach(t => { t.symbol = idToSymbol[t.stockID]; }); // Tildel symbol til hver transaktion
 
-    // Hent historiske kurser for de sidste 10 dage
-    const { getHistoricalPrices } = require('../services/Finnhub');
-    const historicalPrices = {};
-    for (const symbol of symbols) {
-      historicalPrices[symbol] = await getHistoricalPrices(symbol, 10);
+    // Find unikke symboler fra transaktionerne (fjern tomme og duplikerede)
+    const symbols = [];
+    for (const trade of allTrades) {
+      const s = trade.symbol;
+      if (s && !symbols.includes(s)) {
+        symbols.push(s);
+      }
     }
-
-    // Hent nuværende priser til fallback
-    const currentPrices = {};
+    
+    // Hent historiske og nuværende priser
+    const { getHistoricalPrices } = require('../services/Finnhub'); // Service til historiske priser
+    const historicalPrices = {}; // Objekt: symbol → { dato: pris }
+    const currentPrices = {}; // Objekt: symbol → seneste pris
     for (const symbol of symbols) {
+      historicalPrices[symbol] = await getHistoricalPrices(symbol, 10); // Hent sidste 10 dages priser
       try {
-        const quote = await getStockQuote(symbol);
+        const quote = await getStockQuote(symbol); // Hent aktuel pris
         currentPrices[symbol] = quote.price || 0;
-      } catch (e) {
-        currentPrices[symbol] = 0;
+      } catch {
+        currentPrices[symbol] = 0; // Brug 0 hvis der ikke er en pris
       }
     }
 
-    // Beregn porteføljeværdi for hver dag
-    const startDate = new Date('2025-01-01');
-    const today = new Date();
+    // Build history array for each day
+    const days = parseInt(req.query.days, 10) || 10;
     const history = [];
-    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().slice(0, 10);
+    for (let i = days - 1; i >= 0; i--) {
+      const dateObj = new Date();
+      dateObj.setDate(dateObj.getDate() - i);
+      const dateStr = dateObj.toISOString().slice(0, 10);
 
-      // Beregn beholdning for hver aktie på denne dag
-      const holdings = {};
+      // Calculate holdings by symbol up to this date
+      const holdings = symbols.reduce((acc, symbol) => {
+        const tradesForSymbol = allTrades.filter(
+          t => t.symbol === symbol && t.date <= dateStr
+        );
+        acc[symbol] = tradesForSymbol.reduce(
+          (sum, t) => sum + (t.type === 'Buy' ? t.quantity : -t.quantity),
+          0
+        );
+        return acc;
+      }, {});
+
+      // Sum total portfolio value for the day
+      let totalValueForDay = 0;
       for (const symbol of symbols) {
-        const tradesForSymbol = allTrades.filter(t => t.symbol === symbol && t.date <= dateStr);
-        const amount = tradesForSymbol.reduce((sum, t) => sum + (t.type === 'Buy' ? t.quantity : -t.quantity), 0);
-        holdings[symbol] = amount;
+        const amount = holdings[symbol] || 0;
+        const price = historicalPrices[symbol]?.[dateStr] ?? currentPrices[symbol] ?? 0;
+        totalValueForDay += amount * price;
       }
-
-      // Beregn samlet værdi for denne dag
-      let totalValue = 0;
-      for (const symbol of symbols) {
-        const amount = holdings[symbol];
-        // Brug historisk pris hvis tilgængelig, ellers fallback til nuværende pris
-        const histPrices = historicalPrices[symbol];
-        const raw = histPrices ? histPrices[dateStr] : undefined;
-        const price = raw != null ? raw : currentPrices[symbol];
-        totalValue += amount * price;
-      }
-
-      history.push({
-        date: dateStr,
-        value: totalValue
-      });
+      history.push({ date: dateStr, value: totalValueForDay });
     }
 
     res.json(history);
@@ -229,18 +193,92 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
-// === DEBUG: Se alle aktier for brugerens porteføljer ===
+// === API: Top 5 efter værdi på GET /dashboard/top/value ===
+// Henter de fem aktier med størst samlet værdi i dine porteføljer
+router.get('/top/value', async (req, res, next) => {
+  try {
+    // 1) Hent bruger-ID og alle porteføljer for at kende hvad vi skal vise
+    const userId = req.session.user.userID;
+    const portfolios = await Portfolio.getAllForUser(userId);
+
+    // 2) Saml alle beholdninger fra hver portefølje i en liste
+    let allHoldings = [];
+    for (const portfolio of portfolios) {
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(
+        holdings.map(h => ({ ...h, portfolioName: portfolio.name }))
+      );
+    }
+
+    // 3) Hent live-pris for hver aktie og beregn dens værdien
+    for (const h of allHoldings) {
+      try {
+        const quote = await getStockQuote(h.symbol);
+        h.price = quote.price || 0;
+      } catch (e) {
+        h.price = 0;
+      }
+      h.value = (h.amount || 0) * h.price;
+    }
+
+    // 4) Sortér beholdningerne efter værdi (stor til lille) og tag de første 5
+    const topValue = allHoldings.sort((a,b) => b.value - a.value).slice(0,5);
+    // 5) Returnér de 5 største som JSON til klienten
+    res.json(topValue);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// API: der skal hente Top 5 efter profit fra /dashboard/top/profit 
+// Henter de fem aktier med størst urealiseret gevinst i dine porteføljer
+router.get('/top/profit', async (req, res, next) => {
+  try {
+    // 1) Hent bruger-ID og porteføljer
+    const userId = req.session.user.userID;
+    const portfolios = await Portfolio.getAllForUser(userId);
+
+    // 2) Saml alle beholdninger i én liste
+    let allHoldings = [];
+    for (const portfolio of portfolios) {
+      const holdings = await Portfolio.getHoldingsForPortfolio(portfolio.portfolioID);
+      allHoldings = allHoldings.concat(
+        holdings.map(h => ({ ...h, portfolioName: portfolio.name }))
+      );
+    }
+
+    // 3) Hent live-pris for hver aktie og beregn gevinst
+    for (const h of allHoldings) {
+      try {
+        const quote = await getStockQuote(h.symbol);
+        h.price = quote.price || 0;
+      } catch (e) {
+        h.price = 0;
+      }
+      h.profit = (h.price - (h.bought_at || 0)) * (h.amount || 0);
+    }
+
+    // 4) Sortér efter gevinst og tag de første 5
+    const topProfit = allHoldings.sort((a,b) => b.profit - a.profit).slice(0,5);
+    // 5) Sender top 5 som JSON til klienten
+    res.json(topProfit);
+  } catch (err) {
+    next(err);
+  }
+});
+
+//  DEBUG:  for at se alle aktier for brugerens porteføljer 
+// Viser alle aktier i hver portefølje som JSON, kun til udvikling og fejlfinding
 router.get('/debug/stocks', async (req, res) => {
+  // 1) Hent alle porteføljer for brugeren
   const portfolios = await Portfolio.getAllForUser(req.session.user.userID);
-  console.log('DEBUG: Portfolios:', portfolios);
-  console.log('DEBUG: Session user:', req.session.user);
+  // 2) Indsaml alle aktier fra hver portefølje
   let allStocks = [];
   for (const p of portfolios) {
-    console.log('DEBUG: Henter aktier for portfolioID:', p.portfolioID);
     const stocks = await Portfolio.getStocksForPortfolio(p.portfolioID);
-    console.log('DEBUG: Fandt aktier:', stocks);
     allStocks = allStocks.concat(stocks);
   }
+  // 3) Returnér alle aktier som JSON, så vi kan se data under udvikling
   res.json(allStocks);
 });
 

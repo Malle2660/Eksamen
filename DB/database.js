@@ -1,5 +1,6 @@
 const sql = require('mssql');
-require('dotenv').config();  // <-- meget vigtigt, læser fra .env
+require('dotenv').config();  
+// den er meget vigtigt, da den skal læse fra .env fil
 
 const config = {
   user: process.env.DB_USER,

@@ -1,118 +1,137 @@
 const { sql, poolPromise } = require('../db/database');
+const finnhubService = require('../services/Finnhub');
 
-const Portfolio = {
-  // Hent alle porteføljer for en bruger
-  getAllForUser: async (userId) => {
+// Portfolio-klasse: håndterer databaseforespørgsler og beregninger for porteføljer
+class Portfolio {
+  // Hent alle porteføljer for en specifik bruger
+  static async getAllForUser(userId) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input('userId', sql.Int, userId)
       .query('SELECT * FROM Portfolios WHERE userID = @userId');
-    return result.recordset;
-  },
+    return result.recordset; // returnér alle rækker som array
+  }
 
-  // Hent én specifik portefølje
-  getById: async (portfolioId) => {
+  // Hent én portefølje baseret på id
+  static async getById(portfolioId) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input('portfolioId', sql.Int, portfolioId)
-      .query('SELECT * FROM Portfolios WHERE portfolioID = @portfolioId');
-    return result.recordset[0];
-  },
+      .query('SELECT * FROM Portfolios WHERE portfolioID = @portfolioId'); // vi hente én portefølje baseret på id
+    return result.recordset[0]; // første (og eneste) portefølje
+  }
 
-  // Opret ny portefølje
-  create: async (name, accountId, userId) => {
+  // Opret en ny portefølje
+  // name: porteføljens navn
+  // accountId: konto-id tilhørende porteføljen
+  // userId: bruger-id der opretter porteføljen
+  static async create(name, accountId, userId) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const result = await pool
+      .request()
       .input('name', sql.NVarChar(255), name)
       .input('accountId', sql.Int, accountId)
       .input('userId', sql.Int, userId)
-      .query(`
-        INSERT INTO Portfolios (name, accountID, registrationDate, userID)
-        VALUES (@name, @accountId, GETDATE(), @userId)
-      `);
-    return result.rowsAffected[0];
-  },
+      .query(
+        `INSERT INTO Portfolios (name, accountID, registrationDate, userID) 
+         VALUES (@name, @accountId, GETDATE(), @userId)`
+      );
+    return result.rowsAffected[0]; // skal re
+  }
 
-  // Slet en portefølje
-  delete: async (portfolioId) => {
+  // Slet en portefølje ud fra id
+  static async delete(portfolioId) {
     const pool = await poolPromise;
-    await pool.request()
+    await pool
+      .request()
       .input('portfolioId', sql.Int, portfolioId)
       .query('DELETE FROM Portfolios WHERE portfolioID = @portfolioId');
-  },
+  }
 
-  // GAK (gennemsnitlig anskaffelseskurs) for én aktie i en portefølje
-  getGAKForStock: async (portfolioId, symbol) => {
+  // Beregn gennemsnitlig anskaffelseskurs (GAK) for en given aktie
+  static async getGAKForStock(portfolioId, symbol) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const { recordset } = await pool
+      .request()
       .input('portfolioId', sql.Int, portfolioId)
       .input('symbol', sql.NVarChar(10), symbol)
-      .query(`
-        SELECT 
-          SUM(CASE WHEN t.type = 'Buy' THEN t.quantity * t.price ELSE 0 END) AS totalPurchase,
-          SUM(CASE WHEN t.type = 'Buy' THEN t.quantity ELSE 0 END) AS totalBought
-        FROM Trades t
-        JOIN Stocks s ON t.stockID = s.id
-        WHERE t.portfolioID = @portfolioId AND s.symbol = @symbol
-      `);
-    const row = result.recordset[0];
-    if (!row || !row.totalBought) return 0;
-    return row.totalPurchase / row.totalBought;
-  },
+      .query(
+        `SELECT
+           SUM(CASE WHEN t.type='Buy' THEN t.quantity*t.price ELSE 0 END) AS totalPurchase,
+           SUM(CASE WHEN t.type='Buy' THEN t.quantity ELSE 0 END) AS totalBought
+         FROM Trades t
+         JOIN Stocks s ON t.stockID=s.id
+         WHERE t.portfolioID=@portfolioId AND s.symbol=@symbol`
+      );
+    const { totalPurchase = 0, totalBought = 0 } = recordset[0] || {};
+    // Hvis ingen køb, returnér 0, ellers det vægtede gennemsnit
+    return totalBought ? totalPurchase / totalBought : 0;
+  }
 
-  // Hent alle holdings for en portefølje (udregnet fra Trades)
-  getHoldingsForPortfolio: async (portfolioId) => {
+  // Hent alle holdings (aktiebeholdninger) for en portefølje og beregn deres værdi
+  static async getHoldingsForPortfolio(portfolioId) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const { recordset } = await pool
+      .request()
       .input('portfolioId', sql.Int, portfolioId)
-      .query(`
-        SELECT 
-          t.stockID AS id,
-          s.symbol,
-          SUM(CASE WHEN t.type = 'Buy' THEN t.quantity ELSE -t.quantity END) AS amount
-        FROM Trades t
-        JOIN Stocks s ON t.stockID = s.id
-        WHERE t.portfolioID = @portfolioId
-        GROUP BY t.stockID, s.symbol
-        HAVING SUM(CASE WHEN t.type = 'Buy' THEN t.quantity ELSE -t.quantity END) > 0
-      `);
+      .query(
+        `SELECT t.stockID AS id, s.symbol,
+           SUM(CASE WHEN t.type='Buy' THEN t.quantity ELSE -t.quantity END) AS amount
+         FROM Trades t
+         JOIN Stocks s ON t.stockID=s.id
+         WHERE t.portfolioID=@portfolioId
+         GROUP BY t.stockID, s.symbol
+         HAVING SUM(CASE WHEN t.type='Buy' THEN t.quantity ELSE -t.quantity END)>0`
+      ); 
 
-    // Hent markedspriser og lav holdings-objekter
-    const holdings = [];
-    for (const row of result.recordset) {
+   
+    const holdings = []; // vi opretter et array af objekter med id, symbol, amount, price, value
+    for (const { id, symbol, amount } of recordset) {
       let price = 0;
       try {
-        const quote = await require('../services/finnhub').getStockQuote(row.symbol);
-        price = quote.price || 0;
-      } catch (e) { price = 0; }
-      holdings.push({
-        id: row.id,
-        symbol: row.symbol,
-        amount: row.amount,
-        price,
-        value: row.amount * price
-      });
-      
+        const quote = await finnhubService.getStockQuote(symbol); // vi hente aktiekursen for symbol (Vores api key er gemt i .env fil)
+        price = quote.price || 0; // hvis vi ikke kan hente aktiekursen, så behold pris som 0
+      } catch {
+        // Hvis API-kald fejler, behold pris som 0
+      }
+      holdings.push({ id, symbol, amount, price, value: amount * price }); // vi pusher vores objekter til vores tidligere opret array
     }
-    return holdings;
-  },
+    return holdings; //  som er et array af objekter med id, symbol, amount, price, value
+  }
 
-  // Beregn forventet værdi ud fra holdings (Trades)
-  getExpectedValueFromHoldings: async (portfolioId) => {
-    const holdings = await Portfolio.getHoldingsForPortfolio(portfolioId);
-    return holdings.reduce((sum, h) => sum + h.value, 0);
-  },
+  // Beregn samlet forventet porteføljeværdi
+  static async getExpectedValueFromHoldings(portfolioId) {
+    const holdings = await this.getHoldingsForPortfolio(portfolioId);
+    return holdings.reduce((sum, { value }) => sum + value, 0); // vi beregner vores forventede værdi for porteføljen
+  }
 
-  // Urealiseret gevinst/tab for portefølje (baseret på trades/GAK)
-  getTotalUnrealizedFromHoldings: async (portfolioId) => {
-    const holdings = await Portfolio.getHoldingsForPortfolio(portfolioId);
-    let total = 0;
-    for (const h of holdings) {
-      const gak = await Portfolio.getGAKForStock(portfolioId, h.symbol);
-      total += (h.price - gak) * h.amount;
+  // Beregn urealiseret gevinst eller tab for porteføljen
+  static async getTotalUnrealizedFromHoldings(portfolioId) {
+    const holdings = await this.getHoldingsForPortfolio(portfolioId);
+    let totalUnrealized = 0;
+    for (const { symbol, price, amount } of holdings) {
+      const gak = await this.getGAKForStock(portfolioId, symbol); // vi beregner vores GAK for symbol
+      totalUnrealized += (price - gak) * amount; // vi beregner vores urealiseret gevinst eller tab for porteføljen
     }
-    return total;
-  },
-};
+    return totalUnrealized; // positiv = gevinst, negativ = tab
+  }
+
+  // Beregn samlet købspris (totalPurchase) for en portefølje
+  static async getTotalPurchaseFromTrades(portfolioId) {
+    const pool = await poolPromise;
+    const { recordset } = await pool
+      .request()
+      .input('portfolioId', sql.Int, portfolioId)
+      .query(
+        `SELECT SUM(CASE WHEN t.type='Buy' THEN t.quantity * t.price ELSE 0 END) AS totalPurchase
+         FROM Trades t
+         WHERE t.portfolioID = @portfolioId`
+      );
+    const { totalPurchase = 0 } = recordset[0] || {}; // vi beregner vores total purchase for porteføljen
+    return totalPurchase; // og retunere vores total purchase her
+  }
+}
 
 module.exports = Portfolio;
