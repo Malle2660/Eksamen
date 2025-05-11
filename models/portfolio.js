@@ -92,6 +92,7 @@ const Portfolio = {
         price,
         value: row.amount * price
       });
+      
     }
     return holdings;
   },

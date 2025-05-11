@@ -1,6 +1,7 @@
 // public/js/account/account.js
 document.addEventListener('DOMContentLoaded', () => {
   const countEl      = document.getElementById('account-count');
+  if (!countEl) return; // skip account logic when not on accounts page
   const totalBalEl   = document.getElementById('total-balance');
   const currencyEl   = document.getElementById('currency-dist');
   const tbody        = document.getElementById('accounts-table-body');
@@ -406,61 +407,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const firstTradeDate = allTrades.length ? allTrades[0].date : null;
 
-document.addEventListener('DOMContentLoaded', async function() {
-  const ctx = document.getElementById('totalValueChart').getContext('2d');
+let dashboardChart;
+
+async function fetchHistory(days = 10) {
+  console.log('fetchHistory called');
   const res = await fetch('/dashboard/history');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   let history = await res.json();
-
-  // Filtrer history så den kun indeholder data fra 1. januar 2025 og frem
-  const startDate = new Date('2025-01-01');
-  history = history.filter(h => new Date(h.date) >= startDate);
-
-  if (!history.length) {
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "#fff";
-    ctx.fillText("Ingen data tilgængelig", 50, 100);
-    return;
+  // use only the last N days of history
+  if (Array.isArray(history) && history.length) {
+    history = history.slice(-days);
   }
+  console.log(`fetchHistory returning last ${days} days:`, history);
+  return history;
+}
 
-  const labels = history.map(h => h.date);
-  const data = history.map(h => h.value);
+async function updateChartData() {
+  try {
+    const history = await fetchHistory();
+    const labels = history.map(h => h.date);
+    const data = history.map(h => h.value);
+    if (dashboardChart) {
+      dashboardChart.data.labels = labels;
+      dashboardChart.data.datasets[0].data = data;
+      dashboardChart.update();
+    }
+  } catch (err) {
+    console.error('Error updating chart:', err);
+  }
+}
 
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Samlet værdi (USD)',
-        data,
-        borderColor: '#4e79a7',
-        backgroundColor: 'rgba(78,121,167,0.1)',
-        tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: '#fff',
-        fill: true
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { display: true, labels: { color: '#fff' } }
+async function updateMetrics() {
+  try {
+    const res = await fetch('/dashboard/metrics');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const m = await res.json();
+    console.log('updateMetrics response:', m);
+    document.getElementById('totalValue').textContent = m.totalValue.toFixed(2) + ' USD';
+    document.getElementById('realizedProfit').textContent = m.realized.toFixed(2) + ' USD';
+    document.getElementById('unrealizedProfit').textContent = m.unrealized.toFixed(2) + ' USD';
+  } catch (err) {
+    console.error('Error updating metrics:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  // initialize metrics
+  updateMetrics();
+
+  // initialize chart
+  const ctx = document.getElementById('totalValueChart').getContext('2d');
+  try {
+    const history = await fetchHistory();
+    const labels = history.map(h => h.date);
+    const data = history.map(h => h.value);
+    dashboardChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{
+            label: 'Samlet værdi (USD)',
+            data,
+            borderColor: '#4e79a7',
+            backgroundColor: 'rgba(78,121,167,0.1)',
+            tension: 0.4,
+            pointRadius: 3,
+            pointBackgroundColor: '#fff',
+            fill: true
+          }]
       },
-      scales: {
-        x: { 
-          ticks: { color: '#C3C3C1' }
-        },
-        y: {
-          ticks: {
-            color: '#C3C3C1',
-            callback: function(value) {
-              if (Math.abs(value) >= 1000) {
-                return (value / 1000).toLocaleString('da-DK', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+      options: {
+        plugins: { legend: { display: true, labels: { color: '#fff' } } },
+        scales: { x: { ticks: { color: '#C3C3C1' } }, y: {
+            ticks: { color: '#C3C3C1', callback(value) {
+                if (Math.abs(value) >= 1000) {
+                  return (value / 1000).toLocaleString('da-DK',{minimumFractionDigits:1, maximumFractionDigits:1}) + 'k';
+                }
+                return value.toLocaleString('da-DK');
               }
-              return value.toLocaleString('da-DK');
-            }
-          },
-          beginAtZero: true
+            }, beginAtZero: true }
         }
       }
+    });
+
+    // auto-update every minute
+    setInterval(() => {
+      updateMetrics();
+      updateChartData();
+    }, 60 * 1000);
+  } catch (err) {
+    console.error('Error initializing dashboard:', err);
   }
-});
 });

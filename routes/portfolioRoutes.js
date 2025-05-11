@@ -3,7 +3,7 @@ const router = express.Router();
 const sql = require('mssql');
 const Portfolio = require('../models/portfolio');
 const TransactionsModel = require('../models/transactionsModel');
-const { getStockQuote } = require('../services/finnhub');
+const { getStockQuote } = require('../services/Finnhub');
 
 // === GET: Porteføljeoversigt (HTML-side)
 router.get('/', async (req, res) => {
