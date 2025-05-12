@@ -341,36 +341,30 @@ document.addEventListener('DOMContentLoaded', () => {
     dkkChangeEl.textContent = `${dkkChange.toFixed(2)} USD`;
   }
 
-  // BIND CLICK TIL CREATE-PORTFØLJE KNAP
+  // BIND CLICK TIL CREATE-PORTFØLJE KNAP (inline oprettelse)
   if (btnCreate) {
-    btnCreate.addEventListener('click', () => openModal('addPortfolioModal'));
-  }
-
-  // BIND FORM SUBMIT TIL OPRET-PORTFØLJE
-  const createForm = document.getElementById('createPortfolioForm'); //når vi ønsker at op
-  if (createForm) {
-    createForm.addEventListener('submit', async e => { 
-      e.preventDefault();
-      const name      = nameInput.value.trim(); //henter navn fra inputfeltet
-      const accountId = parseInt(accountInput.value, 10);  //
-    if (!name || !accountId) {
+    btnCreate.addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      const accountId = parseInt(accountInput.value, 10);
+      if (!name || isNaN(accountId)) {
         return showNotification('Udfyld både navn og konto-id', 'error');
-    }
-    try {
-      const res = await fetch('/portfolios/create', {
-        method: 'POST',
-          headers: {'Content-Type':'application/json'},
+      }
+      try {
+        const res = await fetch('/portfolios/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({name, accountId})
-      });
+          body: JSON.stringify({ name, accountId })
+        });
         if (!res.ok) throw new Error('Oprettelse fejlede');
         showNotification('Portefølje oprettet', 'success');
-        closeModal('addPortfolioModal');
-        loadPortfolios();    
+        nameInput.value = '';
+        accountInput.value = '';
+        loadPortfolios();
       } catch (err) {
         showNotification(err.message, 'error');
-    }
-  });
+      }
+    });
   }
 
   // bind cancel-knap til at lukke opret-modal

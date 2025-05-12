@@ -17,8 +17,8 @@ class UsersModel {
             .input('password', sql.NVarChar, password) // Indsætter adgangskoden i SQL-forespørgslen - bcrypt bruges til at hashe adgangskoden
             .query(`
                 INSERT INTO users (username, email, password)
-                VALUES (@username, @email, @password); // Indsætter ny bruger i databsen 
-                SELECT SCOPE_IDENTITY() AS id; // Returnerer ID på den oprettede bruger
+                VALUES (@username, @email, @password);
+                SELECT SCOPE_IDENTITY() AS id;
             `);
         return result.recordset[0]; // Returnerer den oprettede brugers ID
     }
