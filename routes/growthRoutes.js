@@ -12,7 +12,7 @@ const { sql, poolPromise } = require('../db/database');
 // Bruges til dato-beregninger i history-route
 const dayjs = require('dayjs');
 
-// === HENT HOLDINGS ===
+// HENT HOLDINGS 
 // GET /portfolios/:portfolioId/holdings
 // Returnerer alle beholdninger (antal units per aktie) for en given portefølje
 router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
@@ -29,7 +29,7 @@ router.get('/portfolios/:portfolioId/holdings', async (req, res) => {
   }
 });
 
-// === HENT AKTIE-QUOTES ===
+// HENT AKTIE-QUOTES 
 // GET /portfolios/:portfolioId/quotes?symbols=SYM1,SYM2
 // Returnerer live-priser for en liste af symbols via Finnhub
 router.get('/portfolios/:portfolioId/quotes', async (req, res) => {
@@ -47,7 +47,7 @@ router.get('/portfolios/:portfolioId/quotes', async (req, res) => {
   }
 });
 
-// === HENT VALUTAKURSER ===
+// HENT VALUTAKURSER 
 // GET /portfolios/:portfolioId/rates?base=EUR
 // Returnerer valutakurser mod basevaluta (default USD)
 router.get('/portfolios/:portfolioId/rates', async (req, res) => {
@@ -63,14 +63,14 @@ router.get('/portfolios/:portfolioId/rates', async (req, res) => {
   }
 });
 
-// === VIS PORTFOLJE-SIDE ===
+// VIS PORTFOLJE-SIDE 
 // GET /portfolios/:portfolioId
 // Renders EJS-skabelon growthTech med portfolioId
 router.get('/portfolios/:portfolioId', async (req, res) => {
   res.render('growthTech', { portfolioId: req.params.portfolioId });
 });
 
-// === HISTORIK-TJENESTE ===
+// HISTORIK-TJENESTE 
 // GET /portfolios/:portfolioId/history
 // Returnerer daglig porteføljetrend { date, value } fra første handel til i dag
 router.get('/portfolios/:portfolioId/history', async (req, res) => {
@@ -142,7 +142,7 @@ router.get('/portfolios/:portfolioId/history', async (req, res) => {
   }
 });
 
-// === HENT TRADES ===
+// HENT TRADES 
 // GET /portfolios/:portfolioId/trades
 // Returnerer alle individuelle trades for en given portefølje til visning i trade-historik
 router.get('/portfolios/:portfolioId/trades', async (req, res) => {

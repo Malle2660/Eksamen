@@ -216,7 +216,7 @@ button:hover, .add-btn:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* ----- DIAGRAMMER ----- */
+/* ----- DIAGRAMMER OVERSIGT ----- */
 .chart-container {
   background: var(--bg-container);
   border-radius: 8px;
@@ -224,6 +224,12 @@ button:hover, .add-btn:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+/* Ensure overview pie chart has a clear fixed size */
+.chart-container canvas#portfolioPieChart {
+  width: 400px !important;
+  height: 400px !important;
+  margin: 0 auto;
 }
 .pie-legend {
   margin-top: 1rem;

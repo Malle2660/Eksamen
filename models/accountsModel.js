@@ -17,7 +17,7 @@ class AccountsModel {
       .input('bank', sql.NVarChar, bank)
       .query(
         `INSERT INTO Accounts (userID, name, currency, bank, balance, registrationsDate, closedAccount)
-         VALUES (@userId, @name, @currency, @bank, 0, GETDATE(), 0);
+        VALUES (@userId, @name, @currency, @bank, 0, GETDATE(), 0);
          SELECT SCOPE_IDENTITY() AS id;`
       );
     return result.recordset[0];
@@ -30,8 +30,8 @@ class AccountsModel {
       .input('accountId', sql.Int, accountId)
       .query(
         `UPDATE Accounts
-         SET closedAccount = 1,
-             closedAt = GETDATE()
+        SET closedAccount = 1,
+            closedAt = GETDATE()
          WHERE accountID = @accountId;`
       );
   }
@@ -43,7 +43,7 @@ class AccountsModel {
       .input('accountId', sql.Int, accountId)
       .query(
         `UPDATE Accounts
-         SET closedAccount = 0
+        SET closedAccount = 0
          WHERE accountID = @accountId;`
       );
   }
@@ -56,7 +56,7 @@ class AccountsModel {
       .input('amount', sql.Float, amount)
       .query(
         `UPDATE Accounts
-         SET balance = balance + @amount
+        SET balance = balance + @amount
          WHERE accountID = @accountId AND closedAccount = 0;`
       );
     await pool.request()
@@ -90,7 +90,7 @@ class AccountsModel {
       .input('amount', sql.Float, amount)
       .query(
         `UPDATE Accounts
-         SET balance = balance - @amount
+        SET balance = balance - @amount
          WHERE accountID = @accountId AND closedAccount = 0;`
       );
     await pool.request()
@@ -111,8 +111,8 @@ class AccountsModel {
       .input('accountId', sql.Int, accountId)
       .query(
         `SELECT date, amount, transactionType
-         FROM Transactions
-         WHERE accountID = @accountId
+        FROM Transactions
+        WHERE accountID = @accountId
          ORDER BY date DESC;`
       );
     return result.recordset;
@@ -121,12 +121,12 @@ class AccountsModel {
   // Henter alle konti for en bruger (inkl. lukkede), sorteret efter oprettelsesdato
   async getAllForUser(userId) {
     const pool = await poolPromise;
-    const result = await pool.request()
+    const result = await pool.request() 
       .input('userId', sql.Int, userId)
       .query(
         `SELECT accountID, name, bank, currency, balance, registrationsDate, closedAccount
-         FROM Accounts
-         WHERE userID = @userId
+        FROM Accounts
+        WHERE userID = @userId
          ORDER BY registrationsDate DESC;`
       );
     return result.recordset;
@@ -145,12 +145,12 @@ class AccountsModel {
       );
     return result.recordset;
   }
-
+  
   // Returnerer den samlede saldo for alle aktive konti for en bruger
   async getTotalBalance(userId) {
-    const pool = await poolPromise;
+    const pool = await poolPromise; 
     const result = await pool.request()
-      .input('userId', sql.Int, userId)
+        .input('userId', sql.Int, userId)
       .query(
         `SELECT SUM(balance) AS totalBalance
          FROM Accounts

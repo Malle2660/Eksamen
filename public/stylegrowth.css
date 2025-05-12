@@ -260,6 +260,12 @@ ul, a {
 }
 .chart-placeholder { height: 300px; }
 .pie-chart-placeholder { height: 200px; margin-bottom: 0.75rem; }
+/* Ensure pie chart canvas fills its container */
+.pie-chart-placeholder canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 
 /* Legend til donut */
 .legend {

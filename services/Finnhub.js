@@ -62,20 +62,20 @@ async function batchQuotes(symbols) {
 
 // Tilføj historiske kurser-funktion
 async function getHistoricalPrices(symbol, days = 10) {
-  const apiKey = process.env.FINNHUB_API_KEY;
-  const now = Math.floor(Date.now() / 1000);
-  const from = now - days * 24 * 60 * 60;
-  const resolution = 'D';
+  const apiKey = process.env.FINNHUB_API_KEY; // Henter API-nøglen fra .env-filen
+  const now = Math.floor(Date.now() / 1000); 
+  const from = now - days * 24 * 60 * 60; // Beregner startdato (nu - dage)
+  const resolution = 'D'; // Sætter opdateringsinterval til 1 dag
   const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${now}&token=${apiKey}`;
   const response = await fetch(url);
   const data = await response.json();
   const prices = {};
-  if (data.s !== 'ok' || !data.c || !data.t) {
+  if (data.s !== 'ok' || !data.c || !data.t) { // Sørger for at data er korrekt
     return prices;
-  }
+  } 
   for (let i = 0; i < data.t.length; i++) {
-    const date = new Date(data.t[i] * 1000).toISOString().slice(0, 10);
-    prices[date] = data.c[i];
+    const date = new Date(data.t[i] * 1000).toISOString().slice(0, 10); // Konverterer Unix-tid til ISO-format
+    prices[date] = data.c[i]; // Gemmer prisen for den pågældende dato
   }
   return prices;
 }

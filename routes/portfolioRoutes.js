@@ -34,13 +34,13 @@ router.get('/', async (req, res) => {
       dailyDKKChange: 0
     });
   } catch (err) {
-    console.error('Fejl ved visning af portefølje:', err);
-    res.status(500).send('Serverfejl');
+    console.error('Fejl ved visning af portefølje:', err); //vi logger fejl, hvis der sker en fejl
+    res.status(500).send('Serverfejl'); //vi sender en fejlbesked tilbage til klienten
   }
 });
 
 // HENT PORTFØLJER SOM JSON (API)
-router.get('/user', async (req, res) => {
+router.get('/user', async (req, res) => { 
   // Samme som ovenfor, men returnerer JSON
   const userId = req.session.user.userID;
     const portfolios = await Portfolio.getAllForUser(userId);
@@ -58,7 +58,7 @@ router.post('/create', async (req, res) => {
     const { name, accountId } = req.body;
   // Tjek at både navn og konto-id er udfyldt
     if (!name || !accountId) {
-    return res.status(400).json({ message: 'Navn og konto-ID mangler' });
+    return res.status(400).json({ message: 'Navn og konto-ID mangler' }); //vi sender en fejlbesked tilbage til brugeren, hvis navn eller konto-id ikke er udfyldt
     }
   const userId = req.session.user.userID;
   try {
@@ -78,18 +78,18 @@ router.post('/:portfolioId/add-stock', async (req, res) => {
     const { symbol, amount, boughtAt, accountId } = req.body;
   // Tjek at alle felter er til stede
     if (!symbol || !amount || !boughtAt || !accountId) {
-    return res.status(400).json({ message: 'Udfyld alle felter' });
+    return res.status(400).json({ message: 'Udfyld alle felter' }); 
     }
 
   try {
     // Forbind til database for Stocks-tabellen
     const pool = await require('../db/database').poolPromise;
-    const sym = symbol.trim().toUpperCase();
+    const sym = symbol.trim().toUpperCase(); // vi tjekker om symbol er udfyldt 
     // Byg én request, som kan genbruges til SELECT og INSERT
-    const request = pool.request().input('symbol', sql.NVarChar(10), sym);
+    const request = pool.request().input('symbol', sql.NVarChar(10), sym); // vi opretter en request, som kan genbruges til SELECT og INSERT
 
     // Check om stock findes
-    let result = await request.query('SELECT id FROM Stocks WHERE symbol = @symbol');
+    let result = await request.query('SELECT id FROM Stocks WHERE symbol = @symbol'); 
     let stockId;
     if (result.recordset.length > 0) {
       // Brug eksisterende stock-id
@@ -173,7 +173,7 @@ router.delete('/:portfolioId', async (req, res) => {
 // Hent alle porteføljer som JSON (uden beregninger)
 router.get('/portfolios', async (req, res) => {
   const userId = req.session.user.userID;
-  res.json(await Portfolio.getAllForUser(userId));
+  res.json(await Portfolio.getAllForUser(userId)); //vi returnerer alle porteføljerne for brugeren som JSON
 });
 // Hent aktiekurs for symbol
 router.get('/api/stock-price/:symbol', async (req, res) => {

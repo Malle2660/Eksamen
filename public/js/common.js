@@ -78,17 +78,18 @@
   
       // 2) Opret nyt Chart.js doughnut-diagram
       window._pieChart = new Chart(ctx, {
-        type: 'doughnut', // skal tegne en pie-chart
+        type: 'doughnut',
         data: {
-          labels,                                                  // slice-navne
-          datasets: [{ data, backgroundColor: colors }]            // slice-værdier og farver
+          labels,
+          datasets: [{ data, backgroundColor: colors }]
         },
         options: {
-          cutout: '70%',                                           // hul i midten
-          responsive: false,
+          cutout: '70%',
+          responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: !legendId,                                  // default legend, hvis ingen custom
+              display: !legendId,
               position: 'right',
               labels: {
                 generateLabels: chart =>                           // custom legend-text
@@ -113,8 +114,8 @@
           <li>
             <span style="
               display:inline-block;
-              width:12px;height:12px;
-              background:${colors[i % colors.length]};
+              width:12px;height:12px; 
+              background:${colors[i % colors.length]}; 
               margin-right:8px;
               border-radius:2px;
             "></span>
@@ -146,4 +147,4 @@
       });
     };
   })();
-  
+ 

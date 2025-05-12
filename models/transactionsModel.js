@@ -1,9 +1,11 @@
+//importerer SQL-typer og en genbrugelig forbindelse til databasen
 const { sql, poolPromise } = require('../db/database');
 
+// Et objekt med metoder til at håndtere transaktioner i databasen
 class TransactionsModel {
     // Indsæt penge på konto
     async deposit(accountId, amount) {
-        const pool = await poolPromise;
+        const pool = await poolPromise; // Henter en åben forbindelse til databasen
 
         // Opdater saldoen på kontoen
         await pool.request()
@@ -15,7 +17,7 @@ class TransactionsModel {
                 WHERE accountID = @accountId AND closedAccount = 0;
             `);
 
-        // log transaktionen i Transactions tabellen
+        // log transaktionen i Transactions-tabellen i databasen
         await pool.request()
             .input('accountId', sql.Int, accountId)
             .input('amount', sql.Float, amount)
@@ -37,7 +39,7 @@ class TransactionsModel {
     async withdraw(accountId, amount) {
         const pool = await poolPromise;
 
-        // Opdater saldoen på kontoen
+        // Trækker beløbet fra kontoen
         await pool.request()
             .input('accountId', sql.Int, accountId)
             .input('amount', sql.Float, amount)
@@ -65,7 +67,7 @@ class TransactionsModel {
         return result.recordset[0].balance;
     }
 
-    // Hent transaktioner for en specifik konto
+    // Henter transaktioner for en specifik konto
     async getTransactions(accountId) {
         const pool = await poolPromise;
         const result = await pool.request()
@@ -80,26 +82,28 @@ class TransactionsModel {
 
         const totalPrice = quantity * pricePerUnit + fee;
 
-        // Check if sufficient balance
+        // Tjekker om der er tilstrækkeligt beløb på kontoen
         const balanceResult = await pool.request()
             .input('accountId', sql.Int, accountId)
             .query('SELECT balance FROM Accounts WHERE accountID = @accountId AND (closedAccount = 0 OR closedAccount IS NULL)');
         
+        // Henter saldoen på kontoen
         const balance = balanceResult.recordset[0]?.balance;
+        // Hvis der ikke er tilstrækkeligt beløb, kastes en fejl
         if (balance < totalPrice) throw new Error("Insufficient funds");
 
-        // Start transaction
+        // Starter en database-transaktion
         const transaction = pool.transaction();
         await transaction.begin();
 
         try {
-            // Deduct balance
+            // Trækker beløbet fra kontoen
             await transaction.request()
                 .input('accountId', sql.Int, accountId)
                 .input('amount', sql.Float, totalPrice)
                 .query('UPDATE Accounts SET balance = balance - @amount WHERE accountID = @accountId');
 
-            // Insert trade
+            // Indsætter transaktionen i Trades-tabellen i databasen
             await transaction.request()
                 .input('portfolioId', sql.Int, portfolioId)
                 .input('accountId', sql.Int, accountId)
@@ -113,9 +117,10 @@ class TransactionsModel {
                     VALUES (@portfolioId, @accountId, @securityId, @quantity, @price, @fee, @type, GETDATE());
                 `);
 
+            // Committer transaktionen
             await transaction.commit();
 
-            // Return new balance
+            // Returnerer den nye saldo
             const newBalanceResult = await pool.request()
                 .input('accountId', sql.Int, accountId)
                 .query('SELECT balance FROM Accounts WHERE accountID = @accountId');
@@ -127,11 +132,12 @@ class TransactionsModel {
         }
     }
 
+    // Sælg værdipapirer
     async sellSecurity(portfolioId, accountId, securityId, quantity, pricePerUnit, fee) {
         const pool = await poolPromise;
         const totalRevenue = quantity * pricePerUnit - fee;
 
-        // Check if we have enough shares
+        // Tjekker om der er tilstrækkeligt antal værdipapirer til at sælge
         const balanceResult = await pool.request()
             .input('portfolioId', sql.Int, portfolioId)
             .input('securityId', sql.Int, securityId)
@@ -140,24 +146,25 @@ class TransactionsModel {
                 FROM Trades
                 WHERE portfolioID = @portfolioId AND stockID = @securityId
             `);
-
+        // Henter det samlede antal værdipapirer, der er købt
         const totalHeld = balanceResult.recordset[0]?.totalHeld ?? 0;
+        // Hvis der ikke er tilstrækkeligt antal værdipapirer til at sælge, kastes en fejl
         if (totalHeld < quantity) {
             throw new Error("Du har desværre ikke nok værdipapir til at sælge");
         }
 
-        // Start transaction
+        // Starter en transaktion
         const transaction = pool.transaction();
         await transaction.begin();
 
         try {
-            // Update balance
+            // Opdater kontoens saldo
             await transaction.request()
                 .input('accountId', sql.Int, accountId)
                 .input('amount', sql.Float, totalRevenue)
                 .query('UPDATE Accounts SET balance = balance + @amount WHERE accountID = @accountId');
 
-            // Insert trade
+            // Indsætter salget i Trades-tabellen i databasen
             await transaction.request()
                 .input('portfolioId', sql.Int, portfolioId)
                 .input('accountId', sql.Int, accountId)
@@ -173,7 +180,7 @@ class TransactionsModel {
 
             await transaction.commit();
 
-            // Return new balance
+            // Returnerer den nye saldo
             const newBalanceResult = await pool.request()
                 .input('accountId', sql.Int, accountId)
                 .query('SELECT balance FROM Accounts WHERE accountID = @accountId');
@@ -185,6 +192,7 @@ class TransactionsModel {
         }
     }
 
+    // Henter alle transaktioner for en given portefølje
     async getAllForPortfolio(portfolioId) {
         const pool = await poolPromise;
         const result = await pool.request()
@@ -194,4 +202,5 @@ class TransactionsModel {
     }
 }
 
+// Vi exporterer TransactionsModel som en model, som kan bruges i vores routes
 module.exports = new TransactionsModel();

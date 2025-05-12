@@ -15,8 +15,8 @@ function showNotification(message, type = 'success', timeout = 3000) {
   notif.textContent = message;                             // sæt besked
   notif.className = `notification ${type}`;                // tilføj CSS-klasse for farve
   notif.style.display = 'block';                           // vis elementet
-  setTimeout(() => {                                       // skjul efter timeout
-    notif.style.display = 'none';
+  setTimeout(() => {                                   
+    notif.style.display = 'none';                          // skjul  
   }, timeout);
 }
 
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadPortfolios() {
     try {
       // 1) Hent porteføljer fra backend med cookies
-      const res = await fetch('/portfolios/user', { credentials: 'include' });  
+      const res = await fetch('/portfolios/user', { credentials: 'include' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       // 2) Konverter respons til JSON-array
@@ -64,12 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
         countEl.textContent     = '0';
         valueEl.textContent     = '0.00 USD';
         percentEl.textContent   = '0.00%';
-        dkkChangeEl.textContent = '0.00 USD';
+        dkkChangeEl.textContent = '0.00 USD';  
         return;
       }
 
       // 5) Ryd tabel inden opbygning
-      tableBody.innerHTML = ''; 
+      tableBody.innerHTML = '';
 
       // 6) Loop hver portefølje og bygg <tr> inkl. knapper
       for (const p of portfolios) {
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slet-portfolio-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('Vil du slette denne portefølje?')) return; // Sletning  skal kun gennemføres hvis brugeren bekræfter
-          try {
+            try {
             const res = await fetch(`/portfolios/${btn.dataset.id}`, {   // slet portefølje fra backend
               method: 'DELETE',
               credentials: 'include'
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error('Sletning mislykkedes'); // fejl hvis sletning mislykkes
             showNotification('Portefølje slettet', 'success');
             loadPortfolios();                 // opdater tabel
-          } catch (err) {
+            } catch (err) {
             showNotification(err.message, 'error'); // fejlbesked hvis sletning mislykkes
           }
         });
@@ -259,21 +259,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Holdings ikke fundet');
       const holdings = await res.json();
 
-      // 2) Hvis ingen aktier, vis besked og stop
-      if (!Array.isArray(holdings) || holdings.length === 0) {
-        showNotification('Ingen aktier i porteføljen', 'info'); 
-        return;
-      }
-
-      // 3) Byg en lille tabel med HTML-rækker for hver holding der viser symbol, antal, pris og værdi
-      const rows = holdings.map(h => `
-        <tr>
+      // 2) Byg tabelrækker: hvis ingen aktier, vis én tom-række med besked
+      const rows = (Array.isArray(holdings) && holdings.length > 0)
+        ? holdings.map(h => `
+          <tr>
           <td>${h.symbol}</td>
           <td>${h.amount}</td>
           <td>${h.price.toFixed(2)} USD</td>
           <td>${h.value.toFixed(2)} USD</td>
-        </tr>
-      `).join('');
+          </tr>
+      `).join('')
+        : `
+        <tr>
+          <td colspan="4">Ingen aktier i denne portefølje.</td>
+        </tr>`;
 
       // 4) Find eller opret modal-container
       let modal = document.getElementById('visAktieOversigt');
@@ -354,40 +353,40 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const name      = nameInput.value.trim(); //henter navn fra inputfeltet
       const accountId = parseInt(accountInput.value, 10);  //
-      if (!name || !accountId) {
+    if (!name || !accountId) {
         return showNotification('Udfyld både navn og konto-id', 'error');
-      }
-      try {
-        const res = await fetch('/portfolios/create', {
-          method: 'POST',
+    }
+    try {
+      const res = await fetch('/portfolios/create', {
+        method: 'POST',
           headers: {'Content-Type':'application/json'},
           credentials: 'include',
           body: JSON.stringify({name, accountId})
-        });
+      });
         if (!res.ok) throw new Error('Oprettelse fejlede');
         showNotification('Portefølje oprettet', 'success');
         closeModal('addPortfolioModal');
-        loadPortfolios();    // genindlæs oversigten
+        loadPortfolios();    
       } catch (err) {
         showNotification(err.message, 'error');
-      }
-    });
+    }
+  });
   }
 
-  // BIND CANCEL-KNOP til at lukke opret-modal
+  // bind cancel-knap til at lukke opret-modal
   const cancelBtn = document.getElementById('cancelPortfolioBtn');
   if (cancelBtn) {
     cancelBtn.addEventListener('click', () => closeModal('addPortfolioModal'));
   }
 
-  // LOAD OG VIS PORTFØLJER FØRSTE GANG
+  // Load og vis porteføljer første gang
   loadPortfolios();
 
   //  link til at se en portefølje
   document.addEventListener('click', e => {
-    if (e.target.classList.contains('portfolio-link')) {
-      e.preventDefault();
+  if (e.target.classList.contains('portfolio-link')) {
+    e.preventDefault();
       window.location.href = `/portfolios/${e.target.dataset.id}`;
-    }
+  }
   });
 });

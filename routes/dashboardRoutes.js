@@ -280,6 +280,6 @@ router.get('/debug/stocks', async (req, res) => {
   }
   // 3) Returnér alle aktier som JSON, så vi kan se data under udvikling
   res.json(allStocks);
-});
+}); 
 
 module.exports = router;

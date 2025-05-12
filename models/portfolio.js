@@ -38,7 +38,7 @@ class Portfolio {
         `INSERT INTO Portfolios (name, accountID, registrationDate, userID) 
          VALUES (@name, @accountId, GETDATE(), @userId)`
       );
-    return result.rowsAffected[0]; // skal re
+    return result.rowsAffected[0]; // skal returnere id på den oprettede portefølje
   }
 
   // Slet en portefølje ud fra id
@@ -65,7 +65,7 @@ class Portfolio {
          JOIN Stocks s ON t.stockID=s.id
          WHERE t.portfolioID=@portfolioId AND s.symbol=@symbol`
       );
-    const { totalPurchase = 0, totalBought = 0 } = recordset[0] || {};
+    const { totalPurchase = 0, totalBought = 0 } = recordset[0] || {}; 
     // Hvis ingen køb, returnér 0, ellers det vægtede gennemsnit
     return totalBought ? totalPurchase / totalBought : 0;
   }
@@ -143,5 +143,5 @@ class Portfolio {
     return result.recordset;
   }
 }
-
+// vi exporterer Portfolio som en model, som kan bruges i vores routes
 module.exports = Portfolio;

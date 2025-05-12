@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!portfolioId) {
     // Hvis ID mangler, vis fejl-notifikation og stop yderligere udførsel
     return showNotification('Portfolio ID mangler – kan ikke indlæse data.', 'error');
-  }
-
+    }
+  
   // 2) HENT HOLDINGS: købte aktier i porteføljen
     let holdings;
     try {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Egen legend under diagrammet
   const legendEl = document.querySelector('.pie-card .legend');
   legendEl.innerHTML = labels.map((lab,i)=>`
-    <li>
+      <li>
       <span class="legend-color" style="background:${['#4e79a7','#f28e2b','#e15759','#76b7b2','#59a14f'][i]}"></span>
       ${lab}: ${data[i].toLocaleString()} USD
       </li>
@@ -141,8 +141,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       quantity:    parseInt(document.getElementById('quantity').value), // henter antal fra inputfelt (man kan købe de aktier man har råd til)
       pricePerUnit:parseFloat(document.getElementById('price').value), // henter pris fra inputfelt
       fee:         parseFloat(document.getElementById('fee').value) // henter gebyr fra inputfelt
-    };
-    try {
+        };
+        try {
       // POST til server for at gennemføre køb
             const res = await fetch('/growth/stocks/buy', {
                 method: 'POST',
@@ -190,8 +190,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (err) {
       // Ved fejl vis besked til bruger
       showNotification(err.message, 'error');
-    }
-  });
+      }
+    });
 
   // 11) HISTORIK & LINE-CHART: hent og vis udvikling over tid
     async function loadPortfolioHistory() {
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tension: 0.4,
             pointRadius: 0,
             fill: true
-      },
+        },
       chartProps: {
         plugins: { legend: { display: false } },
           scales: {
