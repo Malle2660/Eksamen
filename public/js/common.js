@@ -78,7 +78,7 @@
   
       // 2) Opret nyt Chart.js doughnut-diagram
       window._pieChart = new Chart(ctx, {
-        type: 'doughnut',
+        type: 'doughnut', // type af diagram
         data: {
           labels,
           datasets: [{ data, backgroundColor: colors }]
@@ -96,7 +96,7 @@
                   chart.data.labels.map((lab,i) => ({
                     text: `${lab}: ${chart.data.datasets[0].data[i].toLocaleString('en-US',{minimumFractionDigits:2})} USD`,
                     fillStyle: chart.data.datasets[0].backgroundColor[i],
-                    strokeStyle: '#fff',                           // kantfarve
+                    strokeStyle: '#fff',                           // skal tilføje kantfarve
                     lineWidth: 1
                   }))
               }
@@ -143,7 +143,7 @@
             ...(options.datasetProps || {})                       // farver, tension osv.
           }]
         },
-        options: options.chartProps || {}                         // axes, legend osv.
+        options: options.chartProps || {}                         
       });
     };
   })();

@@ -87,8 +87,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch(`/growth/portfolios/${portfolioId}/trades`, { credentials: 'include' });
       if (!res.ok) throw new Error('Kunne ikke hente trade-historik');
       const trades = await res.json();
-      showTradeHistoryModal(trades);                             // render indhold
-      openModal('tradeHistoryModal');                            // vis modal
+      showTradeHistoryModal(trades);                       
+      openModal('tradeHistoryModal');                            
     } catch (err) {
       showNotification(err.message, 'error');
     }
