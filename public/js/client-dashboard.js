@@ -103,4 +103,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 4e) Start auto-opdatering af grafen hvert 60. sekund
   setInterval(updateChartData, 60_000);
+
+  // Bind logout-knap
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/auth/logout';
+    });
+  }
 });

@@ -10,6 +10,18 @@
       max-width: 100%;
       height: 200px;
     }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -22,7 +34,6 @@
           <h1>PORTFOLIOTRACKER</h1>
           <p>ORGANIZING YOUR FINANCES</p>
         </div>
-        <button id="back-to-login-btn" class="collapse-btn" aria-label="Log ud">❮</button>
       </div>
 
       <nav class="sidebar-nav">
@@ -38,6 +49,7 @@
     <main class="main-content">
       <header class="page-header">
         <h2>Dashboard</h2>
+        <button id="logoutBtn" class="logout-btn">Log ud</button>
       </header>
 
       <!-- METRICS-KORT: Viser total værdi, realiseret og urealiseret gevinst (opdateres dynamisk af client-dashboard.js via /dashboard/metrics) -->

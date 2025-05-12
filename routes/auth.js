@@ -112,6 +112,18 @@ router.get('/user', async (req, res) => {
   res.json(portfolios); //Returnerer porteføljerne som JSON tilbage til klienten
 });
 
+// Logout-bruger: ødelæg session og redirect til landing page
+router.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.status(500).send('Kunne ikke logge ud');
+    }
+    res.clearCookie('connect.sid');
+    res.redirect('/');
+  });
+});
+
 //Eksporterer router så den kan bruges i andre filer
 module.exports = router;
 

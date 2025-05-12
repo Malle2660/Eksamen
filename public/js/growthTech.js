@@ -94,6 +94,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Bind "Registrer Handel"-knap til køb-modal
+  const registerBtn = document.getElementById('register-trade-btn');
+  if (registerBtn) {
+    registerBtn.addEventListener('click', () => {
+      openModal('buyStockModal');
+    });
+  }
+
+  // Bind klik på modal "X"-knapper til at lukke deres modal
+  document.querySelectorAll('.modal .close').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const modal = btn.closest('.modal');
+      if (modal) modal.style.display = 'none';
+    });
+  });
+
   // 7) PIE-CHART TIL TOP 5 POSITIONER
   // Aggregér holdings på symbol-niveau for at undgå dubletter
   const aggregatedMap = {};

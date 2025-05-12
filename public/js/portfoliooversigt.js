@@ -73,16 +73,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 6) Loop hver portefølje og bygg <tr> inkl. knapper
       for (const p of portfolios) {
-        // 6a) Hent ekstra tal parallelt: total purchase & unrealized
-        const [totalPurchase, totalUnrealized] = await Promise.all([
-          fetch(`/portfolios/${p.portfolioID}/total-purchase`, { credentials: 'include' })   // hent total purchase
-            .then(r => r.json()).then(d => d.totalPurchase),
-          fetch(`/portfolios/${p.portfolioID}/total-unrealized`, { credentials: 'include' })
-            .then(r => r.json()).then(d => d.totalUnrealized)
-        ]);
+        // 6a) Hent total purchase
+        const totalPurchase = await fetch(`/portfolios/${p.portfolioID}/total-purchase`, { credentials: 'include' })
+          .then(r => r.json()).then(d => d.totalPurchase);
 
-        // 6b) Opret en <tr> med celler for navn, værdi, change osv.
+        //  Opret en <tr> med celler for navn, værdi, change osv.
         const tr = document.createElement('tr'); // opret række til 
+        // Beregn værdierne for hver celle
+        const expected = Number(p.expectedValue ?? 0);
+        const daily = Number(p.dailyChange ?? 0);
+        const realized = Number(p.realizedGain ?? 0);
+        const unrealized = Number(p.unrealizedGain ?? 0);
+        const purchase = Number(totalPurchase ?? 0);
         tr.innerHTML = `
           <td>
             <a href="/portfolios/${p.portfolioID}"
@@ -92,12 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
               ${p.name || '-'}
             </a>
           </td>
-          <td>${p.expectedValue.toFixed(2)} USD</td> 
-          <td>${p.dailyChange.toFixed(2)} USD</td>  
-          <td>${p.realizedGain.toFixed(2)} USD</td>
-          <td>${p.unrealizedGain.toFixed(2)} USD</td>
-          <td>${totalPurchase.toFixed(2)} USD</td>
-          <td>${totalUnrealized.toFixed(2)} USD</td>
+          <td>${expected.toFixed(2)} USD</td>
+          <td>${daily.toFixed(2)} USD</td>
+          <td>${realized.toFixed(2)} USD</td>
+          <td>${unrealized.toFixed(2)} USD</td>
+          <td>${purchase.toFixed(2)} USD</td>
           <td>${new Date(p.registrationDate).toLocaleDateString()}</td>
           <td>
             <button class="btn btn-primary kob-aktie-btn" data-id="${p.portfolioID}">
@@ -344,9 +345,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // BIND CLICK TIL CREATE-PORTFØLJE KNAP (inline oprettelse)
   if (btnCreate) {
     btnCreate.addEventListener('click', async () => {
+      console.log('Attempting to create portfolio:', nameInput.value, accountInput.value);
       const name = nameInput.value.trim();
       const accountId = parseInt(accountInput.value, 10);
       if (!name || isNaN(accountId)) {
+        console.log('Validation failed for createPortfolioBtn');
         return showNotification('Udfyld både navn og konto-id', 'error');
       }
       try {
@@ -356,12 +359,15 @@ document.addEventListener('DOMContentLoaded', () => {
           credentials: 'include',
           body: JSON.stringify({ name, accountId })
         });
-        if (!res.ok) throw new Error('Oprettelse fejlede');
-        showNotification('Portefølje oprettet', 'success');
+        const data = await res.json();
+        console.log('Server response for create:', res.status, data);
+        if (!res.ok) throw new Error(data.message || 'Oprettelse fejlede');
+        showNotification(data.message || 'Portefølje oprettet', 'success');
         nameInput.value = '';
         accountInput.value = '';
         loadPortfolios();
       } catch (err) {
+        console.error('Fejl ved oprettelse af portefølje:', err);
         showNotification(err.message, 'error');
       }
     });
