@@ -57,10 +57,10 @@ document.addEventListener('DOMContentLoaded', () => { // Venter til at HTML er i
         byCurrency[acc.currency] = (byCurrency[acc.currency] || 0) + acc.balance; // Tilføj balance til valutafordelingen
       });
       countEl.textContent    = activeAccounts.length; // Sæt antal konti til antal aktive konti
-      const totalUSD = accounts.reduce((sum, acc) => sum + (acc.balanceUSD || 0), 0);
+      const totalUSD = accounts.reduce((sum, acc) => sum + (acc.balanceUSD || 0), 0); // Beregn total USD
       totalBalEl.textContent = `${totalUSD.toFixed(2)} USD`;
       const grandTotal = Object.values(byCurrency).reduce((a,b) => a + b, 0);
-      const parts      = Object.entries(byCurrency)
+      const parts      = Object.entries(byCurrency) // 
         .map(([cur,bal]) => `${cur} ${((bal/grandTotal)*100).toFixed(0)}%`); // procentdel af de forskellige valutaer
       currencyEl.textContent = parts.join(', '); // viser valutafordelingen i procent
     }
